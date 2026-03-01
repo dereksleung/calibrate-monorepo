@@ -23,10 +23,16 @@
       "@routes": ["src/presentation/routes/index.ts"],
       "@infrastructure": ["src/infrastructure/index.ts"],
       "@application": ["src/application/index.ts"],
-      "@presentation": ["src/presentation/index.ts"]
+      "@presentation": ["src/presentation/index.ts"],
+      "@factories": ["test/factories/index.ts"]
     },
     "types": ["vitest/globals"]
   },
-  "include": ["src/**/*", "kysely.config.ts", "migrationScript.ts"],
+  "include": [
+    "src/**/*",
+    "kysely.config.ts",
+    "migrationScript.ts",
+    "test/**/*"
+  ],
   "exclude": ["node_modules", "dist"]
 }

@@ -1,0 +1,139 @@
+import { DayLogResponseMapper } from "src/presentation/mappers/day-log-response-mapper.js";
+import { DayLog, MealNameEnum } from "@domain";
+import {
+  buildDayLog,
+  buildDayLogResponse,
+  buildFoodEntry,
+  buildFoodEntryResponse,
+} from "@factories";
+
+describe("DayLogResponseMapper", () => {
+  it("should map a fully populated DayLog to a DayLogResponse", () => {
+    const dayLog = buildDayLog({
+      id: "123",
+      date: new Date("2026-02-22"),
+      breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
+      lunch: [buildFoodEntry({ meal: MealNameEnum.LUNCH })],
+      dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
+      snacks: [buildFoodEntry({ meal: MealNameEnum.SNACKS })],
+      weight: 140.1,
+    });
+
+    const result = DayLogResponseMapper.toResponse(dayLog);
+
+    expect(result).toEqual(
+      buildDayLogResponse({
+        id: "123",
+        date: new Date("2026-02-22"),
+        breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
+        lunch: [buildFoodEntryResponse({ meal: MealNameEnum.LUNCH })],
+        dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
+        snacks: [buildFoodEntryResponse({ meal: MealNameEnum.SNACKS })],
+        weight: 140.1,
+      }),
+    );
+  });
+
+  it("should map null meal arrays to null", () => {
+    const dayLog = DayLog.reconstitute({
+      id: "456",
+      date: new Date("2026-03-01"),
+      breakfast: null,
+      lunch: null,
+      dinner: null,
+      snacks: null,
+      weight: null,
+    });
+
+    const result = DayLogResponseMapper.toResponse(dayLog);
+
+    expect(result).toEqual(
+      buildDayLogResponse({
+        id: "456",
+        date: new Date("2026-03-01"),
+        breakfast: null,
+        lunch: null,
+        dinner: null,
+        snacks: null,
+        weight: null,
+      }),
+    );
+  });
+
+  it("should handle a mix of populated and null meals", () => {
+    const dayLog = DayLog.reconstitute({
+      id: "789",
+      date: new Date("2026-03-01"),
+      breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
+      lunch: null,
+      dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
+      snacks: null,
+      weight: 155.0,
+    });
+
+    const result = DayLogResponseMapper.toResponse(dayLog);
+
+    expect(result).toEqual(
+      buildDayLogResponse({
+        id: "789",
+        date: new Date("2026-03-01"),
+        breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
+        lunch: null,
+        dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
+        snacks: null,
+        weight: 155.0,
+      }),
+    );
+  });
+
+  it("should map empty meal arrays to empty arrays", () => {
+    const dayLog = DayLog.reconstitute({
+      id: "101",
+      date: new Date("2026-03-01"),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+    });
+
+    const result = DayLogResponseMapper.toResponse(dayLog);
+
+    expect(result).toEqual(
+      buildDayLogResponse({
+        id: "101",
+        date: new Date("2026-03-01"),
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        snacks: [],
+        weight: null,
+      }),
+    );
+  });
+
+  it("should map multiple food entries per meal", () => {
+    const breakfastEntries = [
+      buildFoodEntry({ meal: MealNameEnum.BREAKFAST }),
+      buildFoodEntry({ meal: MealNameEnum.BREAKFAST }),
+    ];
+
+    const dayLog = buildDayLog({
+      id: "202",
+      date: new Date("2026-03-01"),
+      breakfast: breakfastEntries,
+      lunch: null,
+      dinner: null,
+      snacks: null,
+      weight: null,
+    });
+
+    const result = DayLogResponseMapper.toResponse(dayLog);
+
+    expect(result.breakfast).toHaveLength(2);
+    expect(result.breakfast).toEqual([
+      buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
+      buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
+    ]);
+  });
+});

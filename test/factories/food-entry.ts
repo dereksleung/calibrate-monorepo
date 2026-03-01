@@ -1,0 +1,49 @@
+import { FoodEntry, FoodEntryProps, MealNameEnum } from "@domain";
+import { FoodEntryResponse } from "@presentation";
+
+export const buildFoodEntry = (
+  overrides: Partial<FoodEntryProps> = {},
+): FoodEntry =>
+  FoodEntry.reconstitute({
+    id: overrides.id ?? "1",
+    meal: overrides.meal ?? MealNameEnum.BREAKFAST,
+    name: "Test Food",
+    brand: "Test Brand",
+    iconName: "test-icon",
+    quantity: 1,
+    quantityUnit: "g",
+    calories: 100,
+    totalFatGrams: 10,
+    saturatedFatGrams: 10,
+    cholesterolMg: 10,
+    sodiumMg: 10,
+    totalCarbohydrateGrams: 10,
+    fiberGrams: 10,
+    sugarGrams: 10,
+    proteinGrams: 10,
+    ...overrides,
+  });
+
+export const buildFoodEntryResponse = (
+  overrides: Partial<FoodEntryResponse> = {},
+): FoodEntryResponse => {
+  return {
+    id: "1",
+    meal: MealNameEnum.BREAKFAST,
+    name: "Test Food",
+    brand: "Test Brand",
+    iconName: "test-icon",
+    quantity: 1,
+    quantityUnit: "g",
+    calories: 100,
+    totalFatGrams: 10,
+    saturatedFatGrams: 10,
+    cholesterolMg: 10,
+    sodiumMg: 10,
+    totalCarbohydrateGrams: 10,
+    fiberGrams: 10,
+    sugarGrams: 10,
+    proteinGrams: 10,
+    ...overrides,
+  };
+};

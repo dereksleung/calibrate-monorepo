@@ -7,7 +7,7 @@ import { FoodEntry } from "./food-entry.js";
  * not lead to an invalid system state.
  */
 
-interface DayLogProps {
+export interface DayLogProps {
   id: string;
   date: Date;
   breakfast: FoodEntry[] | null;

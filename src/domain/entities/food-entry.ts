@@ -36,7 +36,7 @@ export const FoodEntrySchema = z.object({
   id: z.string(),
 });
 
-interface FoodEntryProps {
+export interface FoodEntryProps {
   id: string;
   meal: MealNameEnumType;
   name: string;

@@ -7,6 +7,7 @@ import { Request, Response } from "express";
 import { DayLogService } from "@services";
 import { validate } from "@validation";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
+import { BusinessLogicError } from "@domain";
 
 /**
  * The controller has one main job - go between HTTP, and my application.
@@ -63,6 +64,10 @@ export class DayLogController {
       }
       if (error.message.includes("permission")) {
         res.status(403).json({ error: "Permission denied" });
+        return;
+      }
+      if (error instanceof BusinessLogicError) {
+        res.status(400).json({ error: error.message });
         return;
       }
       res.status(500).json({ error: error.message });
