@@ -55,7 +55,7 @@ describe("DayLogController", () => {
       params: {
         date: "2026-02-22T00:58:28.879Z",
       },
-    } as unknown as Request<{ date: GetDayLogRequestRouteParams }>;
+    } as unknown as Request<GetDayLogRequestRouteParams>;
 
     mockDayLogService.getLogForDay.mockResolvedValue(mockDayLog);
 

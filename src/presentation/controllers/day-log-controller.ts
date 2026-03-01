@@ -25,13 +25,13 @@ export class DayLogController {
   }
 
   async getLogForDay(
-    req: Request<{ date: GetDayLogRequestRouteParams }>,
+    req: Request<GetDayLogRequestRouteParams>,
     res: Response,
   ): Promise<void> {
     try {
       const validatedInput = validate(
         GetDayLogRequestRouteParamsSchema,
-        req.params.date,
+        req.params,
       );
       if (!validatedInput.isValid) {
         res.status(400).json({
@@ -43,7 +43,7 @@ export class DayLogController {
       const userId = this.extractUserId(req);
       const dayLog = await this.dayLogService.getLogForDay({
         userId,
-        date: validatedInput?.data,
+        date: validatedInput?.data.date,
       });
 
       const response: DayLogResponse | null = dayLog
