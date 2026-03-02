@@ -3,7 +3,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { createDayLogRoutes } from "@routes";
+import { createDayLogRoutes, createUserRoutes } from "@routes";
 import { Container } from "@infrastructure";
 
 const app = express();
@@ -19,6 +19,7 @@ const container = new Container({});
 
 // Routes
 app.use("/api/v1", createDayLogRoutes(container.getDayLogController()));
+app.use("/api/v1", createUserRoutes(container.getUserController()));
 
 // Health check route
 app.get("/health", (req, res) => {

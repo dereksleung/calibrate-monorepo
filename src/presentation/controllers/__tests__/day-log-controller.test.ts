@@ -59,7 +59,7 @@ describe("DayLogController", () => {
     await dayLogController.getLogForDay(req, res);
 
     expect(mockDayLogService.getLogForDay).toHaveBeenCalledWith({
-      userId: "default-user",
+      userId: "6ebcfbaf-50ad-44c9-bd8f-81965641b458",
       date: "2026-02-22",
     });
     expect(res.status).toHaveBeenCalledWith(200);

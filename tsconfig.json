@@ -24,7 +24,8 @@
       "@infrastructure": ["src/infrastructure/index.ts"],
       "@application": ["src/application/index.ts"],
       "@presentation": ["src/presentation/index.ts"],
-      "@factories": ["test/factories/index.ts"]
+      "@factories": ["test/factories/index.ts"],
+      "@common": ["src/common/index.ts"]
     },
     "types": ["vitest/globals"]
   },

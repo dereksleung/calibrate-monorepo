@@ -1,3 +1,4 @@
+import { UserTierEnumType } from "@domain";
 import {
   ColumnType,
   Generated,
@@ -10,7 +11,7 @@ export interface UsersTable {
   id: Generated<string>;
   email: string;
   password_hash: string;
-  tier: string;
+  tier: UserTierEnumType;
   created_at: ColumnType<Date, string, never>;
   updated_at: ColumnType<Date, string, Date>;
 }

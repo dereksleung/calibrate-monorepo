@@ -8,6 +8,7 @@ import { DayLogService } from "@services";
 import { validate } from "@validation";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
 import { BusinessLogicError } from "@domain";
+import { handleControllerError } from "@common";
 
 /**
  * The controller has one main job - go between HTTP, and my application.
@@ -52,30 +53,13 @@ export class DayLogController {
         : null;
       res.status(200).json(response);
     } catch (error) {
-      this.handleError(error, res);
+      handleControllerError(error, res);
     }
   }
-  private handleError(error: unknown, res: Response): void {
-    console.error("DayLogController error:", error);
-    if (error instanceof Error) {
-      if (error.message.includes("not found")) {
-        res.status(404).json({ error: "Resource not found" });
-        return;
-      }
-      if (error.message.includes("permission")) {
-        res.status(403).json({ error: "Permission denied" });
-        return;
-      }
-      if (error instanceof BusinessLogicError) {
-        res.status(400).json({ error: error.message });
-        return;
-      }
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: "An unknown error occurred" });
-    }
-  }
+
   private extractUserId(req: Request): string {
-    return (req.get("user-id") as string) || "default-user";
+    return (
+      (req.get("user-id") as string) || "6ebcfbaf-50ad-44c9-bd8f-81965641b458"
+    );
   }
 }
