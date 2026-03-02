@@ -1,11 +1,11 @@
-import { DayLogServiceImpl, DayLogRepository } from "@application";
+import { DayLogServiceImpl, IDayLogRepository } from "@application";
 import { DayLog, MealNameEnum } from "@domain";
 import { vi, MockedObject } from "vitest";
 import { buildDayLog, buildFoodEntry } from "@factories";
 
 describe("DayLogServiceImpl", () => {
   let dayLogService: DayLogServiceImpl;
-  let mockDayLogRepository: MockedObject<DayLogRepository>;
+  let mockDayLogRepository: MockedObject<IDayLogRepository>;
 
   const mockDayLog: DayLog = buildDayLog({
     id: "123",

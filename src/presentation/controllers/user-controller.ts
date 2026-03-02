@@ -1,5 +1,5 @@
 import { handleControllerError } from "@common";
-import { UserService } from "@services";
+import { IUserService } from "@services";
 import { validate } from "@validation";
 import { CreateUserRequestBodySchema } from "../http/user-requests.js";
 import { Request, Response } from "express";
@@ -7,8 +7,8 @@ import { UserResponseMapper } from "../mappers/user-response-mapper.js";
 import { UserResponse } from "../http/user-responses.js";
 
 export class UserController {
-  private readonly userService: UserService;
-  constructor(userService: UserService) {
+  private readonly userService: IUserService;
+  constructor(userService: IUserService) {
     this.userService = userService;
   }
 

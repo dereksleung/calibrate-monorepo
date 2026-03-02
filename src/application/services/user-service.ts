@@ -1,18 +1,18 @@
 import { BusinessLogicError, User } from "@domain";
 import {
   CreateUserRequestDto,
-  PasswordHasher,
-  UserRepository,
+  IPasswordHasher,
+  IUserRepository,
 } from "@application";
 
-export interface UserService {
+export interface IUserService {
   createUser(props: CreateUserRequestDto): Promise<User>;
 }
 
-export class UserServiceImpl implements UserService {
+export class UserServiceImpl implements IUserService {
   constructor(
-    private readonly passwordHasher: PasswordHasher,
-    private readonly userRepository: UserRepository,
+    private readonly passwordHasher: IPasswordHasher,
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async createUser(props: CreateUserRequestDto): Promise<User> {

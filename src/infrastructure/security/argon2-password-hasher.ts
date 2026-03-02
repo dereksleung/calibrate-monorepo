@@ -1,7 +1,7 @@
 import argon2 from "argon2";
-import { PasswordHasher } from "@application";
+import { IPasswordHasher } from "@application";
 
-export class Argon2PasswordHasher implements PasswordHasher {
+export class Argon2PasswordHasher implements IPasswordHasher {
   async hash(password: string): Promise<string> {
     return argon2.hash(password, {
       memoryCost: 19456,

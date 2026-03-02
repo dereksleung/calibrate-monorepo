@@ -1,8 +1,8 @@
-import { UserRepository } from "@application";
+import { IUserRepository } from "@application";
 import { User } from "@domain";
 import { db, SelectableUser } from "@infrastructure";
 
-export class PostgresUserRepository implements UserRepository {
+export class PostgresUserRepository implements IUserRepository {
   async save(user: User): Promise<User> {
     const userRow = await db
       .insertInto("users")

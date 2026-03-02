@@ -1,10 +1,10 @@
 import { DayLogController, UserController } from "@controllers";
-import { DayLogService, DayLogServiceImpl } from "@services";
+import { IDayLogService, DayLogServiceImpl } from "@services";
 import {
-  DayLogRepository,
-  PasswordHasher,
-  UserRepository,
-  UserService,
+  IDayLogRepository,
+  IPasswordHasher,
+  IUserRepository,
+  IUserService,
 } from "@application";
 import { PostgresDayLogRepository } from "./persistence/repositories/index.js";
 import { PostgresUserRepository } from "./persistence/repositories/postgres-user-repository.js";
@@ -12,13 +12,13 @@ import { UserServiceImpl } from "@services";
 import { Argon2PasswordHasher } from "./security/argon2-password-hasher.js";
 
 export class Container {
-  private readonly dayLogRepository: DayLogRepository;
-  private readonly dayLogService: DayLogService;
+  private readonly dayLogRepository: IDayLogRepository;
+  private readonly dayLogService: IDayLogService;
   private readonly dayLogController: DayLogController;
-  private readonly userRepository: UserRepository;
-  private readonly userService: UserService;
+  private readonly userRepository: IUserRepository;
+  private readonly userService: IUserService;
   private readonly userController: UserController;
-  private readonly passwordHasher: PasswordHasher;
+  private readonly passwordHasher: IPasswordHasher;
 
   constructor({
     dayLogRepository,
@@ -29,13 +29,13 @@ export class Container {
     userController,
     passwordHasher,
   }: {
-    dayLogRepository?: DayLogRepository;
-    dayLogService?: DayLogService;
+    dayLogRepository?: IDayLogRepository;
+    dayLogService?: IDayLogService;
     dayLogController?: DayLogController;
-    userRepository?: UserRepository;
-    userService?: UserService;
+    userRepository?: IUserRepository;
+    userService?: IUserService;
     userController?: UserController;
-    passwordHasher?: PasswordHasher;
+    passwordHasher?: IPasswordHasher;
   }) {
     this.dayLogRepository = dayLogRepository ?? new PostgresDayLogRepository();
     this.dayLogService =
@@ -52,25 +52,25 @@ export class Container {
       userController ?? new UserController(this.userService);
   }
 
-  getDayLogService(): DayLogService {
+  getDayLogService(): IDayLogService {
     return this.dayLogService;
   }
-  getDayLogRepository(): DayLogRepository {
+  getDayLogRepository(): IDayLogRepository {
     return this.dayLogRepository;
   }
   getDayLogController(): DayLogController {
     return this.dayLogController;
   }
-  getUserService(): UserService {
+  getUserService(): IUserService {
     return this.userService;
   }
-  getUserRepository(): UserRepository {
+  getUserRepository(): IUserRepository {
     return this.userRepository;
   }
   getUserController(): UserController {
     return this.userController;
   }
-  getPasswordHasher(): PasswordHasher {
+  getPasswordHasher(): IPasswordHasher {
     return this.passwordHasher;
   }
 }

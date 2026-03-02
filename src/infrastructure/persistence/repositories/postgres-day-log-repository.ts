@@ -2,9 +2,9 @@ import { DayLog, FoodEntry, MealNameEnum } from "@domain";
 import { SelectableFoodEntry } from "../schemas/food-entries-table.js";
 import { db } from "../../persistence/database.js";
 import { GetDayLogByDateAndUserDto } from "../../../application/dtos/day-log-dtos.js";
-import { DayLogRepository } from "../../../application/ports/day-log-repository.js";
+import { IDayLogRepository } from "../../../application/ports/day-log-repository.js";
 
-export class PostgresDayLogRepository implements DayLogRepository {
+export class PostgresDayLogRepository implements IDayLogRepository {
   async findLogByDateAndUserId({
     userId,
     date,

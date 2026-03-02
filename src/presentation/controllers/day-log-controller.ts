@@ -4,7 +4,7 @@ import {
 } from "../http/day-log-requests.js";
 import { DayLogResponse } from "../http/day-log-responses.js";
 import { Request, Response } from "express";
-import { DayLogService } from "@services";
+import { IDayLogService } from "@services";
 import { validate } from "@validation";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
 import { BusinessLogicError } from "@domain";
@@ -21,8 +21,8 @@ import { handleControllerError } from "@common";
  */
 
 export class DayLogController {
-  private readonly dayLogService: DayLogService;
-  constructor(dayLogService: DayLogService) {
+  private readonly dayLogService: IDayLogService;
+  constructor(dayLogService: IDayLogService) {
     this.dayLogService = dayLogService;
   }
 
