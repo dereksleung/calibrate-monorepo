@@ -7,6 +7,7 @@ export const buildFoodEntry = (
   FoodEntry.reconstitute({
     id: overrides.id ?? "1",
     meal: overrides.meal ?? MealNameEnum.BREAKFAST,
+    dayLogId: overrides.dayLogId ?? "1",
     name: "Test Food",
     brand: "Test Brand",
     iconName: "test-icon",

@@ -3,6 +3,15 @@ import { User } from "@domain";
 import { db, SelectableUser } from "@infrastructure";
 
 export class PostgresUserRepository implements IUserRepository {
+  async findById(id: string): Promise<User | null> {
+    const userRow = await db
+      .selectFrom("users")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst();
+    return userRow ? this.mapRowToUser(userRow) : null;
+  }
+
   async save(user: User): Promise<User> {
     const userRow = await db
       .insertInto("users")

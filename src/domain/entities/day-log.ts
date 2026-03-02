@@ -1,4 +1,5 @@
-import { FoodEntry } from "./food-entry.js";
+import { BusinessLogicError } from "@domain";
+import { FoodEntry, MealNameEnum, MealNameEnumType } from "./food-entry.js";
 
 /**
  * The day log will be an aggregate root. It will be the public interface
@@ -10,20 +11,20 @@ import { FoodEntry } from "./food-entry.js";
 export interface DayLogProps {
   id: string;
   date: Date;
-  breakfast: FoodEntry[] | null;
-  lunch: FoodEntry[] | null;
-  dinner: FoodEntry[] | null;
-  snacks: FoodEntry[] | null;
+  breakfast: FoodEntry[];
+  lunch: FoodEntry[];
+  dinner: FoodEntry[];
+  snacks: FoodEntry[];
   weight: number | null;
 }
 
 export class DayLog {
   private readonly _id: string;
   private readonly _date: Date;
-  private _breakfast: FoodEntry[] | null;
-  private _lunch: FoodEntry[] | null;
-  private _dinner: FoodEntry[] | null;
-  private _snacks: FoodEntry[] | null;
+  private _breakfast: FoodEntry[];
+  private _lunch: FoodEntry[];
+  private _dinner: FoodEntry[];
+  private _snacks: FoodEntry[];
   private _weight: number | null;
 
   private constructor({
@@ -37,15 +38,51 @@ export class DayLog {
   }: DayLogProps) {
     this._id = id;
     this._date = date;
-    this._breakfast = breakfast ?? null;
-    this._lunch = lunch ?? null;
-    this._dinner = dinner ?? null;
-    this._snacks = snacks ?? null;
+    this._breakfast = breakfast;
+    this._lunch = lunch;
+    this._dinner = dinner;
+    this._snacks = snacks;
     this._weight = weight ?? null;
   }
 
   public static reconstitute(props: DayLogProps): DayLog {
     return new DayLog(props);
+  }
+
+  public addFoodEntry(foodEntry: FoodEntry): FoodEntry {
+    let meal = this.getMealArray(foodEntry.meal);
+    if (meal && meal.length > 25) {
+      throw new BusinessLogicError("Meal cannot exceed 25 food entries");
+    }
+    switch (foodEntry.meal) {
+      case MealNameEnum.BREAKFAST:
+        this._breakfast?.push(foodEntry);
+        break;
+      case MealNameEnum.LUNCH:
+        this._lunch?.push(foodEntry);
+        break;
+      case MealNameEnum.DINNER:
+        this._dinner?.push(foodEntry);
+        break;
+      case MealNameEnum.SNACKS:
+        this._snacks?.push(foodEntry);
+        break;
+    }
+
+    return foodEntry;
+  }
+
+  private getMealArray(meal: MealNameEnumType): FoodEntry[] | null {
+    switch (meal) {
+      case MealNameEnum.BREAKFAST:
+        return this._breakfast;
+      case MealNameEnum.LUNCH:
+        return this._lunch;
+      case MealNameEnum.DINNER:
+        return this._dinner;
+      case MealNameEnum.SNACKS:
+        return this._snacks;
+    }
   }
 
   public get id(): string {

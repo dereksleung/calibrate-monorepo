@@ -37,14 +37,15 @@ export class Container {
     userController?: UserController;
     passwordHasher?: IPasswordHasher;
   }) {
+    this.userRepository = userRepository ?? new PostgresUserRepository();
     this.dayLogRepository = dayLogRepository ?? new PostgresDayLogRepository();
     this.dayLogService =
-      dayLogService ?? new DayLogServiceImpl(this.dayLogRepository);
+      dayLogService ??
+      new DayLogServiceImpl(this.dayLogRepository, this.userRepository);
     this.dayLogController =
       dayLogController ?? new DayLogController(this.dayLogService);
 
     this.passwordHasher = passwordHasher ?? new Argon2PasswordHasher();
-    this.userRepository = userRepository ?? new PostgresUserRepository();
     this.userService =
       userService ??
       new UserServiceImpl(this.passwordHasher, this.userRepository);

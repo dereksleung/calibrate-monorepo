@@ -11,8 +11,8 @@ export interface DayLogsTable {
   date: ColumnType<Date, string, never>;
   user_id: ColumnType<string, string, never>;
   weight: ColumnType<number | null, number | null, number | null>;
-  created_at: ColumnType<Date, string, never>;
-  updated_at: ColumnType<Date, string, Date>;
+  created_at: ColumnType<Date, never, never>;
+  updated_at: ColumnType<Date, never, Date>;
 }
 
 export type SelectableDayLog = Selectable<DayLogsTable>;

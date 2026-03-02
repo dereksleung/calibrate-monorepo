@@ -34,40 +34,14 @@ describe("DayLogResponseMapper", () => {
     );
   });
 
-  it("should map null meal arrays to null", () => {
-    const dayLog = DayLog.reconstitute({
-      id: "456",
-      date: new Date("2026-03-01"),
-      breakfast: null,
-      lunch: null,
-      dinner: null,
-      snacks: null,
-      weight: null,
-    });
-
-    const result = DayLogResponseMapper.toResponse(dayLog);
-
-    expect(result).toEqual(
-      buildDayLogResponse({
-        id: "456",
-        date: new Date("2026-03-01"),
-        breakfast: null,
-        lunch: null,
-        dinner: null,
-        snacks: null,
-        weight: null,
-      }),
-    );
-  });
-
-  it("should handle a mix of populated and null meals", () => {
+  it("should handle a mix of populated and empty meals", () => {
     const dayLog = DayLog.reconstitute({
       id: "789",
       date: new Date("2026-03-01"),
       breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
-      lunch: null,
+      lunch: [],
       dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
-      snacks: null,
+      snacks: [],
       weight: 155.0,
     });
 
@@ -78,9 +52,9 @@ describe("DayLogResponseMapper", () => {
         id: "789",
         date: new Date("2026-03-01"),
         breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
-        lunch: null,
+        lunch: [],
         dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
-        snacks: null,
+        snacks: [],
         weight: 155.0,
       }),
     );
@@ -122,9 +96,9 @@ describe("DayLogResponseMapper", () => {
       id: "202",
       date: new Date("2026-03-01"),
       breakfast: breakfastEntries,
-      lunch: null,
-      dinner: null,
-      snacks: null,
+      lunch: [],
+      dinner: [],
+      snacks: [],
       weight: null,
     });
 

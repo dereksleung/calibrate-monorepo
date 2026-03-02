@@ -1,7 +1,5 @@
 import * as z from "zod";
 
-// TODO: Consider moving zod schemas to request model file, if it does not DRY anything with the domain model.
-// Schema validation will be used at least for create/update request validation.
 export const MealNameSchema = z.enum([
   "BREAKFAST",
   "LUNCH",
@@ -13,31 +11,9 @@ export const MealNameEnum = MealNameSchema.enum;
 
 export type MealNameEnumType = z.infer<typeof MealNameSchema>;
 
-export const CommonFoodEntryFieldsSchema = z.object({
-  meal: MealNameSchema,
-  name: z.string(),
-  brand: z.string().nullable(),
-  iconName: z.string().nullable(),
-  quantity: z.number(),
-  quantityUnit: z.string(),
-  calories: z.number(),
-  totalFatGrams: z.number(),
-  saturatedFatGrams: z.number().nullable(),
-  cholesterolMg: z.number().nullable(),
-  sodiumMg: z.number().nullable(),
-  totalCarbohydrateGrams: z.number(),
-  fiberGrams: z.number().nullable(),
-  sugarGrams: z.number().nullable(),
-  proteinGrams: z.number(),
-});
-
-export const FoodEntrySchema = z.object({
-  ...CommonFoodEntryFieldsSchema.shape,
-  id: z.string(),
-});
-
-export interface FoodEntryProps {
+export interface CommonFoodEntryProps {
   id: string;
+  dayLogId: string;
   meal: MealNameEnumType;
   name: string;
   brand: string | null;
@@ -55,8 +31,15 @@ export interface FoodEntryProps {
   proteinGrams: number;
 }
 
+export interface FoodEntryProps extends CommonFoodEntryProps {}
+export interface CreateFoodEntryProps extends Omit<
+  CommonFoodEntryProps,
+  "id"
+> {}
+
 export class FoodEntry {
   private readonly _id: string;
+  private readonly _dayLogId: string;
   private readonly _meal: MealNameEnumType;
   private _name: string;
   private _brand: string | null;
@@ -90,8 +73,10 @@ export class FoodEntry {
     fiberGrams,
     sugarGrams,
     proteinGrams,
+    dayLogId,
   }: FoodEntryProps) {
     this._id = id;
+    this._dayLogId = dayLogId;
     this._meal = meal;
     this._name = name;
     this._brand = brand;
@@ -113,8 +98,18 @@ export class FoodEntry {
     return new FoodEntry(props);
   }
 
+  public static create(props: CreateFoodEntryProps): FoodEntry {
+    return new FoodEntry({
+      ...props,
+      id: crypto.randomUUID(),
+    });
+  }
+
   public get id(): string {
     return this._id;
+  }
+  public get dayLogId(): string {
+    return this._dayLogId;
   }
   public get meal(): MealNameEnumType {
     return this._meal;

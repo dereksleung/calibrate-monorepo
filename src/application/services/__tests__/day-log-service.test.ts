@@ -1,4 +1,8 @@
-import { DayLogServiceImpl, IDayLogRepository } from "@application";
+import {
+  DayLogServiceImpl,
+  IDayLogRepository,
+  IUserRepository,
+} from "@application";
 import { DayLog, MealNameEnum } from "@domain";
 import { vi, MockedObject } from "vitest";
 import { buildDayLog, buildFoodEntry } from "@factories";
@@ -6,7 +10,7 @@ import { buildDayLog, buildFoodEntry } from "@factories";
 describe("DayLogServiceImpl", () => {
   let dayLogService: DayLogServiceImpl;
   let mockDayLogRepository: MockedObject<IDayLogRepository>;
-
+  let mockUserRepository: MockedObject<IUserRepository>;
   const mockDayLog: DayLog = buildDayLog({
     id: "123",
     date: new Date("2026-02-22"),
@@ -18,10 +22,16 @@ describe("DayLogServiceImpl", () => {
   });
 
   beforeEach(() => {
+    mockUserRepository = {
+      findById: vi.fn(),
+    } as any;
     mockDayLogRepository = {
       findLogByDateAndUserId: vi.fn(),
     } as any;
-    dayLogService = new DayLogServiceImpl(mockDayLogRepository);
+    dayLogService = new DayLogServiceImpl(
+      mockDayLogRepository,
+      mockUserRepository,
+    );
   });
 
   describe("getLogForDay", () => {
