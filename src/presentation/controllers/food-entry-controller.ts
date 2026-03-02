@@ -16,6 +16,7 @@ export class FoodEntryController {
       return;
     }
 
+    // TODO: Remove this once we implement authentication with JWT
     const stubUserId = "59802894-b4ad-49dc-83dd-72a6fa571cd3";
 
     const { data } = validatedInput;
