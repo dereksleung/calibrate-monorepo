@@ -42,9 +42,10 @@ export class DayLogController {
         });
         return;
       }
-      const userId = this.extractUserId(req);
+      // TODO: Remove this once we implement authentication with JWT
+      const stubUserId = "59802894-b4ad-49dc-83dd-72a6fa571cd3";
       const dayLog = await this.dayLogService.getLogForDay({
-        userId,
+        userId: stubUserId,
         date: validatedInput?.data.date,
       });
 
@@ -55,11 +56,5 @@ export class DayLogController {
     } catch (error) {
       handleControllerError(error, res);
     }
-  }
-
-  private extractUserId(req: Request): string {
-    return (
-      (req.get("user-id") as string) || "6ebcfbaf-50ad-44c9-bd8f-81965641b458"
-    );
   }
 }
