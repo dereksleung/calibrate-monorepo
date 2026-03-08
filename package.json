@@ -10,7 +10,7 @@
     "start": "node dist/app.js",
     "kysely": "kysely --experimental-resolve-tsconfig-paths",
     "prepare": "husky",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "oxlint --type-aware --type-check",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix"
   },

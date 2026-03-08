@@ -31,11 +31,9 @@ export interface CommonFoodEntryProps {
   proteinGrams: number;
 }
 
-export interface FoodEntryProps extends CommonFoodEntryProps {}
-export interface CreateFoodEntryProps extends Omit<
-  CommonFoodEntryProps,
-  "id"
-> {}
+export type FoodEntryProps = CommonFoodEntryProps;
+
+export type CreateFoodEntryProps = Omit<FoodEntryProps, "id">;
 
 export class FoodEntry {
   private readonly _id: string;

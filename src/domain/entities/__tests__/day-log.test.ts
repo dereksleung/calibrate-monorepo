@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DayLog, BusinessLogicError, MealNameEnum } from "@domain";
+import { BusinessLogicError, MealNameEnum } from "@domain";
 import { buildDayLog, buildFoodEntry } from "@factories";
 
 describe("DayLog", () => {
