@@ -7,7 +7,6 @@ import { Request, Response } from "express";
 import { IDayLogService } from "@services";
 import { validate } from "@validation";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
-import { BusinessLogicError } from "@domain";
 import { handleControllerError } from "@common";
 
 /**

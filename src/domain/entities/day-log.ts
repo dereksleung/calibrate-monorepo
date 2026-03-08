@@ -50,7 +50,7 @@ export class DayLog {
   }
 
   public addFoodEntry(foodEntry: FoodEntry): FoodEntry {
-    let meal = this.getMealArray(foodEntry.meal);
+    const meal = this.getMealArray(foodEntry.meal);
     if (meal && meal.length >= 25) {
       throw new BusinessLogicError("Meal cannot exceed 25 food entries");
     }
