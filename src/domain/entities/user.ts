@@ -1,8 +1,4 @@
-import {
-  UserTier,
-  UserTierEnumType,
-  UserTierSchema,
-} from "../value-objects/user-tier.js";
+import { UserTier, UserTierEnumType, UserTierSchema } from "../value-objects/user-tier.js";
 
 import argon2 from "argon2";
 
@@ -28,14 +24,7 @@ export class User {
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
 
-  private constructor({
-    id,
-    email,
-    passwordHash,
-    tier,
-    createdAt,
-    updatedAt,
-  }: UserProps) {
+  private constructor({ id, email, passwordHash, tier, createdAt, updatedAt }: UserProps) {
     this._id = id;
     this._email = email;
     this._passwordHash = passwordHash;

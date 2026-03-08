@@ -24,9 +24,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable("food_entries")
     .addColumn("id", "uuid", (col) => col.primaryKey())
-    .addColumn("day_log_id", "uuid", (col) =>
-      col.references("day_logs.id").notNull(),
-    )
+    .addColumn("day_log_id", "uuid", (col) => col.references("day_logs.id").notNull())
     .addColumn("meal", "varchar(9)", (col) => col.notNull())
     .addColumn("name", "varchar(100)", (col) => col.notNull())
     .addColumn("brand", "varchar(75)")
@@ -38,9 +36,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("saturated_fat_grams", "numeric(5, 1)")
     .addColumn("cholesterol_mg", "smallint")
     .addColumn("sodium_mg", "smallint")
-    .addColumn("total_carbohydrate_grams", "numeric(5, 1)", (col) =>
-      col.notNull(),
-    )
+    .addColumn("total_carbohydrate_grams", "numeric(5, 1)", (col) => col.notNull())
     .addColumn("fiber_grams", "numeric(5, 1)")
     .addColumn("sugar_grams", "numeric(5, 1)")
     .addColumn("protein_grams", "numeric(5, 1)", (col) => col.notNull())

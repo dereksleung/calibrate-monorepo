@@ -106,9 +106,7 @@ describe("DayLog", () => {
       });
 
       expect(() => dayLog.addFoodEntry(extraEntry)).toThrow(BusinessLogicError);
-      expect(() => dayLog.addFoodEntry(extraEntry)).toThrow(
-        "Meal cannot exceed 25 food entries",
-      );
+      expect(() => dayLog.addFoodEntry(extraEntry)).toThrow("Meal cannot exceed 25 food entries");
     });
 
     it("enforces the 25-entry limit independently per meal", () => {

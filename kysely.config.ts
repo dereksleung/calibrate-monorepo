@@ -5,12 +5,6 @@ import { createKyselyInstance } from "./src/infrastructure/persistence/database.
 export default defineConfig({
   kysely: createKyselyInstance(),
   migrations: {
-    migrationFolder: path.join(
-      import.meta.dirname,
-      "src",
-      "infrastructure",
-      "persistence",
-      "migrations",
-    ),
+    migrationFolder: path.join(import.meta.dirname, "src", "infrastructure", "persistence", "migrations"),
   },
 });

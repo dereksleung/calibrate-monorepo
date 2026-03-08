@@ -27,15 +27,7 @@ export class DayLog {
   private _snacks: FoodEntry[];
   private _weight: number | null;
 
-  private constructor({
-    id,
-    date,
-    breakfast,
-    lunch,
-    dinner,
-    snacks,
-    weight,
-  }: DayLogProps) {
+  private constructor({ id, date, breakfast, lunch, dinner, snacks, weight }: DayLogProps) {
     this._id = id;
     this._date = date;
     this._breakfast = breakfast;

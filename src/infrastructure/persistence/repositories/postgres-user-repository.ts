@@ -4,11 +4,7 @@ import { db, SelectableUser } from "@infrastructure";
 
 export class PostgresUserRepository implements IUserRepository {
   async findById(id: string): Promise<User | null> {
-    const userRow = await db
-      .selectFrom("users")
-      .selectAll()
-      .where("id", "=", id)
-      .executeTakeFirst();
+    const userRow = await db.selectFrom("users").selectAll().where("id", "=", id).executeTakeFirst();
     return userRow ? this.mapRowToUser(userRow) : null;
   }
 
@@ -34,11 +30,7 @@ export class PostgresUserRepository implements IUserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const userRow = await db
-      .selectFrom("users")
-      .selectAll()
-      .where("email", "=", email)
-      .executeTakeFirst();
+    const userRow = await db.selectFrom("users").selectAll().where("email", "=", email).executeTakeFirst();
 
     if (!userRow) return null;
 

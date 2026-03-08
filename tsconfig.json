@@ -29,11 +29,6 @@
     },
     "types": ["vitest/globals"]
   },
-  "include": [
-    "src/**/*",
-    "kysely.config.ts",
-    "migrationScript.ts",
-    "test/**/*"
-  ],
+  "include": ["src/**/*", "kysely.config.ts", "migrationScript.ts", "test/**/*"],
   "exclude": ["node_modules", "dist"]
 }

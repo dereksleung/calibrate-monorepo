@@ -1,7 +1,4 @@
-import {
-  GetDayLogRequestRouteParams,
-  GetDayLogRequestRouteParamsSchema,
-} from "../http/day-log-requests.js";
+import { GetDayLogRequestRouteParams, GetDayLogRequestRouteParamsSchema } from "../http/day-log-requests.js";
 import { DayLogResponse } from "../http/day-log-responses.js";
 import { Request, Response } from "express";
 import { IDayLogService } from "@services";
@@ -25,15 +22,9 @@ export class DayLogController {
     this.dayLogService = dayLogService;
   }
 
-  async getLogForDay(
-    req: Request<GetDayLogRequestRouteParams>,
-    res: Response,
-  ): Promise<void> {
+  async getLogForDay(req: Request<GetDayLogRequestRouteParams>, res: Response): Promise<void> {
     try {
-      const validatedInput = validate(
-        GetDayLogRequestRouteParamsSchema,
-        req.params,
-      );
+      const validatedInput = validate(GetDayLogRequestRouteParamsSchema, req.params);
       if (!validatedInput.isValid) {
         res.status(400).json({
           error: "Validation failed",
@@ -48,9 +39,7 @@ export class DayLogController {
         date: validatedInput?.data.date,
       });
 
-      const response: DayLogResponse | null = dayLog
-        ? DayLogResponseMapper.toResponse(dayLog)
-        : null;
+      const response: DayLogResponse | null = dayLog ? DayLogResponseMapper.toResponse(dayLog) : null;
       res.status(200).json(response);
     } catch (error) {
       handleControllerError(error, res);

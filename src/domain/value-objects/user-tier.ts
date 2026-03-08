@@ -16,9 +16,7 @@ export class UserTier {
   public static from(tier: UserTierEnumType): UserTier {
     const validatedTier = validate(UserTierSchema, tier);
     if (!validatedTier.isValid) {
-      throw new BusinessLogicError(
-        `Invalid user tier: ${validatedTier.errors.join(", ")}`,
-      );
+      throw new BusinessLogicError(`Invalid user tier: ${validatedTier.errors.join(", ")}`);
     }
     return new UserTier(validatedTier.data);
   }
@@ -32,9 +30,6 @@ export class UserTier {
   }
 
   public isSubscribed(): boolean {
-    return (
-      this._tier === UserTierSchema.enum.PREMIUM ||
-      this._tier === UserTierSchema.enum.LIFETIME
-    );
+    return this._tier === UserTierSchema.enum.PREMIUM || this._tier === UserTierSchema.enum.LIFETIME;
   }
 }

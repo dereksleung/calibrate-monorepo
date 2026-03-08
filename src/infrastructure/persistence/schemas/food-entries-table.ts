@@ -1,11 +1,5 @@
 import { MealNameEnumType } from "@domain";
-import {
-  ColumnType,
-  Generated,
-  Selectable,
-  Insertable,
-  Updateable,
-} from "kysely";
+import { ColumnType, Generated, Selectable, Insertable, Updateable } from "kysely";
 
 export interface FoodEntriesTable {
   id: Generated<string>;

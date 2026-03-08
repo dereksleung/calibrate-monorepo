@@ -1,11 +1,6 @@
 import * as z from "zod";
 
-export const MealNameSchema = z.enum([
-  "BREAKFAST",
-  "LUNCH",
-  "DINNER",
-  "SNACKS",
-]);
+export const MealNameSchema = z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACKS"]);
 
 export const MealNameEnum = MealNameSchema.enum;
 

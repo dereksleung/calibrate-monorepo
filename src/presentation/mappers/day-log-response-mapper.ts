@@ -7,8 +7,7 @@ export class DayLogResponseMapper {
     return {
       id: dayLog.id,
       date: dayLog.date,
-      breakfast:
-        dayLog.breakfast?.map(FoodEntryResponseMapper.toResponse) ?? null,
+      breakfast: dayLog.breakfast?.map(FoodEntryResponseMapper.toResponse) ?? null,
       lunch: dayLog.lunch?.map(FoodEntryResponseMapper.toResponse) ?? null,
       dinner: dayLog.dinner?.map(FoodEntryResponseMapper.toResponse) ?? null,
       snacks: dayLog.snacks?.map(FoodEntryResponseMapper.toResponse) ?? null,

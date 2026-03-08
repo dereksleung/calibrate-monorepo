@@ -1,11 +1,5 @@
 import { UserTierEnumType } from "@domain";
-import {
-  ColumnType,
-  Generated,
-  Selectable,
-  Insertable,
-  Updateable,
-} from "kysely";
+import { ColumnType, Generated, Selectable, Insertable, Updateable } from "kysely";
 
 export interface UsersTable {
   id: Generated<string>;

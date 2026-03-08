@@ -1,9 +1,5 @@
 import { BusinessLogicError, User } from "@domain";
-import {
-  CreateUserRequestDto,
-  IPasswordHasher,
-  IUserRepository,
-} from "@application";
+import { CreateUserRequestDto, IPasswordHasher, IUserRepository } from "@application";
 
 export interface IUserService {
   createUser(props: CreateUserRequestDto): Promise<User>;

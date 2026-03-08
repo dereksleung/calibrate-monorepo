@@ -12,9 +12,7 @@ export const buildDayLog = (overrides: Partial<DayLogProps> = {}): DayLog =>
     weight: overrides.weight ?? null,
   });
 
-export const buildDayLogResponse = (
-  overrides: Partial<DayLogResponse> = {},
-): DayLogResponse => {
+export const buildDayLogResponse = (overrides: Partial<DayLogResponse> = {}): DayLogResponse => {
   return {
     id: "1",
     date: new Date(),

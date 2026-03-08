@@ -1,10 +1,4 @@
-import {
-  ColumnType,
-  Generated,
-  Selectable,
-  Insertable,
-  Updateable,
-} from "kysely";
+import { ColumnType, Generated, Selectable, Insertable, Updateable } from "kysely";
 
 export interface DayLogsTable {
   id: Generated<string>;

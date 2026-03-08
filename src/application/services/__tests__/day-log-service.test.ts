@@ -1,8 +1,4 @@
-import {
-  DayLogServiceImpl,
-  IDayLogRepository,
-  IUserRepository,
-} from "@application";
+import { DayLogServiceImpl, IDayLogRepository, IUserRepository } from "@application";
 import { DayLog, MealNameEnum } from "@domain";
 import { vi, MockedObject } from "vitest";
 import { buildDayLog, buildFoodEntry } from "@factories";
@@ -28,10 +24,7 @@ describe("DayLogServiceImpl", () => {
     mockDayLogRepository = {
       findLogByDateAndUserId: vi.fn(),
     } as any;
-    dayLogService = new DayLogServiceImpl(
-      mockDayLogRepository,
-      mockUserRepository,
-    );
+    dayLogService = new DayLogServiceImpl(mockDayLogRepository, mockUserRepository);
   });
 
   describe("getLogForDay", () => {
@@ -66,9 +59,7 @@ describe("DayLogServiceImpl", () => {
     });
 
     it("should propagate errors thrown by the repository", async () => {
-      mockDayLogRepository.findLogByDateAndUserId.mockRejectedValue(
-        new Error("Database connection failed"),
-      );
+      mockDayLogRepository.findLogByDateAndUserId.mockRejectedValue(new Error("Database connection failed"));
 
       await expect(
         dayLogService.getLogForDay({

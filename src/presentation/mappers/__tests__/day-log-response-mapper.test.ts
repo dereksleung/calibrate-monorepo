@@ -1,11 +1,6 @@
 import { DayLogResponseMapper } from "src/presentation/mappers/day-log-response-mapper.js";
 import { DayLog, MealNameEnum } from "@domain";
-import {
-  buildDayLog,
-  buildDayLogResponse,
-  buildFoodEntry,
-  buildFoodEntryResponse,
-} from "@factories";
+import { buildDayLog, buildDayLogResponse, buildFoodEntry, buildFoodEntryResponse } from "@factories";
 
 describe("DayLogResponseMapper", () => {
   it("should map a fully populated DayLog to a DayLogResponse", () => {

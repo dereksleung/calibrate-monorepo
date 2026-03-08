@@ -1,9 +1,7 @@
 import { FoodEntry, FoodEntryProps, MealNameEnum } from "@domain";
 import { FoodEntryResponse } from "@presentation";
 
-export const buildFoodEntry = (
-  overrides: Partial<FoodEntryProps> = {},
-): FoodEntry =>
+export const buildFoodEntry = (overrides: Partial<FoodEntryProps> = {}): FoodEntry =>
   FoodEntry.reconstitute({
     id: overrides.id ?? "1",
     meal: overrides.meal ?? MealNameEnum.BREAKFAST,
@@ -25,9 +23,7 @@ export const buildFoodEntry = (
     ...overrides,
   });
 
-export const buildFoodEntryResponse = (
-  overrides: Partial<FoodEntryResponse> = {},
-): FoodEntryResponse => {
+export const buildFoodEntryResponse = (overrides: Partial<FoodEntryResponse> = {}): FoodEntryResponse => {
   return {
     id: "1",
     meal: MealNameEnum.BREAKFAST,

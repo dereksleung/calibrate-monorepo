@@ -4,11 +4,7 @@ import { DayLogServiceImpl } from "@application";
 import { DayLogResponse, GetDayLogRequestRouteParams } from "@presentation";
 import { vi, MockedObject } from "vitest";
 import { Request } from "express";
-import {
-  buildDayLogResponse,
-  buildFoodEntry,
-  buildFoodEntryResponse,
-} from "@factories";
+import { buildDayLogResponse, buildFoodEntry, buildFoodEntryResponse } from "@factories";
 
 describe("DayLogController", () => {
   let dayLogController: DayLogController;
@@ -100,9 +96,7 @@ describe("DayLogController", () => {
       },
     } as unknown as Request<GetDayLogRequestRouteParams>;
 
-    mockDayLogService.getLogForDay.mockRejectedValue(
-      new Error("Resource not found"),
-    );
+    mockDayLogService.getLogForDay.mockRejectedValue(new Error("Resource not found"));
 
     const res = {
       status: vi.fn().mockReturnThis(),
@@ -123,9 +117,7 @@ describe("DayLogController", () => {
       },
     } as unknown as Request<GetDayLogRequestRouteParams>;
 
-    mockDayLogService.getLogForDay.mockRejectedValue(
-      new Error("Insufficient permission for this resource"),
-    );
+    mockDayLogService.getLogForDay.mockRejectedValue(new Error("Insufficient permission for this resource"));
 
     const res = {
       status: vi.fn().mockReturnThis(),
@@ -146,9 +138,7 @@ describe("DayLogController", () => {
       },
     } as unknown as Request<GetDayLogRequestRouteParams>;
 
-    mockDayLogService.getLogForDay.mockRejectedValue(
-      new Error("Database connection failed"),
-    );
+    mockDayLogService.getLogForDay.mockRejectedValue(new Error("Database connection failed"));
 
     const res = {
       status: vi.fn().mockReturnThis(),
@@ -215,9 +205,7 @@ describe("DayLogController", () => {
       },
     } as unknown as Request<GetDayLogRequestRouteParams>;
 
-    mockDayLogService.getLogForDay.mockRejectedValue(
-      new BusinessLogicError("Invalid date"),
-    );
+    mockDayLogService.getLogForDay.mockRejectedValue(new BusinessLogicError("Invalid date"));
 
     const res = {
       status: vi.fn().mockReturnThis(),

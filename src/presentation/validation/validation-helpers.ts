@@ -10,14 +10,9 @@ interface FailureValidationResult {
   errors: string[];
 }
 
-export type ValidationResult<T> =
-  | SuccessValidationResult<T>
-  | FailureValidationResult;
+export type ValidationResult<T> = SuccessValidationResult<T> | FailureValidationResult;
 
-export function validate<T extends z4.$ZodType>(
-  schema: T,
-  data: unknown,
-): ValidationResult<z4.infer<T>> {
+export function validate<T extends z4.$ZodType>(schema: T, data: unknown): ValidationResult<z4.infer<T>> {
   const result = z4.safeParse(schema, data);
   if (result.success) {
     return { isValid: true, data: result.data };
