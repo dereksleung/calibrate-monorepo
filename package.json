@@ -2,6 +2,18 @@
   "name": "clean-architecture-backend",
   "version": "1.0.0",
   "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/dereksleung/clean-architecture-backend#readme",
+  "bugs": {
+    "url": "https://github.com/dereksleung/clean-architecture-backend/issues"
+  },
+  "license": "ISC",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dereksleung/clean-architecture-backend.git"
+  },
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "test": "vitest",
@@ -12,20 +24,10 @@
     "prepare": "husky",
     "typecheck": "oxlint --type-aware --type-check",
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dereksleung/clean-architecture-backend.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/dereksleung/clean-architecture-backend/issues"
-  },
-  "homepage": "https://github.com/dereksleung/clean-architecture-backend#readme",
   "dependencies": {
     "argon2": "^0.44.0",
     "cors": "^2.8.6",
@@ -46,6 +48,7 @@
     "globals": "^17.3.0",
     "husky": "^9.1.7",
     "nodemon": "^3.1.11",
+    "oxfmt": "^0.36.0",
     "oxlint": "^1.51.0",
     "oxlint-tsgolint": "^0.16.0",
     "prettier": "3.8.1",
