@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Agent"
+  short_description: "Write and maintain Vitest coverage"
+  default_prompt: "Write or update unit, integration, and edge-case tests in src/**/__tests__/ and test/ using Vitest. Never remove or disable failing tests unless explicitly authorized by the user."
