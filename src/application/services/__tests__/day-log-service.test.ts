@@ -1,7 +1,7 @@
 import { DayLogServiceImpl, IDayLogRepository, IUserRepository } from "@application";
 import { DayLog, MealNameEnum } from "@domain";
-import { vi, MockedObject } from "vitest";
 import { buildDayLog, buildFoodEntry } from "@factories";
+import { vi, MockedObject } from "vitest";
 
 describe("DayLogServiceImpl", () => {
   let dayLogService: DayLogServiceImpl;

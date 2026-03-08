@@ -1,6 +1,7 @@
-import { FoodEntryResponseMapper } from "./food-entry-response-mapper.js";
 import { DayLog } from "@domain";
+
 import { DayLogResponse } from "../http/day-log-responses.js";
+import { FoodEntryResponseMapper } from "./food-entry-response-mapper.js";
 
 export class DayLogResponseMapper {
   public static toResponse(dayLog: DayLog): DayLogResponse {

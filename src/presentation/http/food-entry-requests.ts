@@ -1,5 +1,5 @@
-import * as z from "zod";
 import { MealNameSchema } from "@domain";
+import * as z from "zod";
 
 export const CommonFoodEntryFieldsSchema = z.object({
   meal: MealNameSchema,
@@ -21,5 +21,5 @@ export const CommonFoodEntryFieldsSchema = z.object({
 
 export const CreateFoodEntryRequestSchema = z.object({
   ...CommonFoodEntryFieldsSchema.shape,
-  dayLogId: z.string(),
+  dayLogId: z.string().nullable(),
 });

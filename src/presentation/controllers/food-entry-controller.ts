@@ -1,6 +1,7 @@
 import { IDayLogService } from "@application";
 import { validate } from "@validation";
 import { Request, Response } from "express";
+
 import { CreateFoodEntryRequestSchema } from "../http/food-entry-requests.js";
 
 export class FoodEntryController {

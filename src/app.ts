@@ -1,10 +1,10 @@
 import "dotenv/config";
-import express from "express";
+import { Container } from "@infrastructure";
+import { createDayLogRoutes, createUserRoutes } from "@routes";
 import cors from "cors";
+import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
-import { createDayLogRoutes, createUserRoutes } from "@routes";
-import { Container } from "@infrastructure";
 
 const app = express();
 const PORT = process.env.PORT || 3000;

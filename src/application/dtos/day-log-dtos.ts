@@ -18,7 +18,7 @@ export interface GetDayLogRequestDto {
 
 export interface AddFoodEntryRequestDto {
   userId: string;
-  dayLogId: string;
+  dayLogId: string | null;
   foodEntry: {
     meal: MealNameEnumType;
     name: string;

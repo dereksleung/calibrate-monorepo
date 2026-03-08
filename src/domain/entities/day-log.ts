@@ -1,4 +1,5 @@
 import { BusinessLogicError } from "@domain";
+
 import { FoodEntry, MealNameEnum, MealNameEnumType } from "./food-entry.js";
 
 /**

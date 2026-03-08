@@ -1,5 +1,6 @@
-import { Pool } from "pg";
 import { Kysely, PostgresDialect } from "kysely";
+import { Pool } from "pg";
+
 import { DayLogsTable } from "./schemas/day-logs-table.js";
 import { FoodEntriesTable } from "./schemas/food-entries-table.js";
 import { UsersTable } from "./schemas/users-table.js";

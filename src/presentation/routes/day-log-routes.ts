@@ -4,6 +4,8 @@ import { DayLogController } from "src/presentation/controllers/day-log-controlle
 export function createDayLogRoutes(dayLogController: DayLogController): Router {
   const router = Router();
 
-  router.get("/daylogs/:date", (req, res) => dayLogController.getLogForDay(req, res));
+  router.get("/daylogs/:date", (req, res) =>
+    dayLogController.getLogForDay(req, res),
+  );
   return router;
 }

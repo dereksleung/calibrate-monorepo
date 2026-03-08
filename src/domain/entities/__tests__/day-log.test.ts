@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
 import { BusinessLogicError, MealNameEnum } from "@domain";
 import { buildDayLog, buildFoodEntry } from "@factories";
+import { describe, it, expect } from "vitest";
 
 describe("DayLog", () => {
   describe("reconstitute", () => {

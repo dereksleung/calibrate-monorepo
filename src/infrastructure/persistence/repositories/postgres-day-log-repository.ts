@@ -1,28 +1,19 @@
 import { DayLog, FoodEntry, MealNameEnum } from "@domain";
-import {
-  InsertableFoodEntry,
-  SelectableFoodEntry,
-} from "../schemas/food-entries-table.js";
-import { db } from "../../persistence/database.js";
+
 import {
   FindOrCreateDayLogByIdRepositoryDto,
   GetDayLogByDateAndUserDto,
 } from "../../../application/dtos/day-log-dtos.js";
 import { IDayLogRepository } from "../../../application/ports/day-log-repository.js";
+import { db } from "../../persistence/database.js";
 import { SelectableDayLog } from "../schemas/day-logs-table.js";
+import { InsertableFoodEntry, SelectableFoodEntry } from "../schemas/food-entries-table.js";
 
 export class PostgresDayLogRepository implements IDayLogRepository {
-  async findOrCreateById({
-    id,
-    userId,
-  }: FindOrCreateDayLogByIdRepositoryDto): Promise<DayLog> {
+  async findOrCreateById({ id, userId }: FindOrCreateDayLogByIdRepositoryDto): Promise<DayLog> {
     let dayLogRow: SelectableDayLog;
     if (id) {
-      const foundRow = await db
-        .selectFrom("day_logs")
-        .selectAll()
-        .where("id", "=", id)
-        .executeTakeFirst();
+      const foundRow = await db.selectFrom("day_logs").selectAll().where("id", "=", id).executeTakeFirst();
 
       if (!foundRow) throw new Error("Day log not found");
 
@@ -43,8 +34,7 @@ export class PostgresDayLogRepository implements IDayLogRepository {
       dayLogRow = newRow;
     }
 
-    const { breakfast, lunch, dinner, snacks } =
-      await this.getFoodEntriesByDayLogId(dayLogRow.id);
+    const { breakfast, lunch, dinner, snacks } = await this.getFoodEntriesByDayLogId(dayLogRow.id);
 
     return DayLog.reconstitute({
       id: dayLogRow.id,
@@ -74,10 +64,7 @@ export class PostgresDayLogRepository implements IDayLogRepository {
    * adds the 25th breakfast entry at the exact same moment.
    * The probability is vanishingly small.
    */
-  async addFoodEntry(
-    dayLogId: string,
-    foodEntry: FoodEntry,
-  ): Promise<FoodEntry> {
+  async addFoodEntry(dayLogId: string, foodEntry: FoodEntry): Promise<FoodEntry> {
     const foodEntryRow = await db
       .insertInto("food_entries")
       .values({
@@ -90,10 +77,7 @@ export class PostgresDayLogRepository implements IDayLogRepository {
     return this.mapRowToFoodEntry(foodEntryRow);
   }
 
-  async findLogByDateAndUserId({
-    userId,
-    date,
-  }: GetDayLogByDateAndUserDto): Promise<DayLog | null> {
+  async findLogByDateAndUserId({ userId, date }: GetDayLogByDateAndUserDto): Promise<DayLog | null> {
     const dayLogRow = await db
       .selectFrom("day_logs")
       .selectAll()
@@ -103,8 +87,7 @@ export class PostgresDayLogRepository implements IDayLogRepository {
 
     if (!dayLogRow) return null;
 
-    const { breakfast, lunch, dinner, snacks } =
-      await this.getFoodEntriesByDayLogId(dayLogRow.id);
+    const { breakfast, lunch, dinner, snacks } = await this.getFoodEntriesByDayLogId(dayLogRow.id);
 
     return DayLog.reconstitute({
       id: dayLogRow.id,

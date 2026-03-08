@@ -1,4 +1,5 @@
 import { FoodEntry } from "@domain";
+
 import { FoodEntryResponse } from "../http/food-entry-responses.js";
 
 export class FoodEntryResponseMapper {

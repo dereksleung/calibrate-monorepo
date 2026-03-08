@@ -1,10 +1,10 @@
-import { DayLogController } from "src/presentation/controllers/day-log-controller.js";
-import { BusinessLogicError, DayLog, MealNameEnum } from "@domain";
 import { DayLogServiceImpl } from "@application";
-import { DayLogResponse, GetDayLogRequestRouteParams } from "@presentation";
-import { vi, MockedObject } from "vitest";
-import { Request } from "express";
+import { BusinessLogicError, DayLog, MealNameEnum } from "@domain";
 import { buildDayLogResponse, buildFoodEntry, buildFoodEntryResponse } from "@factories";
+import { DayLogResponse, GetDayLogRequestRouteParams } from "@presentation";
+import { Request } from "express";
+import { DayLogController } from "src/presentation/controllers/day-log-controller.js";
+import { vi, MockedObject } from "vitest";
 
 describe("DayLogController", () => {
   let dayLogController: DayLogController;

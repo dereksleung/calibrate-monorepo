@@ -1,10 +1,11 @@
 import { handleControllerError } from "@common";
 import { IUserService } from "@services";
 import { validate } from "@validation";
-import { CreateUserRequestBodySchema } from "../http/user-requests.js";
 import { Request, Response } from "express";
-import { UserResponseMapper } from "../mappers/user-response-mapper.js";
+
+import { CreateUserRequestBodySchema } from "../http/user-requests.js";
 import { UserResponse } from "../http/user-responses.js";
+import { UserResponseMapper } from "../mappers/user-response-mapper.js";
 
 export class UserController {
   private readonly userService: IUserService;

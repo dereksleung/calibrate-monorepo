@@ -1,4 +1,5 @@
 import { User } from "@domain";
+
 import { UserResponse } from "../http/user-responses.js";
 
 export class UserResponseMapper {

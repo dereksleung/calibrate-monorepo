@@ -1,5 +1,6 @@
 import { validate } from "@validation";
 import * as z from "zod";
+
 import { BusinessLogicError } from "../errors/business-logic-error.js";
 
 export const UserTierSchema = z.enum(["FREE", "PREMIUM", "LIFETIME"]);
