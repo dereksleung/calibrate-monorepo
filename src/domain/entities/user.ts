@@ -1,6 +1,8 @@
-import { UserTier, UserTierEnumType, UserTierSchema } from "../value-objects/user-tier.js";
-
-import argon2 from "argon2";
+import {
+  UserTier,
+  UserTierEnumType,
+  UserTierSchema,
+} from "../value-objects/user-tier.js";
 
 export interface UserProps {
   id: string;
@@ -24,7 +26,14 @@ export class User {
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
 
-  private constructor({ id, email, passwordHash, tier, createdAt, updatedAt }: UserProps) {
+  private constructor({
+    id,
+    email,
+    passwordHash,
+    tier,
+    createdAt,
+    updatedAt,
+  }: UserProps) {
     this._id = id;
     this._email = email;
     this._passwordHash = passwordHash;
@@ -64,14 +73,5 @@ export class User {
   }
   public get updatedAt(): Date {
     return this._updatedAt;
-  }
-
-  public async hashPassword(password: string): Promise<string> {
-    return await argon2.hash(password, {
-      memoryCost: 19456,
-      timeCost: 2,
-      parallelism: 1,
-      type: argon2.argon2id,
-    });
   }
 }
