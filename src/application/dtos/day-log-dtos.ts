@@ -6,8 +6,8 @@ export interface GetDayLogByDateAndUserDto {
   date: string;
 }
 
-export interface FindOrCreateDayLogByIdRepositoryDto {
-  id: string | null;
+export interface FindOrCreateDayLogByDateAndUserIdRepositoryDto {
+  date: string;
   userId: string;
 }
 // Service layer DTOs for client inputs
@@ -18,7 +18,7 @@ export interface GetDayLogRequestDto {
 
 export interface AddFoodEntryRequestDto {
   userId: string;
-  dayLogId: string | null;
+  date: string;
   foodEntry: {
     meal: MealNameEnumType;
     name: string;

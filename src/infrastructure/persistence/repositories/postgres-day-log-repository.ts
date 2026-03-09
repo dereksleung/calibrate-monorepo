@@ -1,7 +1,7 @@
 import { DayLog, FoodEntry, MealNameEnum } from "@domain";
 
 import {
-  FindOrCreateDayLogByIdRepositoryDto,
+  FindOrCreateDayLogByDateAndUserIdRepositoryDto,
   GetDayLogByDateAndUserDto,
 } from "../../../application/dtos/day-log-dtos.js";
 import { IDayLogRepository } from "../../../application/ports/day-log-repository.js";
@@ -10,13 +10,21 @@ import { SelectableDayLog } from "../schemas/day-logs-table.js";
 import { InsertableFoodEntry, SelectableFoodEntry } from "../schemas/food-entries-table.js";
 
 export class PostgresDayLogRepository implements IDayLogRepository {
-  async findOrCreateById({ id, userId }: FindOrCreateDayLogByIdRepositoryDto): Promise<DayLog> {
+  async findOrCreateByDateAndUserId({
+    date,
+    userId,
+  }: FindOrCreateDayLogByDateAndUserIdRepositoryDto): Promise<DayLog> {
+    if (!date) throw new Error("Date is required");
     let dayLogRow: SelectableDayLog;
-    if (id) {
-      const foundRow = await db.selectFrom("day_logs").selectAll().where("id", "=", id).executeTakeFirst();
+    if (date) {
+      const foundRow = await db
+        .selectFrom("day_logs")
+        .selectAll()
+        .where("user_id", "=", userId)
+        .where("date", "=", new Date(date))
+        .executeTakeFirst();
 
       if (!foundRow) throw new Error("Day log not found");
-
       dayLogRow = foundRow;
     } else {
       const newRow = await db

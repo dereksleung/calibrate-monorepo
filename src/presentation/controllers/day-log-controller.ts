@@ -3,11 +3,9 @@ import { IDayLogService } from "@services";
 import { validate } from "@validation";
 import { Request, Response } from "express";
 
-import {
-  GetDayLogRequestRouteParams,
-  GetDayLogRequestRouteParamsSchema,
-} from "../http/day-log-requests.js";
+import { GetDayLogRequestRouteParams, GetDayLogRequestRouteParamsSchema } from "../http/day-log-requests.js";
 import { DayLogResponse } from "../http/day-log-responses.js";
+import { CreateFoodEntryRequestRouteParamsSchema, CreateFoodEntryRequestRouteParams, CreateFoodEntryRequestSchema } from "../http/food-entry-requests.js";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
 
 /**
@@ -26,15 +24,9 @@ export class DayLogController {
     this.dayLogService = dayLogService;
   }
 
-  async getLogForDay(
-    req: Request<GetDayLogRequestRouteParams>,
-    res: Response,
-  ): Promise<void> {
+  async getLogForDay(req: Request<GetDayLogRequestRouteParams>, res: Response): Promise<void> {
     try {
-      const validatedInput = validate(
-        GetDayLogRequestRouteParamsSchema,
-        req.params,
-      );
+      const validatedInput = validate(GetDayLogRequestRouteParamsSchema, req.params);
       if (!validatedInput.isValid) {
         res.status(400).json({
           error: "Validation failed",
@@ -49,10 +41,40 @@ export class DayLogController {
         date: validatedInput?.data.date,
       });
 
-      const response: DayLogResponse | null = dayLog
-        ? DayLogResponseMapper.toResponse(dayLog)
-        : null;
+      const response: DayLogResponse | null = dayLog ? DayLogResponseMapper.toResponse(dayLog) : null;
       res.status(200).json(response);
+    } catch (error) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async createFoodEntry(req: Request<CreateFoodEntryRequestRouteParams>, res: Response): Promise<void> {
+    try {
+      const validatedDate = validate(CreateFoodEntryRequestRouteParamsSchema, req.params);
+      
+      const validatedInput = validate(CreateFoodEntryRequestSchema, req.body);
+      const errors = [];
+      if (!validatedDate.isValid) errors.push(...validatedDate.errors);
+      if (!validatedInput.isValid) errors.push(...validatedInput.errors);
+      if (errors.length > 0) {
+        res.status(400).json({
+          error: "Validation failed",
+          details: errors,
+        });
+        return;
+      }
+
+      if (!validatedDate.isValid || !validatedInput.isValid) return;
+
+      // TODO: Remove this once we implement authentication with JWT
+      const stubUserId = "59802894-b4ad-49dc-83dd-72a6fa571cd3";
+
+      const entry = await this.dayLogService.addFoodEntry({
+        userId: stubUserId,
+        foodEntry: validatedInput?.data,
+        date: validatedDate?.data.date,
+      });
+      res.status(201).json(entry);
     } catch (error) {
       handleControllerError(error, res);
     }

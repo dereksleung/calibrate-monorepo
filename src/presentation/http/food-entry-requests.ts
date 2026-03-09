@@ -19,7 +19,10 @@ export const CommonFoodEntryFieldsSchema = z.object({
   proteinGrams: z.number(),
 });
 
-export const CreateFoodEntryRequestSchema = z.object({
-  ...CommonFoodEntryFieldsSchema.shape,
-  dayLogId: z.string().nullable(),
+export const CreateFoodEntryRequestSchema = CommonFoodEntryFieldsSchema;
+
+export const CreateFoodEntryRequestRouteParamsSchema = z.object({
+  date: z.iso.date(),
 });
+
+export type CreateFoodEntryRequestRouteParams = z.infer<typeof CreateFoodEntryRequestRouteParamsSchema>;

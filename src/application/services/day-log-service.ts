@@ -6,7 +6,7 @@ import { IUserRepository } from "../ports/user-repository.js";
 
 export interface IDayLogService {
   getLogForDay({ userId, date }: GetDayLogRequestDto): Promise<DayLog | null>;
-  addFoodEntry({ userId, dayLogId, foodEntry }: AddFoodEntryRequestDto): Promise<FoodEntry>;
+  addFoodEntry({ userId, date, foodEntry }: AddFoodEntryRequestDto): Promise<FoodEntry>;
 }
 
 export class DayLogServiceImpl implements IDayLogService {
@@ -21,7 +21,7 @@ export class DayLogServiceImpl implements IDayLogService {
     return this.dayLogRepository.findLogByDateAndUserId({ userId, date });
   }
 
-  async addFoodEntry({ userId, dayLogId, foodEntry }: AddFoodEntryRequestDto): Promise<FoodEntry> {
+  async addFoodEntry({ userId, date, foodEntry }: AddFoodEntryRequestDto): Promise<FoodEntry> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new BusinessLogicError("User not found");
@@ -35,8 +35,8 @@ export class DayLogServiceImpl implements IDayLogService {
       throw new BusinessLogicError("User has reached the maximum number of day logs before subscribing");
     }
 
-    const dayLog = await this.dayLogRepository.findOrCreateById({
-      id: dayLogId,
+    const dayLog = await this.dayLogRepository.findOrCreateByDateAndUserId({
+      date,
       userId,
     });
 

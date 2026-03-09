@@ -2,8 +2,6 @@ import { BusinessLogicError } from "@domain";
 import { Response } from "express";
 
 export function handleControllerError(error: unknown, res: Response): void {
-  console.error("Controller error:", error);
-  console.error("DayLogController error:", error);
   if (error instanceof Error) {
     if (error.message.includes("not found")) {
       res.status(404).json({ error: "Resource not found" });

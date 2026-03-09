@@ -4,6 +4,7 @@ import { buildDayLogResponse, buildFoodEntry, buildFoodEntryResponse } from "@fa
 import { DayLogResponse, GetDayLogRequestRouteParams } from "@presentation";
 import { Request } from "express";
 import { DayLogController } from "src/presentation/controllers/day-log-controller.js";
+import { CreateFoodEntryRequestRouteParams } from "src/presentation/http/food-entry-requests.js";
 import { vi, MockedObject } from "vitest";
 
 describe("DayLogController", () => {
@@ -27,10 +28,28 @@ describe("DayLogController", () => {
     snacks: [buildFoodEntryResponse({ meal: MealNameEnum.SNACKS })],
     weight: 140.1,
   });
+  const mockCreateFoodEntryRequestBody = {
+    meal: MealNameEnum.BREAKFAST,
+    name: "Scrambled Eggs",
+    brand: null,
+    iconName: null,
+    quantity: 2,
+    quantityUnit: "pieces",
+    calories: 180,
+    totalFatGrams: 12,
+    saturatedFatGrams: 4,
+    cholesterolMg: 370,
+    sodiumMg: 140,
+    totalCarbohydrateGrams: 2,
+    fiberGrams: 0,
+    sugarGrams: 1,
+    proteinGrams: 14,
+  };
 
   beforeEach(() => {
     mockDayLogService = {
       getLogForDay: vi.fn(),
+      addFoodEntry: vi.fn(),
       // any is acceptable here because this is a test file,
       // the type assertion will not spread beyond the test file and beforeEach handler.
     } as any;
@@ -216,5 +235,195 @@ describe("DayLogController", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: "Invalid date" });
+  });
+
+  it("should create a food entry when request body is valid", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    const createdFoodEntry = buildFoodEntry({
+      dayLogId: "123",
+      meal: MealNameEnum.BREAKFAST,
+      name: "Scrambled Eggs",
+      brand: null,
+      iconName: null,
+      quantity: 2,
+      quantityUnit: "pieces",
+      calories: 180,
+      totalFatGrams: 12,
+      saturatedFatGrams: 4,
+      cholesterolMg: 370,
+      sodiumMg: 140,
+      totalCarbohydrateGrams: 2,
+      fiberGrams: 0,
+      sugarGrams: 1,
+      proteinGrams: 14,
+    });
+    mockDayLogService.addFoodEntry.mockResolvedValue(createdFoodEntry);
+
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(mockDayLogService.addFoodEntry).toHaveBeenCalledWith({
+      userId: "59802894-b4ad-49dc-83dd-72a6fa571cd3",
+      date: "2026-02-22",
+      foodEntry: mockCreateFoodEntryRequestBody,
+    });
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(createdFoodEntry);
+  });
+
+  it("should return 400 when date param is invalid", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "not-a-date",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+      const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: "Validation failed",
+        details: expect.any(Array),
+      }),
+    );
+  });
+
+  it("should return 400 when createFoodEntry body is invalid", async () => {
+    const req = {
+      body: {
+        meal: MealNameEnum.BREAKFAST,
+        name: "Scrambled Eggs",
+        brand: null,
+        iconName: null,
+        quantity: 2,
+      },
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(mockDayLogService.addFoodEntry).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: "Validation failed",
+        details: expect.any(Array),
+      }),
+    );
+  });
+
+  it("should return 404 when createFoodEntry service throws a 'not found' error", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockRejectedValue(new Error("Resource not found"));
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: "Resource not found" });
+  });
+
+  it("should return 403 when createFoodEntry service throws a 'permission' error", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockRejectedValue(new Error("Insufficient permission for this resource"));
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: "Permission denied" });
+  });
+
+  it("should return 500 with error message when createFoodEntry service throws generic Error", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockRejectedValue(new Error("Database connection failed"));
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: "Database connection failed" });
+  });
+
+  it("should return 500 with generic message when createFoodEntry service throws non-Error", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockRejectedValue("some string error");
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: "An unknown error occurred" });
+  });
+
+  it("should return 400 when createFoodEntry service throws BusinessLogicError", async () => {
+    const req = {
+      body: mockCreateFoodEntryRequestBody,
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockRejectedValue(new BusinessLogicError("Invalid input"));
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: "Invalid input" });
   });
 });
