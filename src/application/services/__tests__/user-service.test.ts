@@ -10,6 +10,7 @@ describe("UserServiceImpl", () => {
   beforeEach(() => {
     mockPasswordHasher = {
       hash: vi.fn(),
+      verify: vi.fn(),
     } as any;
 
     mockUserRepository = {
