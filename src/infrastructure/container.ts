@@ -1,13 +1,21 @@
-import { IDayLogRepository, IPasswordHasher, IUserRepository, IUserService } from "@application";
-import { DayLogController, UserController } from "@controllers";
-import { IDayLogService, DayLogServiceImpl } from "@services";
-import { UserServiceImpl } from "@services";
+import {
+  IAccessTokenService,
+  IDayLogRepository,
+  IPasswordHasher,
+  IAuthService,
+  IUserRepository,
+  IUserService,
+} from "@application";
+import { AuthController, DayLogController, UserController } from "@controllers";
+import { AuthServiceImpl, IDayLogService, DayLogServiceImpl, UserServiceImpl } from "@services";
 
-import { PostgresDayLogRepository } from "./persistence/repositories/index.js";
-import { PostgresUserRepository } from "./persistence/repositories/postgres-user-repository.js";
-import { Argon2PasswordHasher } from "./security/argon2-password-hasher.js";
+import { PostgresDayLogRepository, PostgresUserRepository } from "./persistence/repositories/index.js";
+import { Argon2PasswordHasher, JoseAccessTokenService } from "./security/index.js";
 
 export class Container {
+  private readonly accessTokenService: IAccessTokenService;
+  private readonly authController: AuthController;
+  private readonly authService: IAuthService;
   private readonly dayLogRepository: IDayLogRepository;
   private readonly dayLogService: IDayLogService;
   private readonly dayLogController: DayLogController;
@@ -17,6 +25,9 @@ export class Container {
   private readonly passwordHasher: IPasswordHasher;
 
   constructor({
+    accessTokenService,
+    authController,
+    authService,
     dayLogRepository,
     dayLogService,
     dayLogController,
@@ -25,6 +36,9 @@ export class Container {
     userController,
     passwordHasher,
   }: {
+    accessTokenService?: IAccessTokenService;
+    authController?: AuthController;
+    authService?: IAuthService;
     dayLogRepository?: IDayLogRepository;
     dayLogService?: IDayLogService;
     dayLogController?: DayLogController;
@@ -39,10 +53,23 @@ export class Container {
     this.dayLogController = dayLogController ?? new DayLogController(this.dayLogService);
 
     this.passwordHasher = passwordHasher ?? new Argon2PasswordHasher();
+    this.accessTokenService = accessTokenService ?? new JoseAccessTokenService();
+    this.authService =
+      authService ?? new AuthServiceImpl(this.passwordHasher, this.userRepository, this.accessTokenService);
+    this.authController = authController ?? new AuthController(this.authService);
     this.userService = userService ?? new UserServiceImpl(this.passwordHasher, this.userRepository);
     this.userController = userController ?? new UserController(this.userService);
   }
 
+  getAccessTokenService(): IAccessTokenService {
+    return this.accessTokenService;
+  }
+  getAuthController(): AuthController {
+    return this.authController;
+  }
+  getAuthService(): IAuthService {
+    return this.authService;
+  }
   getDayLogService(): IDayLogService {
     return this.dayLogService;
   }

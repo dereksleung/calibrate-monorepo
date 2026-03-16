@@ -1,3 +1,4 @@
+import { AuthenticationError } from "@application";
 import { handleControllerError } from "@common";
 import { IDayLogService } from "@services";
 import { validate } from "@validation";
@@ -5,7 +6,11 @@ import { Request, Response } from "express";
 
 import { GetDayLogRequestRouteParams, GetDayLogRequestRouteParamsSchema } from "../http/day-log-requests.js";
 import { DayLogResponse } from "../http/day-log-responses.js";
-import { CreateFoodEntryRequestRouteParamsSchema, CreateFoodEntryRequestRouteParams, CreateFoodEntryRequestSchema } from "../http/food-entry-requests.js";
+import {
+  CreateFoodEntryRequestRouteParamsSchema,
+  CreateFoodEntryRequestRouteParams,
+  CreateFoodEntryRequestSchema,
+} from "../http/food-entry-requests.js";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
 
 /**
@@ -34,10 +39,13 @@ export class DayLogController {
         });
         return;
       }
-      // TODO: Remove this once we implement authentication with JWT
-      const stubUserId = "59802894-b4ad-49dc-83dd-72a6fa571cd3";
+      const authenticatedUserId = req.auth?.userId;
+      if (!authenticatedUserId) {
+        throw new AuthenticationError("Authentication required");
+      }
+
       const dayLog = await this.dayLogService.getLogForDay({
-        userId: stubUserId,
+        userId: authenticatedUserId,
         date: validatedInput?.data.date,
       });
 
@@ -51,7 +59,7 @@ export class DayLogController {
   async createFoodEntry(req: Request<CreateFoodEntryRequestRouteParams>, res: Response): Promise<void> {
     try {
       const validatedDate = validate(CreateFoodEntryRequestRouteParamsSchema, req.params);
-      
+
       const validatedInput = validate(CreateFoodEntryRequestSchema, req.body);
       const errors = [];
       if (!validatedDate.isValid) errors.push(...validatedDate.errors);
@@ -66,11 +74,13 @@ export class DayLogController {
 
       if (!validatedDate.isValid || !validatedInput.isValid) return;
 
-      // TODO: Remove this once we implement authentication with JWT
-      const stubUserId = "59802894-b4ad-49dc-83dd-72a6fa571cd3";
+      const authenticatedUserId = req.auth?.userId;
+      if (!authenticatedUserId) {
+        throw new AuthenticationError("Authentication required");
+      }
 
       const entry = await this.dayLogService.addFoodEntry({
-        userId: stubUserId,
+        userId: authenticatedUserId,
         foodEntry: validatedInput?.data,
         date: validatedDate?.data.date,
       });

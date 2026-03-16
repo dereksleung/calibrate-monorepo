@@ -59,6 +59,9 @@ describe("DayLogController", () => {
   it("should get a log when given a valid YYYY-MM-DD date", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -74,7 +77,7 @@ describe("DayLogController", () => {
     await dayLogController.getLogForDay(req, res);
 
     expect(mockDayLogService.getLogForDay).toHaveBeenCalledWith({
-      userId: "59802894-b4ad-49dc-83dd-72a6fa571cd3",
+      userId: "user-1",
       date: "2026-02-22",
     });
     expect(res.status).toHaveBeenCalledWith(200);
@@ -110,6 +113,9 @@ describe("DayLogController", () => {
   it("should return 404 when service throws a 'not found' error", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -131,6 +137,9 @@ describe("DayLogController", () => {
   it("should return 403 when service throws a 'permission' error", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -152,6 +161,9 @@ describe("DayLogController", () => {
   it("should return 500 with error message for all other Errors", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -175,6 +187,9 @@ describe("DayLogController", () => {
   it("should return 500 with generic message for non-Error throw", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -198,6 +213,9 @@ describe("DayLogController", () => {
   it("should return 200 with null when service returns null", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -219,6 +237,9 @@ describe("DayLogController", () => {
   it("should return 400 when service throws a BusinessLogicError", async () => {
     const req = {
       get: vi.fn(),
+      auth: {
+        userId: "user-1",
+      },
       params: {
         date: "2026-02-22",
       },
@@ -239,6 +260,9 @@ describe("DayLogController", () => {
 
   it("should create a food entry when request body is valid", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -272,7 +296,7 @@ describe("DayLogController", () => {
     await dayLogController.createFoodEntry(req, res);
 
     expect(mockDayLogService.addFoodEntry).toHaveBeenCalledWith({
-      userId: "59802894-b4ad-49dc-83dd-72a6fa571cd3",
+      userId: "user-1",
       date: "2026-02-22",
       foodEntry: mockCreateFoodEntryRequestBody,
     });
@@ -282,12 +306,15 @@ describe("DayLogController", () => {
 
   it("should return 400 when date param is invalid", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "not-a-date",
       } as unknown as CreateFoodEntryRequestRouteParams,
     } as unknown as Request<CreateFoodEntryRequestRouteParams>;
-      const res = {
+    const res = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn(),
     } as any;
@@ -304,6 +331,9 @@ describe("DayLogController", () => {
 
   it("should return 400 when createFoodEntry body is invalid", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: {
         meal: MealNameEnum.BREAKFAST,
         name: "Scrambled Eggs",
@@ -334,6 +364,9 @@ describe("DayLogController", () => {
 
   it("should return 404 when createFoodEntry service throws a 'not found' error", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -353,6 +386,9 @@ describe("DayLogController", () => {
 
   it("should return 403 when createFoodEntry service throws a 'permission' error", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -372,6 +408,9 @@ describe("DayLogController", () => {
 
   it("should return 500 with error message when createFoodEntry service throws generic Error", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -391,6 +430,9 @@ describe("DayLogController", () => {
 
   it("should return 500 with generic message when createFoodEntry service throws non-Error", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -410,6 +452,9 @@ describe("DayLogController", () => {
 
   it("should return 400 when createFoodEntry service throws BusinessLogicError", async () => {
     const req = {
+      auth: {
+        userId: "user-1",
+      },
       body: mockCreateFoodEntryRequestBody,
       params: {
         date: "2026-02-22",
@@ -425,5 +470,24 @@ describe("DayLogController", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: "Invalid input" });
+  });
+
+  it("should return 401 when getLogForDay is called without authenticated user context", async () => {
+    const req = {
+      get: vi.fn(),
+      params: {
+        date: "2026-02-22",
+      },
+    } as unknown as Request<GetDayLogRequestRouteParams>;
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.getLogForDay(req, res);
+
+    expect(mockDayLogService.getLogForDay).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ error: "Authentication required" });
   });
 });

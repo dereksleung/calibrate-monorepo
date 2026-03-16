@@ -1,6 +1,6 @@
-import "dotenv/config";
 import { Container } from "@infrastructure";
-import { createDayLogRoutes, createUserRoutes } from "@routes";
+import { createAuthenticationMiddleware } from "@presentation";
+import { createAuthRoutes, createDayLogRoutes, createUserRoutes } from "@routes";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -16,9 +16,11 @@ app.use(morgan("combined"));
 app.use(express.json());
 
 const container = new Container({});
+const authenticateRequest = createAuthenticationMiddleware(container.getAccessTokenService());
 
 // Routes
-app.use("/api/v1", createDayLogRoutes(container.getDayLogController()));
+app.use("/api/v1", createAuthRoutes(container.getAuthController()));
+app.use("/api/v1", createDayLogRoutes(container.getDayLogController(), authenticateRequest));
 app.use("/api/v1", createUserRoutes(container.getUserController()));
 
 // Health check route
