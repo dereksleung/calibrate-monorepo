@@ -5,8 +5,8 @@
 The project follows clean architecture with these layers:
 
 - `src/domain/` — domain entities, value objects, business rules, no dependencies on outer layers
-- `src/application/` — services (use case coordination), ports (repository interfaces), DTOs
-- `src/infrastructure/` — concrete implementations and technology choices (Postgres repositories, Kysely query builder, HTTP controllers)
+- `src/application/` — services (use case coordination), ports (interfaces for particular technology adapters, e.g. db repositories), DTOs
+- `src/infrastructure/` — concrete implementations and technology choices (e.g. Postgres repositories, Kysely query builder, argon2 password hasher, jose JWT signing/verification)
 - `src/presentation/` - controllers, http request/response shapes, mappers transforming application layer values to response values, validation of http requests, routes definitions
 
 ---
@@ -36,7 +36,7 @@ When adding a food entry, the `DayLogService`:
 2. Calls a behavior method on the domain object (`dayLog.addFoodEntry(entry)`), which enforces invariants
 3. Calls `dayLogRepository.addFoodEntry(dayLog.id, entry)` to persist only the new child row.
 
-This is not a full `save(aggregate)` — the repository exposes a targeted write method `addFoodEntry` rather than a full upsert. This is an intentional trade-off: it is more efficient than a `save()` with full diffing, adding a single food entyr is a very frequent operation. `save()` with full diffing also would be more purist DDD but adds complexity.
+This is not a full `save(aggregate)` — the repository exposes a targeted write method `addFoodEntry` rather than a full upsert. This is an intentional trade-off: it is more efficient than a `save()` with full diffing, adding a single food entry is a very frequent operation. `save()` with full diffing also would be more purist DDD but adds complexity.
 
 This is reflected in src/application/services/day-log-service.ts `DayLogServiceImpl.addFoodEntry()` and src/infrastructure/persistence/repositories/postgres-day-log-repository.ts `PostgresDayLogRepository.addFoodEntry()`.
 
