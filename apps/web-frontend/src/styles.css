@@ -78,27 +78,27 @@
   --font-label-sm: Inter, sans-serif;
   --font-body-lg: Inter, sans-serif;
 
-  --text-headline-md: 24px;
-  --text-headline-md--line-height: 32px;
+  --text-headline-md: 1.5rem;
+  --text-headline-md--line-height: 2rem;
   --text-headline-md--letter-spacing: -0.01em;
   --text-headline-md--font-weight: 400;
 
-  --text-display-lg: 40px;
-  --text-display-lg--line-height: 48px;
-  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg: 2.5rem;
+  --text-display-lg--line-height: 3rem;
+  --text-display-lg--letter-spacing: -0.02rem;
   --text-display-lg--font-weight: 300;
 
-  --text-body-md: 16px;
-  --text-body-md--line-height: 24px;
+  --text-body-md: 1rem;
+  --text-body-md--line-height: 1.5rem;
   --text-body-md--font-weight: 300;
 
-  --text-label-sm: 12px;
-  --text-label-sm--line-height: 16px;
-  --text-label-sm--letter-spacing: 0.05em;
+  --text-label-sm: 0.75rem;
+  --text-label-sm--line-height: 1rem;
+  --text-label-sm--letter-spacing: 0.05rem;
   --text-label-sm--font-weight: 500;
 
-  --text-body-lg: 18px;
-  --text-body-lg--line-height: 28px;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.75rem;
   --text-body-lg--font-weight: 300;
 }
 
