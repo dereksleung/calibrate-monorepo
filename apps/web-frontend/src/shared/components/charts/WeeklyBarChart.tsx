@@ -2,6 +2,7 @@ import {
   ChartContainer,
   type ChartConfig,
 } from "#/shared/components/base/chart.tsx";
+import { useIsMobile } from "#/shared/hooks/use-media-query";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
 const Y_AXIS_PADDING = 160;
@@ -91,31 +92,43 @@ export const WeeklyBarChart = ({
     },
   } satisfies ChartConfig;
 
+  const isMobile = useIsMobile();
+
   return (
     <ChartContainer
       config={chartConfig}
       className={className}
-      initialDimension={{ width: 720, height: 272 }}
+      // initialDimension={{ width: 720, height: 272 }}
     >
       <BarChart
         accessibilityLayer
         data={weeklyData}
         barCategoryGap="42%"
-        margin={{ top: 12, right: 10, bottom: 16, left: 10 }}
+        className="flex-1 min-h-10"
+        responsive
       >
         <XAxis
           dataKey="label"
           axisLine={false}
           tickLine={false}
-          tickMargin={16}
+          tickMargin={isMobile ? 8 : 16}
           tick={{
             fill: "var(--color-muted-foreground)",
-            fontSize: 12,
+            fontSize: isMobile ? 9 : 12,
             fontWeight: 500,
-            letterSpacing: "0.12em",
+            letterSpacing: isMobile ? "0.02em" : "0.12em",
           }}
         />
-        <YAxis domain={[0, yAxisMax]} />
+        <YAxis 
+          domain={[0, yAxisMax]} 
+          tick={{
+            fontWeight: isMobile ? 300 : 500,
+            fill: "var(--color-muted-foreground)",
+            fontSize: isMobile ? 9 : 12,
+          }}
+          width="auto"
+          label={false}
+        />
         <Bar
           dataKey="eaten"
           background={{ fill: "transparent" }}

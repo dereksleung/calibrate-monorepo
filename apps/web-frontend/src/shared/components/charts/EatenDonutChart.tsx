@@ -1,15 +1,15 @@
-import * as React from "react"
-import { Label, Pie, PieChart } from "recharts"
+import * as React from "react";
+import { Label, Pie, PieChart } from "recharts";
 
 import {
   ChartContainer,
   type ChartConfig,
-} from "#/shared/components/base/chart.tsx"
+} from "#/shared/components/base/chart.tsx";
 
 type EatenDonutChartProps = {
-  eaten: number
-  limit: number
-}
+  eaten: number;
+  limit: number;
+};
 
 const chartConfig = {
   eaten: {
@@ -20,21 +20,21 @@ const chartConfig = {
     color: "var(--color-surface-container-low)",
     label: "Remaining",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
-const formatEatenChartValue = (value: number) => value.toLocaleString()
+const formatEatenChartValue = (value: number) => value.toLocaleString();
 
 export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
-  const uniqueId = React.useId().replace(/:/g, "")
-  const gradientId = `${uniqueId}-eaten-gradient`
-  const redGradientId = `${uniqueId}-eaten-over-limit-gradient`
-  const eatenLimitDelta = limit - eaten
-  const isUnderLimit = eatenLimitDelta >= 0
-  const eatenLimitComparisonLabel = isUnderLimit ? "Under" : "Over"
+  const uniqueId = React.useId().replace(/:/g, "");
+  const gradientId = `${uniqueId}-eaten-gradient`;
+  const redGradientId = `${uniqueId}-eaten-over-limit-gradient`;
+  const eatenLimitDelta = limit - eaten;
+  const isUnderLimit = eatenLimitDelta >= 0;
+  const eatenLimitComparisonLabel = isUnderLimit ? "Under" : "Over";
   const eatenLimitComparisonTone = isUnderLimit
     ? "fill-primary"
-    : "fill-destructive"
-  const activeGradientId = isUnderLimit ? gradientId : redGradientId
+    : "fill-destructive";
+  const activeGradientId = isUnderLimit ? gradientId : redGradientId;
   const chartData = [
     {
       name: "eaten",
@@ -46,15 +46,15 @@ export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
       value: Math.max(eatenLimitDelta, 0),
       fill: "var(--color-remaining)",
     },
-  ]
+  ];
 
   return (
     <ChartContainer
       config={chartConfig}
-      className="aspect-square h-[17rem] max-h-full w-full max-w-[17rem]"
-      initialDimension={{ width: 272, height: 272 }}
+      className="aspect-square max-h-full w-full max-w-[17rem]"
+      // initialDimension={{ width: 272, height: 272 }}
     >
-      <PieChart accessibilityLayer>
+      <PieChart accessibilityLayer responsive className="flex-1">
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="var(--color-primary-fixed)" />
@@ -69,8 +69,8 @@ export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
           data={chartData}
           dataKey="value"
           nameKey="name"
-          innerRadius={100}
-          outerRadius={118}
+          innerRadius="74%"
+          outerRadius="88%"
           paddingAngle={3}
           cornerRadius={18}
           startAngle={90}
@@ -80,8 +80,19 @@ export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
           <Label
             content={({ viewBox }) => {
               if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) {
-                return null
+                return null;
               }
+
+              const centerY = viewBox.cy ?? 0;
+              const outerRadius =
+                "outerRadius" in viewBox &&
+                typeof viewBox.outerRadius === "number"
+                  ? viewBox.outerRadius
+                  : 118;
+
+              const isCompact = outerRadius < 100;
+              const valueYOffset = isCompact ? -4 : 0;
+              const labelYOffset = isCompact ? 18 : 28;
 
               return (
                 <text
@@ -92,24 +103,24 @@ export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
                 >
                   <tspan
                     x={viewBox.cx}
-                    y={viewBox.cy}
-                    className={`${eatenLimitComparisonTone} font-heading text-[2.5rem] font-light`}
+                    y={centerY + valueYOffset} 
+                    className={`${eatenLimitComparisonTone} font-heading text-[1.5rem] md:text-[2.5rem] font-light`}
                   >
                     {formatEatenChartValue(Math.abs(eatenLimitDelta))}
                   </tspan>
                   <tspan
                     x={viewBox.cx}
-                    y={(viewBox.cy ?? 0) + 28}
-                    className={`${eatenLimitComparisonTone} font-sans text-[0.75rem] font-medium uppercase tracking-[0.22em]`}
+                    y={centerY + labelYOffset}
+                    className={`${eatenLimitComparisonTone} font-sans relative bottom-5 md:bottom-0 text-[0.6rem] md:text-[0.75rem] font-medium uppercase tracking-[0.22em]`}
                   >
                     {eatenLimitComparisonLabel}
                   </tspan>
                 </text>
-              )
+              );
             }}
           />
         </Pie>
       </PieChart>
     </ChartContainer>
-  )
-}
+  );
+};
