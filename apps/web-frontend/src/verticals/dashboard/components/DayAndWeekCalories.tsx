@@ -1,40 +1,17 @@
 import { Card } from "#/shared/components/base/Card.tsx";
 import { ChartContainer, type ChartConfig } from "#/shared/components/base/chart.tsx";
+import { EatenDonutChart } from "#/shared/components/charts/EatenDonutChart.tsx";
 import {
   Bar,
   BarChart,
-  Label,
-  Pie,
-  PieChart,
   XAxis,
   YAxis,
 } from "recharts";
 
 const dailyCalories = {
-  eaten: 1700,
+  eaten: 1625,
   limit: 1650,
 }
-
-const dailyCaloriesDifference = dailyCalories.limit - dailyCalories.eaten
-const dailyCaloriesStatus =
-  dailyCaloriesDifference >= 0 ? "Under" : "Over"
-const dailyCaloriesStatusColor =
-  dailyCaloriesDifference >= 0 ? "fill-primary" : "fill-destructive"
-const linearGradientId =
-  dailyCaloriesDifference >= 0 ? "daily-calories-gradient" : "red-daily-calories-gradient"
-
-const dailyCaloriesData = [
-  {
-    name: "eaten",
-    calories: Math.min(dailyCalories.eaten, dailyCalories.limit),
-    fill: "url(#" + linearGradientId + ")",
-  },
-  {
-    name: "remaining",
-    calories: Math.max(dailyCaloriesDifference, 0),
-    fill: "var(--color-remaining)",
-  },
-]
 
 const weeklyCaloriesData = [
   { day: "MON", calories: 1540, limit: 1650 },
@@ -66,21 +43,11 @@ const weeklyMaxCalories =
   ) + 160
 
 const chartConfig = {
-  eaten: {
-    color: "var(--color-primary)",
-    label: "Eaten",
-  },
-  remaining: {
-    color: "var(--color-surface-container-low)",
-    label: "Remaining",
-  },
   calories: {
     color: "var(--color-primary-fixed)",
     label: "Calories",
   },
 } satisfies ChartConfig
-
-const formatCalories = (calories: number) => calories.toLocaleString()
 
 const WeeklyCaloriesBarShape = ({
   background,
@@ -129,80 +96,10 @@ export const DayAndWeekCalories = () => {
   return (
     <Card className="gap-8 px-6 py-8 md:px-10 lg:flex-row lg:items-center lg:px-12">
       <div className="flex justify-center lg:w-[34%]">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-square h-[17rem] max-h-full w-full max-w-[17rem]"
-          initialDimension={{ width: 272, height: 272 }}
-        >
-          <PieChart accessibilityLayer>
-            <defs>
-              <linearGradient
-                id="daily-calories-gradient"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop offset="0%" stopColor="var(--color-primary-fixed)" />
-                <stop offset="100%" stopColor="var(--color-primary)" />
-              </linearGradient>
-              <linearGradient
-                id="red-daily-calories-gradient"
-                x1="0"
-                x2="0"
-                y1="0"
-                y2="1"
-              >
-                <stop offset="0%" stopColor="var(--color-orange-500)" />
-                <stop offset="100%" stopColor="var(--color-red-600)" />
-              </linearGradient>
-            </defs>
-            <Pie
-              data={dailyCaloriesData}
-              dataKey="calories"
-              nameKey="name"
-              innerRadius={100}
-              outerRadius={118}
-              paddingAngle={3}
-              cornerRadius={18}
-              startAngle={90}
-              endAngle={-270}
-              stroke="none"
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) {
-                    return null
-                  }
-
-                  return (
-                    <text
-                      x={viewBox.cx}
-                      y={viewBox.cy}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                    >
-                      <tspan
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        className={`${dailyCaloriesStatusColor} font-heading text-[2.5rem] font-light`}
-                      >
-                        {formatCalories(Math.abs(dailyCaloriesDifference))}
-                      </tspan>
-                      <tspan
-                        x={viewBox.cx}
-                        y={(viewBox.cy ?? 0) + 28}
-                        className={`${dailyCaloriesStatusColor} font-sans text-[0.75rem] font-medium uppercase tracking-[0.22em]`}
-                      >
-                        {dailyCaloriesStatus}
-                      </tspan>
-                    </text>
-                  )
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+        <EatenDonutChart
+          eaten={dailyCalories.eaten}
+          limit={dailyCalories.limit}
+        />
       </div>
 
       <div className="min-h-[17rem] flex-1">
