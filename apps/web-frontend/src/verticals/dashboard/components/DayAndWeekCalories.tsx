@@ -11,19 +11,27 @@ import {
 } from "recharts";
 
 const dailyCalories = {
-  eaten: 1150,
+  eaten: 1700,
   limit: 1650,
 }
+
+const dailyCaloriesDifference = dailyCalories.limit - dailyCalories.eaten
+const dailyCaloriesStatus =
+  dailyCaloriesDifference >= 0 ? "Under" : "Over"
+const dailyCaloriesStatusColor =
+  dailyCaloriesDifference >= 0 ? "fill-primary" : "fill-destructive"
+const linearGradientId =
+  dailyCaloriesDifference >= 0 ? "daily-calories-gradient" : "red-daily-calories-gradient"
 
 const dailyCaloriesData = [
   {
     name: "eaten",
-    calories: dailyCalories.eaten,
-    fill: "url(#daily-calories-gradient)",
+    calories: Math.min(dailyCalories.eaten, dailyCalories.limit),
+    fill: "url(#" + linearGradientId + ")",
   },
   {
     name: "remaining",
-    calories: dailyCalories.limit - dailyCalories.eaten,
+    calories: Math.max(dailyCaloriesDifference, 0),
     fill: "var(--color-remaining)",
   },
 ]
@@ -138,6 +146,16 @@ export const DayAndWeekCalories = () => {
                 <stop offset="0%" stopColor="var(--color-primary-fixed)" />
                 <stop offset="100%" stopColor="var(--color-primary)" />
               </linearGradient>
+              <linearGradient
+                id="red-daily-calories-gradient"
+                x1="0"
+                x2="0"
+                y1="0"
+                y2="1"
+              >
+                <stop offset="0%" stopColor="var(--color-orange-500)" />
+                <stop offset="100%" stopColor="var(--color-red-600)" />
+              </linearGradient>
             </defs>
             <Pie
               data={dailyCaloriesData}
@@ -167,16 +185,16 @@ export const DayAndWeekCalories = () => {
                       <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-primary font-heading text-[2.5rem] font-light"
+                        className={`${dailyCaloriesStatusColor} font-heading text-[2.5rem] font-light`}
                       >
-                        {formatCalories(dailyCalories.eaten)}
+                        {formatCalories(Math.abs(dailyCaloriesDifference))}
                       </tspan>
                       <tspan
                         x={viewBox.cx}
                         y={(viewBox.cy ?? 0) + 28}
-                        className="fill-on-surface font-sans text-[0.75rem] font-medium uppercase tracking-[0.22em]"
+                        className={`${dailyCaloriesStatusColor} font-sans text-[0.75rem] font-medium uppercase tracking-[0.22em]`}
                       >
-                        of {formatCalories(dailyCalories.limit)} kcal
+                        {dailyCaloriesStatus}
                       </tspan>
                     </text>
                   )
