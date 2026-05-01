@@ -1,5 +1,6 @@
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { ConsistencyScore } from "#/verticals/dashboard/components/ConsistencyScore.tsx";
+import { DayAndWeekCalories } from "#/verticals/dashboard/components/DayAndWeekCalories.tsx";
 import { HighImpactSwap } from "#/verticals/dashboard/components/HighImpactSwap.tsx";
 import { YesterdayRecap } from "#/verticals/dashboard/components/YesterdayRecap.tsx";
 
@@ -15,6 +16,10 @@ export const Dashboard = ({
           <HighImpactSwap />  
           <ConsistencyScore />
         </div>
+      </section>
+      <section className="space-y-6 mt-10">
+        <Typography as="h2" variant="headline" color="onSurface">Daily & Weekly Calories</Typography>
+        <DayAndWeekCalories />
       </section>
     </main>
   )

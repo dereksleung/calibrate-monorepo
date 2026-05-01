@@ -18,7 +18,7 @@ const typographyVariants = cva("", {
       primary: "text-primary",
       destructive: "text-destructive",
 
-      // From your Tailwind v4 @theme tokens
+      // From Tailwind v4 @theme tokens
       onBackground: "text-on-background",
       onError: "text-on-error",
       onErrorContainer: "text-on-error-container",
