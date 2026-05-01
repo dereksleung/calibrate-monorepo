@@ -1,17 +1,22 @@
 import { Card } from "#/shared/components/base/Card.tsx";
-import { ChartContainer, type ChartConfig } from "#/shared/components/base/chart.tsx";
-import { EatenDonutChart } from "#/shared/components/charts/EatenDonutChart.tsx";
 import {
-  Bar,
-  BarChart,
-  XAxis,
-  YAxis,
-} from "recharts";
+  ChartContainer,
+  type ChartConfig,
+} from "#/shared/components/base/chart.tsx";
+import { EatenDonutChart } from "#/shared/components/charts/EatenDonutChart.tsx";
+import { Bar, BarChart, XAxis, YAxis } from "recharts";
+
+/**
+ * TODO: Implement actual data fetching and handling.
+ * Using mock data for now, just demonstrating the charts, and judgment
+ * presenting the most important metrics and data for a normal user
+ * trying to stay on track with new habits and weight loss for now.
+ */
 
 const dailyCalories = {
   eaten: 1625,
   limit: 1650,
-}
+};
 
 const weeklyCaloriesData = [
   { day: "MON", calories: 1540, limit: 1650 },
@@ -21,33 +26,33 @@ const weeklyCaloriesData = [
   { day: "FRI", calories: 2160, limit: 1800 },
   { day: "SAT", calories: 1160, limit: 1800 },
   { day: "SUN", calories: 1060, limit: 1800 },
-]
+];
 
-type WeeklyCaloriesDatum = (typeof weeklyCaloriesData)[number]
+type WeeklyCaloriesDatum = (typeof weeklyCaloriesData)[number];
 
 type WeeklyCaloriesBarShapeProps = {
   background?: {
-    y?: number
-    height?: number
-  }
-  height?: number
-  payload?: WeeklyCaloriesDatum
-  width?: number
-  x?: number
-  y?: number
-}
+    y?: number;
+    height?: number;
+  };
+  height?: number;
+  payload?: WeeklyCaloriesDatum;
+  width?: number;
+  x?: number;
+  y?: number;
+};
 
 const weeklyMaxCalories =
   Math.max(
-    ...weeklyCaloriesData.flatMap(({ calories, limit }) => [calories, limit])
-  ) + 160
+    ...weeklyCaloriesData.flatMap(({ calories, limit }) => [calories, limit]),
+  ) + 160;
 
 const chartConfig = {
   calories: {
     color: "var(--color-primary-fixed)",
     label: "Calories",
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 const WeeklyCaloriesBarShape = ({
   background,
@@ -58,16 +63,17 @@ const WeeklyCaloriesBarShape = ({
   y = 0,
 }: WeeklyCaloriesBarShapeProps) => {
   if (!payload) {
-    return null
+    return null;
   }
 
-
-  const fullBarHeight = background?.height ?? height
-  const fullBarY = background?.y ?? y
-  const limitY = fullBarY + fullBarHeight * (1 - payload.limit / weeklyMaxCalories)
-  const fill = payload.calories <= payload.limit
-    ? "var(--color-calories)"
-    : "var(--color-red-600)"
+  const fullBarHeight = background?.height ?? height;
+  const fullBarY = background?.y ?? y;
+  const limitY =
+    fullBarY + fullBarHeight * (1 - payload.limit / weeklyMaxCalories);
+  const fill =
+    payload.calories <= payload.limit
+      ? "var(--color-calories)"
+      : "var(--color-red-600)";
 
   return (
     <g>
@@ -89,8 +95,8 @@ const WeeklyCaloriesBarShape = ({
         strokeWidth={2}
       />
     </g>
-  )
-}
+  );
+};
 
 export const DayAndWeekCalories = () => {
   return (
