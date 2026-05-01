@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "#/lib/utils"
 
-const typographyVariants = cva("m-0", {
+const typographyVariants = cva("", {
   variants: {
     variant: {
       display: "font-heading text-display-lg text-balance",
@@ -42,6 +42,17 @@ const typographyVariants = cva("m-0", {
 
       inherit: "text-inherit",
     },
+    size: {
+      lg: "text-lg",
+      md: "text-md",
+      sm: "text-sm",
+    },
+    weight: {
+      normal: "font-normal",
+      medium: "font-medium",
+      semibold: "font-semibold",
+      bold: "font-bold",
+    },
   },
   defaultVariants: {
     variant: "body",
@@ -65,6 +76,8 @@ type TypographyProps<TElement extends React.ElementType> =
 const Typography = <TElement extends React.ElementType = "p">({
   as,
   variant,
+  size,
+  weight,
   color,
   className,
   ...props
@@ -74,7 +87,7 @@ const Typography = <TElement extends React.ElementType = "p">({
   return (
     <Component
       data-slot="typography"
-      className={cn(typographyVariants({ variant, color, className }))}
+      className={cn(typographyVariants({ variant, color, size, weight, className }))}
       {...props}
     />
   )

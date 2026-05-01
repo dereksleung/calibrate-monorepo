@@ -1,0 +1,25 @@
+import { Card } from "#/shared/components/base/Card.tsx";
+import { Typography } from "#/shared/components/base/typography/Typography.tsx";
+import { ChartColumnIncreasing } from "lucide-react";
+
+/* TODO: Make text dynamic. 
+  Just showing judgment presenting the most important metrics and data for a normal user trying to stay on track 
+  with new habits and weight loss for now. */
+export const ConsistencyScore = () => {
+  return (
+    <Card className="p-8 gap-4">
+      <div className="flex gap-3 text-primary">
+        <ChartColumnIncreasing />
+        <Typography as="h3" size="lg" color="primary" weight="semibold">
+          Consistency Score
+        </Typography>
+      </div>
+      <div className="flex items-end gap-2">
+        <Typography as="span" variant="display" color="primary">
+          94%
+        </Typography>
+      </div>
+      <p className="font-body-md text-on-surface-variant">You stayed inside your calorie limit 94% of the last 30 days. Great job!</p>
+    </Card>
+  )
+};
