@@ -1,4 +1,4 @@
-import { Card, CardTitle } from "#/shared/components/base/Card.tsx";
+import { Card } from "#/shared/components/base/Card.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { EatenDonutChart } from "#/shared/components/charts/EatenDonutChart.tsx";
 import { WeeklyBarChart } from "#/shared/components/charts/WeeklyBarChart.tsx";

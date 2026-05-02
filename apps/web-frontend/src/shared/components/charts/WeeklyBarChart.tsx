@@ -96,10 +96,7 @@ export const WeeklyBarChart = ({
   const isMobile = useIsMobile();
 
   return (
-    <ChartContainer
-      config={chartConfig}
-      // className={className}
-    >
+    <ChartContainer config={chartConfig}>
       <BarChart
         accessibilityLayer
         data={weeklyData}
@@ -119,8 +116,8 @@ export const WeeklyBarChart = ({
             letterSpacing: isMobile ? "0.02em" : "0.12em",
           }}
         />
-        <YAxis 
-          domain={[0, yAxisMax]} 
+        <YAxis
+          domain={[0, yAxisMax]}
           tick={{
             fontWeight: isMobile ? 300 : 500,
             fill: "var(--color-muted-foreground)",
