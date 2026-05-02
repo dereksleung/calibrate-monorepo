@@ -15,8 +15,8 @@ export const Dashboard = ({
       <section className="space-y-6">
         <Typography as="h2" variant="headline" color="onSurface">Daily Insights</Typography>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <YesterdayRecap />
           <HighImpactSwap />  
+          <YesterdayRecap />
           <ConsistencyScore />
         </div>
       </section>
