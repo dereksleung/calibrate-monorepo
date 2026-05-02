@@ -22,24 +22,13 @@ export function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-// export default function mediaQueryList(query) {
-//   const subscribe = React.useCallback((callback) => {
-//     const mediaQueryList = window.matchMedia(query);
-//     mediaQueryList.addEventListener("change", callback);
-//     return () => mediaQueryList.removeEventListener("change", callback);
-//   }, [query]);
-
-//   const getSnapshot = () => {
-//     return window.matchMedia(query).matches;
-//   };
-
-//   return React.useSyncExternalStore(subscribe, getSnapshot);
-// };
-
-// md breakpointhelps catch landscape mobile devices
-// Tailwind's md breakpoint is min-width 768px
 const BELOW_MD_QUERY = "(max-width: 767px)";
 
 export function useIsMobile(): boolean {
   return useMediaQuery(BELOW_MD_QUERY);
+}
+
+const ABOVE_LG_QUERY = "(min-width: 1024px)";
+export function useIsLgAndAbove(): boolean {
+  return useMediaQuery(ABOVE_LG_QUERY);
 }

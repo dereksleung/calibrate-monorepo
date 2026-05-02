@@ -1,3 +1,4 @@
+import { cn } from "#/lib/utils.ts";
 import {
   ChartContainer,
   type ChartConfig,
@@ -5,7 +6,7 @@ import {
 import { useIsMobile } from "#/shared/hooks/use-media-query";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
-const Y_AXIS_PADDING = 160;
+const Y_AXIS_PADDING = 1.1;
 
 export type WeeklyDatum = {
   label: string;
@@ -84,7 +85,7 @@ export const WeeklyBarChart = ({
   const maxValue = weeklyData.length
     ? Math.max(...weeklyData.flatMap(({ eaten, limit }) => [eaten, limit]))
     : 0;
-  const yAxisMax = maxValue + Y_AXIS_PADDING;
+  const yAxisMax = maxValue * Y_AXIS_PADDING;
 
   const chartConfig = {
     eaten: {
@@ -97,21 +98,20 @@ export const WeeklyBarChart = ({
   return (
     <ChartContainer
       config={chartConfig}
-      className={className}
-      // initialDimension={{ width: 720, height: 272 }}
+      // className={className}
     >
       <BarChart
         accessibilityLayer
         data={weeklyData}
-        barCategoryGap="42%"
-        className="flex-1 min-h-10"
+        barCategoryGap="35%"
+        className={cn("flex-1 min-h-10", className)}
         responsive
       >
         <XAxis
           dataKey="label"
           axisLine={false}
           tickLine={false}
-          tickMargin={isMobile ? 8 : 16}
+          tickMargin={8}
           tick={{
             fill: "var(--color-muted-foreground)",
             fontSize: isMobile ? 9 : 12,

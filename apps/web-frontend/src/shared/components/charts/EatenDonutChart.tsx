@@ -5,10 +5,12 @@ import {
   ChartContainer,
   type ChartConfig,
 } from "#/shared/components/base/chart.tsx";
+import { cn } from "#/lib/utils.ts";
 
 type EatenDonutChartProps = {
   eaten: number;
   limit: number;
+  className?: string;
 };
 
 const chartConfig = {
@@ -24,7 +26,7 @@ const chartConfig = {
 
 const formatEatenChartValue = (value: number) => value.toLocaleString();
 
-export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
+export const EatenDonutChart = ({ eaten, limit, className }: EatenDonutChartProps) => {
   const uniqueId = React.useId().replace(/:/g, "");
   const gradientId = `${uniqueId}-eaten-gradient`;
   const redGradientId = `${uniqueId}-eaten-over-limit-gradient`;
@@ -52,9 +54,8 @@ export const EatenDonutChart = ({ eaten, limit }: EatenDonutChartProps) => {
     <ChartContainer
       config={chartConfig}
       className="aspect-square max-h-full w-full max-w-[17rem]"
-      // initialDimension={{ width: 272, height: 272 }}
     >
-      <PieChart accessibilityLayer responsive className="flex-1">
+      <PieChart accessibilityLayer responsive className={cn("flex-1 min-h-[8rem] md:min-h-[13rem]", className)}>
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="var(--color-primary-fixed)" />
