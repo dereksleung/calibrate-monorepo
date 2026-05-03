@@ -63,7 +63,7 @@ export function Goals() {
   const [activeTab, setActiveTab] = useState<GoalTab>("1M");
 
   return (
-    <main className="min-h-screen bg-surface px-4 pb-12 pt-10 antialiased md:px-10 md:pb-20 md:pt-14">
+    <main className="min-h-screen bg-surface px-4 pb-12 pt-0 antialiased md:px-10 md:pb-20">
       <div
         className="sticky top-14 z-20 -mx-4 border-b border-white/25 bg-surface/90 px-4 py-3 backdrop-blur-md md:-mx-10 md:px-10"
       >
@@ -94,7 +94,7 @@ export function Goals() {
         </div>
       </div>
 
-      <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-8">
+      <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-8 pt-8 md:pt-10">
         <header className="flex self-stretch flex-col gap-5">
           <div className="flex self-stretch justify-between">
             <h1 className="font-heading text-[2.5rem] font-light leading-none text-primary md:text-[3rem]">
