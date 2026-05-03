@@ -1,12 +1,237 @@
-import { Typography } from '#/shared/components/base/typography/Typography.tsx'
+import { useState } from "react";
+import { TrendingDown } from "lucide-react";
+import { Line, LineChart, XAxis, YAxis } from "recharts";
+
+import { cn } from "#/lib/utils.ts";
+import { Button } from "#/shared/components/base/Button.tsx";
+import {
+  Card,
+  CardContent,
+  CardTitle,
+} from "#/shared/components/base/Card.tsx";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "#/shared/components/base/chart.tsx";
+import { StatBarChart } from "#/verticals/goals-analytics/components/StatBarChart.tsx";
+
+const GOAL_TABS = ["1W", "1M", "3M", "Plan"] as const;
+
+type GoalTab = (typeof GOAL_TABS)[number];
+
+const JOURNEY_IMAGE_URL =
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuCXHD-C_7DzoORGBlhQEayIAZvNgeTVMM4FMeM6BGWET_HfdXvcm_MnHFn2_7QL9hVMQ9RmC-ROXAkFA-epORDLxaZ9WCyairiFsWBnyJ9Pn5izptULWIha5Y55osPr1oYFHNMnHWYEii2t-QY8fsQ-4q1M-lW2zDbO7KSS1A2Ow-fp1aC9DKB9Ziy2R5jCrytOBxlWqRkFHuAVjZwcO2LHVcMFlzJU5GLt0NdBU8ILQudTuPJTi7Ma2_suLfSE7hC1H79MXm3Iol0";
+
+const weeklyWeightData = [
+  { date: "2024-01-12", label: "Jan 12", weight: 144.5 },
+  { date: "2024-01-13", label: "Jan 13", weight: 144.1 },
+  { date: "2024-01-14", label: "Jan 14", weight: 144.3 },
+  { date: "2024-01-15", label: "Jan 15", weight: 143.1 },
+  { date: "2024-01-16", label: "Jan 16", weight: 142.8 },
+  { date: "2024-01-17", label: "Jan 17", weight: 142.9 },
+  { date: "2024-01-18", label: "Jan 18", weight: 137.1 },
+] as const;
+
+const FAT_DAILY_LIMIT_GRAMS = 58;
+
+const weeklyFatData = [
+  { label: "M", eaten: 29, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "T", eaten: 35, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "W", eaten: 44, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "Th", eaten: 52, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "F", eaten: 58, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "Sa", eaten: 61, limit: FAT_DAILY_LIMIT_GRAMS },
+  { label: "Sn", eaten: 64, limit: FAT_DAILY_LIMIT_GRAMS },
+];
+
+const averageFatLimitPercent = Math.round(
+  (weeklyFatData.reduce((total, day) => total + day.eaten / day.limit, 0) /
+    weeklyFatData.length) *
+    100,
+);
+
+const weightChartConfig = {
+  weight: {
+    label: "Weight",
+    color: "var(--color-primary)",
+  },
+} satisfies ChartConfig;
 
 export function Goals() {
+  const [activeTab, setActiveTab] = useState<GoalTab>("1M");
+
   return (
-    <main className="bg-surface px-4 pb-8 pt-14 antialiased md:px-10">
-      <Typography as="h1" variant="headline" color="onSurface">
-        Goals
-      </Typography>
-      <p className="mt-4 text-muted-foreground">Nutrition and wellness goals will appear here.</p>
+    <main className="min-h-screen bg-surface px-4 pb-12 pt-10 antialiased md:px-10 md:pb-20 md:pt-14">
+      <div
+        className="sticky top-14 z-20 -mx-4 border-b border-white/25 bg-surface/90 px-4 py-3 backdrop-blur-md md:-mx-10 md:px-10"
+      >
+        <div className="mx-auto w-full max-w-[64rem]">
+          <div
+            className="mx-auto grid h-14 w-full max-w-[28.5rem] grid-cols-4 rounded-full bg-surface-container px-1 py-1 shadow-inner"
+            role="tablist"
+            aria-label="Goal timeframe"
+          >
+            {GOAL_TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={cn(
+                  "rounded-full px-3 text-base font-medium text-on-surface transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 md:text-lg",
+                  activeTab === tab
+                    ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(0,0,0,0.65)]"
+                    : "hover:bg-white/45",
+                )}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-8">
+        <header className="flex self-stretch flex-col gap-5">
+          <div className="flex self-stretch justify-between">
+            <h1 className="font-heading text-[2.5rem] font-light leading-none text-primary md:text-[3rem]">
+              Goals
+            </h1>
+            <Button
+              variant="outline"
+              className="h-12 w-fit border-white/70 bg-white/80 px-8 text-base font-medium text-primary shadow-[0_16px_36px_-22px_rgba(0,0,0,0.45)] hover:bg-white"
+            >
+              Edit Plan
+            </Button>
+          </div>
+          <p className="text-base text-on-surface md:text-lg">
+            Drill down into your stats and progress
+          </p>
+        </header>
+
+        <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
+          <CardContent className="flex min-h-32 flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center md:px-8">
+            <div className="flex size-14 items-center justify-center rounded-full bg-primary-fixed/45 text-primary md:size-16">
+              <TrendingDown aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium uppercase tracking-[0.28em] text-on-surface md:text-base">
+                Active Program
+              </p>
+              <CardTitle className="mt-2 font-sans text-2xl font-light leading-tight text-foreground md:text-[1.75rem]">
+                Lose 1 lb per week
+              </CardTitle>
+            </div>
+            <p className="text-base font-medium text-primary sm:ml-auto md:text-lg">
+              Healthy Pace
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
+          <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
+            <div className="text-center">
+              <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
+                -7.4 lbs
+              </p>
+              <p className="mt-3 text-base font-medium text-on-surface md:text-lg">
+                Since Jan 12, 2024
+              </p>
+            </div>
+
+            <ChartContainer
+              config={weightChartConfig}
+              className="mt-16 h-[20rem] w-full aspect-auto md:mt-24 md:h-[26rem]"
+            >
+              <LineChart
+                accessibilityLayer
+                data={weeklyWeightData}
+                margin={{ top: 16, right: 8, bottom: 10, left: 8 }}
+                responsive
+                className="min-h-[20rem] flex-1 md:min-h-[26rem]"
+              >
+                <YAxis
+                  dataKey="weight"
+                  padding={{ top: 8, bottom: 18 }}
+                  width="auto"
+                />
+                <XAxis
+                  dataKey="label"
+                  axisLine={{ stroke: "var(--color-border)" }}
+                  tickLine={false}
+                  tickMargin={16}
+                  tick={{
+                    fill: "var(--color-on-surface)",
+                    fontSize: 16,
+                    fontWeight: 400,
+                  }}
+                  height={48}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={
+                    <ChartTooltipContent
+                      hideIndicator
+                      labelFormatter={(_, payload) =>
+                        payload[0]?.payload?.label ?? ""
+                      }
+                      formatter={(value) => (
+                        <span className="font-medium text-foreground">
+                          {Number(value).toFixed(1)} lbs lost
+                        </span>
+                      )}
+                    />
+                  }
+                />
+                <Line
+                  type="monotone"
+                  dataKey="weight"
+                  stroke="var(--color-weight)"
+                  strokeWidth={2}
+                  dot={{
+                    r: 4,
+                    fill: "var(--color-primary)",
+                    stroke: "var(--color-primary)",
+                    strokeWidth: 1,
+                  }}
+                  activeDot={{
+                    r: 5,
+                    fill: "var(--color-primary)",
+                    stroke: "var(--color-primary)",
+                  }}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <section
+          className="min-h-52 overflow-hidden rounded-[24px] bg-cover bg-center text-white shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)] md:min-h-58"
+          style={{
+            backgroundImage: `linear-gradient(color-mix(in srgb, var(--color-primary) 38%, transparent), color-mix(in srgb, var(--color-primary) 38%, transparent)), url(${JOURNEY_IMAGE_URL})`,
+          }}
+        >
+          <div className="flex min-h-52 flex-col justify-center px-6 py-8 md:min-h-58 md:px-8">
+            <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/90 md:text-base">
+              Your Journey
+            </p>
+            <p className="mt-3 font-heading text-[2rem] font-light leading-none text-white md:text-[2.5rem]">
+              90 days to goal
+            </p>
+            <p className="mt-4 text-base font-medium text-white md:text-lg">
+              Keep the steady pace. You're doing great.
+            </p>
+          </div>
+        </section>
+
+        <StatBarChart data={weeklyFatData}>
+          {averageFatLimitPercent}% of {FAT_DAILY_LIMIT_GRAMS}g
+        </StatBarChart>
+      </div>
     </main>
-  )
+  );
 }
