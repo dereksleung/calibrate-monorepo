@@ -32,7 +32,7 @@ export const DayAndWeekStat = ({
 }) => {
   return (
     <Card className="p-4 md:px-6 gap-4 flex-col lg:items-center">
-      <Typography as="h3" variant="bodyLg" color="onSurface" className="self-start">
+      <Typography as="h3" variant="bodyLg" color="primary" weight="semibold" className="self-start ml-3">
         {title}
       </Typography>
       <div className="flex flex-1 self-stretch gap-4 md:gap-8">
