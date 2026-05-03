@@ -93,117 +93,174 @@ export function FatsAnalytics() {
   const [activeTab, setActiveTab] = useState<FatAnalyticsTab>("total");
 
   return (
-    <div className="flex h-full flex-col gap-6 overflow-y-auto bg-surface-container-low px-5 pb-8 pt-6">
-      <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)]">
-        <CardContent className="grid grid-cols-2 gap-6 px-6 py-6">
-          <div className="flex flex-col gap-2">
-            <Typography
-              as="p"
-              variant="label"
-              color="muted"
-              className="tracking-[0.08em]"
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-surface-container-low">
+      <div className="flex shrink-0 flex-col gap-6 px-5 pb-4 pt-6">
+        <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)]">
+          <CardContent className="grid grid-cols-2 gap-4 px-5 py-5 sm:gap-6 sm:px-6 sm:py-6">
+            <div className="flex min-w-0 flex-col gap-2">
+              <Typography
+                as="p"
+                variant="label"
+                color="muted"
+                className="tracking-[0.06em] sm:tracking-[0.08em]"
+              >
+                Since Apr 5
+              </Typography>
+              <div className="flex items-baseline gap-1">
+                <Typography
+                  as="span"
+                  variant="display"
+                  color="default"
+                  className="leading-none tracking-normal"
+                >
+                  563
+                </Typography>
+                <Typography as="span" variant="bodyLg" color="muted">
+                  g
+                </Typography>
+              </div>
+            </div>
+
+            <div className="flex min-w-0 flex-col items-end gap-2 text-right">
+              <Typography
+                as="p"
+                variant="label"
+                color="muted"
+                className="tracking-[0.06em] sm:tracking-[0.08em]"
+              >
+                Versus Prev 28 Days
+              </Typography>
+              <div className="flex items-center justify-end gap-2 text-primary">
+                <Typography
+                  as="span"
+                  variant="display"
+                  color="default"
+                  className="leading-none tracking-normal"
+                >
+                  27%
+                </Typography>
+                <ArrowDown aria-hidden="true" className="size-8 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="rounded-full bg-surface-container-high p-1">
+          <div className="grid grid-cols-2">
+            <button
+              type="button"
+              aria-pressed={activeTab === "total"}
+              className={cn(
+                "rounded-full px-6 py-3 text-on-surface-variant focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+                activeTab === "total" &&
+                  "bg-white text-primary shadow-[0_12px_24px_-20px_rgba(0,0,0,0.65)]",
+              )}
+              onClick={() => setActiveTab("total")}
             >
-              Since Apr 5
-            </Typography>
-            <div className="flex items-baseline gap-1">
               <Typography
                 as="span"
-                variant="display"
-                color="default"
-                className="leading-none tracking-normal"
+                variant="bodyLg"
+                color={activeTab === "total" ? "primary" : "onSurfaceVariant"}
+                weight={activeTab === "total" ? "medium" : "normal"}
               >
-                563
+                Total
               </Typography>
-              <Typography as="span" variant="bodyLg" color="muted">
-                g
-              </Typography>
-            </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2 text-right">
-            <Typography
-              as="p"
-              variant="label"
-              color="muted"
-              className="tracking-[0.08em]"
+            </button>
+            <button
+              type="button"
+              aria-pressed={activeTab === "trend"}
+              className={cn(
+                "rounded-full px-6 py-3 text-on-surface-variant focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+                activeTab === "trend" &&
+                  "bg-white text-primary shadow-[0_12px_24px_-20px_rgba(0,0,0,0.65)]",
+              )}
+              onClick={() => setActiveTab("trend")}
             >
-              Versus Prev 28 Days
-            </Typography>
-            <div className="flex items-center justify-end gap-2 text-primary">
               <Typography
                 as="span"
-                variant="display"
-                color="default"
-                className="leading-none tracking-normal"
+                variant="bodyLg"
+                color={activeTab === "trend" ? "primary" : "onSurfaceVariant"}
+                weight={activeTab === "trend" ? "medium" : "normal"}
               >
-                27%
+                Trend
               </Typography>
-              <ArrowDown aria-hidden="true" className="size-8 text-primary" />
-            </div>
+            </button>
           </div>
-        </CardContent>
-      </Card>
-
-      <div className="rounded-full bg-surface-container-high p-1">
-        <div className="grid grid-cols-2">
-          <button
-            type="button"
-            aria-pressed={activeTab === "total"}
-            className={cn(
-              "rounded-full px-6 py-3 text-on-surface-variant focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
-              activeTab === "total" &&
-                "bg-white text-primary shadow-[0_12px_24px_-20px_rgba(0,0,0,0.65)]"
-            )}
-            onClick={() => setActiveTab("total")}
-          >
-            <Typography
-              as="span"
-              variant="bodyLg"
-              color={activeTab === "total" ? "primary" : "onSurfaceVariant"}
-              weight={activeTab === "total" ? "medium" : "normal"}
-            >
-              Total
-            </Typography>
-          </button>
-          <button
-            type="button"
-            aria-pressed={activeTab === "trend"}
-            className={cn(
-              "rounded-full px-6 py-3 text-on-surface-variant focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
-              activeTab === "trend" &&
-                "bg-white text-primary shadow-[0_12px_24px_-20px_rgba(0,0,0,0.65)]"
-            )}
-            onClick={() => setActiveTab("trend")}
-          >
-            <Typography
-              as="span"
-              variant="bodyLg"
-              color={activeTab === "trend" ? "primary" : "onSurfaceVariant"}
-              weight={activeTab === "trend" ? "medium" : "normal"}
-            >
-              Trend
-            </Typography>
-          </button>
         </div>
       </div>
 
-      {activeTab === "total" ? (
-        <section className="flex flex-col gap-4">
-          <Typography
-            as="h2"
-            variant="label"
-            color="muted"
-            className="text-center tracking-[0.18em]"
-          >
-            Total Fat For Last 28 Days
-          </Typography>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-2">
+        {activeTab === "total" ? (
+          <section className="flex flex-col gap-4">
+            <Typography
+              as="h2"
+              variant="label"
+              color="muted"
+              className="text-center tracking-[0.18em]"
+            >
+              Total Fat For Last 28 Days
+            </Typography>
 
-          <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_24px_52px_-34px_rgba(0,0,0,0.55)]">
-            <CardContent className="flex flex-col gap-7 px-5 py-6">
-              {fatSources.map((source) => (
-                <div key={source.name} className="flex flex-col gap-3">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
-                    <div className="size-12 overflow-hidden rounded-xl bg-surface-container-low">
+            <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_24px_52px_-34px_rgba(0,0,0,0.55)]">
+              <CardContent className="flex flex-col gap-7 px-5 py-6">
+                {fatSources.map((source) => (
+                  <div key={source.name} className="flex flex-col gap-3">
+                    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
+                      <div className="size-12 overflow-hidden rounded-xl bg-surface-container-low">
+                        <img
+                          alt={source.imageAlt}
+                          className="size-full object-cover"
+                          src={source.imageUrl}
+                        />
+                      </div>
+                      <Typography
+                        as="p"
+                        variant="bodyLg"
+                        color="default"
+                        className="truncate"
+                      >
+                        {source.name}
+                      </Typography>
+                      <Typography
+                        as="p"
+                        variant="bodyLg"
+                        color="default"
+                        weight="medium"
+                        className="whitespace-nowrap"
+                      >
+                        {source.amount}
+                      </Typography>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-container-low">
+                      <div
+                        className="h-full rounded-full bg-primary-fixed-dim"
+                        style={{ width: `${source.percent}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
+        ) : (
+          <section className="flex flex-col gap-4">
+            <Typography
+              as="h2"
+              variant="label"
+              color="muted"
+              className="text-center tracking-[0.18em]"
+            >
+              Change in fat from last month to this month
+            </Typography>
+
+            <div className="flex flex-col gap-4">
+              {fatTrendSources.map((source) => (
+                <Card
+                  key={source.name}
+                  className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.55)]"
+                >
+                  <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-4 py-4">
+                    <div className="size-12 overflow-hidden rounded-xl bg-surface-container-low ring-1 ring-outline-variant/40">
                       <img
                         alt={source.imageAlt}
                         className="size-full object-cover"
@@ -212,83 +269,30 @@ export function FatsAnalytics() {
                     </div>
                     <Typography
                       as="p"
-                      variant="bodyLg"
+                      variant="body"
                       color="default"
                       className="truncate"
                     >
                       {source.name}
                     </Typography>
-                    <Typography
-                      as="p"
-                      variant="bodyLg"
-                      color="default"
-                      weight="medium"
-                      className="whitespace-nowrap"
-                    >
-                      {source.amount}
-                    </Typography>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-surface-container-low">
-                    <div
-                      className="h-full rounded-full bg-primary-fixed-dim"
-                      style={{ width: `${source.percent}%` }}
-                    />
-                  </div>
-                </div>
+                    <div className="flex items-center justify-end gap-2 text-primary">
+                      <ArrowUpRight aria-hidden="true" className="size-4" />
+                      <Typography
+                        as="p"
+                        variant="bodyLg"
+                        color="primary"
+                        className="whitespace-nowrap"
+                      >
+                        {source.change}
+                      </Typography>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
-            </CardContent>
-          </Card>
-        </section>
-      ) : (
-        <section className="flex flex-col gap-4">
-          <Typography
-            as="h2"
-            variant="label"
-            color="muted"
-            className="text-center tracking-[0.18em]"
-          >
-            Change in fat from last month to this month
-          </Typography>
-
-          <div className="flex flex-col gap-4">
-            {fatTrendSources.map((source) => (
-              <Card
-                key={source.name}
-                className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.55)]"
-              >
-                <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 px-4 py-4">
-                  <div className="size-12 overflow-hidden rounded-xl bg-surface-container-low ring-1 ring-outline-variant/40">
-                    <img
-                      alt={source.imageAlt}
-                      className="size-full object-cover"
-                      src={source.imageUrl}
-                    />
-                  </div>
-                  <Typography
-                    as="p"
-                    variant="body"
-                    color="default"
-                    className="truncate"
-                  >
-                    {source.name}
-                  </Typography>
-                  <div className="flex items-center justify-end gap-2 text-primary">
-                    <ArrowUpRight aria-hidden="true" className="size-4" />
-                    <Typography
-                      as="p"
-                      variant="bodyLg"
-                      color="primary"
-                      className="whitespace-nowrap"
-                    >
-                      {source.change}
-                    </Typography>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }

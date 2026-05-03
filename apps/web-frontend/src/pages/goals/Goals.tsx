@@ -260,7 +260,7 @@ export function Goals() {
         open={activeDrawerContent !== null}
         onOpenChange={handleAnalyticsDrawerOpenChange}
       >
-        <DrawerContent className="w-full bg-surface-container-low md:max-w-[28rem]">
+        <DrawerContent className="h-[80vh] w-full bg-surface-container-low md:h-full md:max-w-[28rem]">
           <DrawerHeader className="sr-only">
             <DrawerTitle>Fats Analytics</DrawerTitle>
             <DrawerDescription>
