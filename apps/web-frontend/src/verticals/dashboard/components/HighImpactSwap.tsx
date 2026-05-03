@@ -9,44 +9,104 @@ import {
 } from "#/shared/components/base/drawer.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
+import { cn } from "#/lib/utils";
 import { ArrowLeftRight, EyeOff, Lightbulb, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 
 const smartSwaps = [
   "Swap whole milk for almond milk in your coffee to save 50cal.",
   "Replace mayo with Greek yogurt in your sandwich for 90cal savings.",
 ];
 
+type TipCardProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+export const SmartSwap = ({ children, className }: TipCardProps) => (
+  <div
+    className={cn(
+      "rounded-3xl border-l-4 border-primary bg-card px-5 py-4 shadow-sm",
+      className,
+    )}
+  >
+    <Typography as="p" color="onSurface" className="text-lg leading-7">
+      {children}
+    </Typography>
+  </div>
+);
+
+export const HiddenContributor = ({ children, className }: TipCardProps) => (
+  <div
+    className={cn(
+      "rounded-3xl border border-outline-variant bg-surface-container-low px-6 py-5 shadow-sm",
+      className,
+    )}
+  >
+    <Typography as="p" color="onSurface" className="text-lg leading-8 italic">
+      {children}
+    </Typography>
+  </div>
+);
+
+export const PrimaryBgTipCard = ({ children, className }: TipCardProps) => (
+  <div
+    className={cn(
+      "relative flex flex-col gap-14 rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-6 text-primary-foreground shadow-lg after:absolute after:inset-0",
+      className,
+    )}
+  >
+    <Sparkles className="size-5" />
+    <Typography
+      as="p"
+      color="inherit"
+      weight="bold"
+      className="text-base leading-6"
+    >
+      {children}
+    </Typography>
+  </div>
+);
+
 export const HighImpactSwap = () => {
   const isMobile = useIsMobile();
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
-        <Card className="rounded-radius-sm p-4 lg:p-8 gap-4">
-          <div className="flex gap-3 text-primary">
-            <ArrowLeftRight className="mt-1" />
-            <h3 className="font-semibold text-lg">High-Impact Swap</h3>
-          </div>
-          {/* TODO: Make text dynamic.
+      <Card className="rounded-radius-sm p-4 lg:p-8 gap-4">
+        <div className="flex gap-3 text-primary">
+          <ArrowLeftRight className="mt-1" />
+          <Typography
+            as="h3"
+            variant="bodyLg"
+            color="primary"
+            weight="semibold"
+            className="self-start"
+          >
+            High-Impact Swap
+          </Typography>
+        </div>
+        {/* TODO: Make text dynamic.
           Just showing judgment presenting the most important metrics and data for a normal user trying to stay on track
           with new habits and weight loss for now. */}
-          <Typography as="p" color="onSurfaceVariant" size="sm" weight="light">
-            Reducing your snack almonds by 20g would save 80cal.
-          </Typography>
-          <DrawerTrigger asChild>
-            <button
-              type="button"
-              className="mt-auto flex cursor-pointer items-center gap-2 pt-4 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
-            >
-              <Typography as="span" color="primary" weight="medium" size="sm">
-                Learn More
-              </Typography>
-              <Lightbulb className="size-4 text-primary" />
-            </button>
-          </DrawerTrigger>
-        </Card>
+        <Typography as="p" color="onSurfaceVariant" size="sm" weight="light">
+          Reducing your snack almonds by 20g would save 80cal.
+        </Typography>
+        <DrawerTrigger asChild>
+          <button
+            type="button"
+            className="mt-auto flex cursor-pointer items-center gap-2 pt-4 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+          >
+            <Typography as="span" color="primary" weight="medium" size="sm">
+              Learn More
+            </Typography>
+            <Lightbulb className="size-4 text-primary" />
+          </button>
+        </DrawerTrigger>
+      </Card>
       <DrawerContent>
         <DrawerHeader className="gap-2 px-6 pt-8 pb-4 text-left">
           <DrawerTitle className="font-heading text-3xl font-normal text-primary">
-            High-Impact Tips 
+            High-Impact Tips
           </DrawerTitle>
           <DrawerDescription className="sr-only">
             Personalized guidance based on your recent logs.
@@ -70,18 +130,7 @@ export const HighImpactSwap = () => {
 
             <div className="flex flex-col gap-4">
               {smartSwaps.map((swap) => (
-                <div
-                  key={swap}
-                  className="rounded-3xl border-l-4 border-primary bg-card px-5 py-4 shadow-sm"
-                >
-                  <Typography
-                    as="p"
-                    color="onSurface"
-                    className="text-lg leading-7"
-                  >
-                    {swap}
-                  </Typography>
-                </div>
+                <SmartSwap key={swap}>{swap}</SmartSwap>
               ))}
             </div>
           </section>
@@ -100,31 +149,17 @@ export const HighImpactSwap = () => {
               </Typography>
             </div>
 
-            <div className="rounded-3xl border border-outline-variant bg-surface-container-low px-6 py-5 shadow-sm">
-              <Typography
-                as="p"
-                color="onSurface"
-                className="text-lg leading-8 italic"
-              >
-                "Cooking oils and dressings added an average of{" "}
-                <span className="font-bold">250kcal</span> to your dinners this
-                week."
-              </Typography>
-            </div>
+            <HiddenContributor>
+              "Cooking oils and dressings added an average of{" "}
+              <span className="font-bold">250kcal</span> to your dinners this
+              week."
+            </HiddenContributor>
           </section>
 
-          <div className="relative flex flex-col gap-14 rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-6 text-primary-foreground shadow-lg after:absolute after:inset-0">
-            <Sparkles className="size-5" />
-            <Typography
-              as="p"
-              color="inherit"
-              weight="bold"
-              className="text-base leading-6"
-            >
-              Tip: Using an oil sprayer can reduce fat intake by up to 15g per
-              meal.
-            </Typography>
-          </div>
+          <PrimaryBgTipCard>
+            Tip: Using an oil sprayer can reduce fat intake by up to 15g per
+            meal.
+          </PrimaryBgTipCard>
         </div>
       </DrawerContent>
     </Drawer>
