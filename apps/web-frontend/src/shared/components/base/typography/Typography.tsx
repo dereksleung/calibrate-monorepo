@@ -48,6 +48,7 @@ const typographyVariants = cva("", {
       sm: "text-sm",
     },
     weight: {
+      light: "font-light",
       normal: "font-normal",
       medium: "font-medium",
       semibold: "font-semibold",

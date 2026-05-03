@@ -20,8 +20,7 @@ export const HighImpactSwap = () => {
   const isMobile = useIsMobile();
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
-      <DrawerTrigger asChild>
-        <Card className="rounded-radius-sm p-8 gap-4">
+        <Card className="rounded-radius-sm p-4 lg:p-8 gap-4">
           <div className="flex gap-3 text-primary">
             <ArrowLeftRight className="mt-1" />
             <h3 className="font-semibold text-lg">High-Impact Swap</h3>
@@ -29,9 +28,10 @@ export const HighImpactSwap = () => {
           {/* TODO: Make text dynamic.
           Just showing judgment presenting the most important metrics and data for a normal user trying to stay on track
           with new habits and weight loss for now. */}
-          <Typography as="p" color="onSurface" className="font-body-md">
+          <Typography as="p" color="onSurfaceVariant" size="sm" weight="light">
             Reducing your snack almonds by 20g would save 80cal.
           </Typography>
+          <DrawerTrigger asChild>
             <button
               type="button"
               className="mt-auto flex cursor-pointer items-center gap-2 pt-4 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
@@ -41,8 +41,8 @@ export const HighImpactSwap = () => {
               </Typography>
               <Lightbulb className="size-4 text-primary" />
             </button>
+          </DrawerTrigger>
         </Card>
-      </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-2 px-6 pt-8 pb-4 text-left">
           <DrawerTitle className="font-heading text-3xl font-normal text-primary">

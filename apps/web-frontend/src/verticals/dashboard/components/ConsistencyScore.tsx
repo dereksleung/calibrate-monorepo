@@ -7,7 +7,7 @@ import { ChartColumnIncreasing } from "lucide-react";
   with new habits and weight loss for now. */
 export const ConsistencyScore = () => {
   return (
-    <Card className="p-8 gap-4">
+    <Card className="p-4 lg:p-8 gap-4">
       <div className="flex gap-3 text-primary">
         <ChartColumnIncreasing className="mt-1" />
         <Typography as="h3" size="lg" color="primary" weight="semibold">
@@ -19,7 +19,7 @@ export const ConsistencyScore = () => {
           94%
         </Typography>
       </div>
-      <Typography as="p" color="onSurfaceVariant">
+      <Typography as="p" color="onSurfaceVariant" size="sm" weight="light">
         You stayed inside your calorie limit 94% of the last 30 days. Great job!
       </Typography>
     </Card>
