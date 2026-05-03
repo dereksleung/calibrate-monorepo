@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Bar, BarChart, ReferenceLine, XAxis, YAxis } from "recharts";
 
+import { cn } from "#/lib/utils.ts";
 import { Card, CardContent } from "#/shared/components/base/Card.tsx";
 import {
   ChartContainer,
@@ -10,50 +11,66 @@ import {
 } from "#/shared/components/base/chart.tsx";
 
 type StatBarChartDatum = {
-  eaten: number;
   label: string;
   limit: number;
+  value: number;
 };
 
 type StatBarChartProps = {
+  ariaLabel?: string;
+  chartConfig: ChartConfig;
   children: ReactNode;
   data: StatBarChartDatum[];
+  onClick?: () => void;
+  valueUnit?: string;
 };
 
-const statBarChartConfig = {
-  eaten: {
-    label: "Fats",
-    color: "var(--color-primary-fixed)",
-  },
-  limit: {
-    label: "Limit",
-    color: "var(--color-primary)",
-  },
-} satisfies ChartConfig;
-
-export function StatBarChart({ children, data }: StatBarChartProps) {
+export function StatBarChart({
+  ariaLabel,
+  chartConfig,
+  children,
+  data,
+  onClick,
+  valueUnit,
+}: StatBarChartProps) {
   const limit = data[0]?.limit ?? 0;
   const maxValue = data.length
-    ? Math.max(...data.flatMap(({ eaten, limit }) => [eaten, limit]))
+    ? Math.max(...data.flatMap(({ value, limit }) => [value, limit]))
     : 0;
   const yAxisMax = Math.ceil((maxValue * 1.1) / 10) * 10;
 
   return (
-    <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
+    <Card
+      aria-label={ariaLabel}
+      className={cn(
+        "rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]",
+        onClick &&
+          "cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+      )}
+      onClick={onClick}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
-        <div className="text-center">
-          <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
-            {children}
-          </p>
-          <p className="mt-3 text-base font-medium text-on-surface md:text-lg">
-            Weekly fat average
-          </p>
-        </div>
+        {children}
 
         <div className="mt-12 min-w-0 md:mt-16">
           <ChartContainer
-            config={statBarChartConfig}
-            className="h-[18rem] w-full aspect-auto cursor-pointer md:h-[22rem]"
+            config={chartConfig}
+            className={cn(
+              "h-[18rem] w-full aspect-auto md:h-[22rem]",
+              onClick && "cursor-pointer",
+            )}
           >
             <BarChart
               accessibilityLayer
@@ -86,7 +103,7 @@ export function StatBarChart({ children, data }: StatBarChartProps) {
               />
               <ChartTooltip
                 cursor={{
-                  fill: "color-mix(in srgb, var(--color-primary-fixed) 45%, transparent)",
+                  fill: "color-mix(in srgb, var(--color-value) 45%, transparent)",
                 }}
                 content={
                   <ChartTooltipContent
@@ -99,13 +116,16 @@ export function StatBarChart({ children, data }: StatBarChartProps) {
                         | StatBarChartDatum
                         | undefined;
                       const percentOfLimit = payload
-                        ? Math.round((payload.eaten / payload.limit) * 100)
+                        ? Math.round(
+                            (payload.value / (payload.limit || 1)) * 100,
+                          )
                         : 0;
+                      const unitLabel = valueUnit ?? "";
 
                       return (
                         <span className="font-medium text-foreground">
-                          {Number(value).toFixed(0)}g / {percentOfLimit}% of
-                          limit
+                          {Number(value).toFixed(0)}
+                          {unitLabel} / {percentOfLimit}% of limit
                         </span>
                       );
                     }}
@@ -119,8 +139,8 @@ export function StatBarChart({ children, data }: StatBarChartProps) {
                 ifOverflow="extendDomain"
               />
               <Bar
-                dataKey="eaten"
-                fill="var(--color-eaten)"
+                dataKey="value"
+                fill="var(--color-value)"
                 radius={[8, 8, 8, 8]}
                 maxBarSize={48}
                 isAnimationActive={false}

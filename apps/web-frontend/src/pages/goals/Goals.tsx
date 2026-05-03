@@ -15,11 +15,22 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "#/shared/components/base/chart.tsx";
-import { StatBarChart } from "#/verticals/goals-analytics/components/StatBarChart.tsx";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "#/shared/components/base/drawer.tsx";
+import { FatsAnalytics } from "#/verticals/goals-analytics/components/FatsAnalytics.tsx";
+import { FatBarChart } from "#/verticals/goals-analytics/components/FatBarChart.tsx";
+import { Typography } from "#/shared/components/base/typography/Typography.tsx";
+import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
 
 const GOAL_TABS = ["1W", "1M", "3M", "Plan"] as const;
 
 type GoalTab = (typeof GOAL_TABS)[number];
+type AnalyticsDrawerContent = "fats";
 
 const JOURNEY_IMAGE_URL =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCXHD-C_7DzoORGBlhQEayIAZvNgeTVMM4FMeM6BGWET_HfdXvcm_MnHFn2_7QL9hVMQ9RmC-ROXAkFA-epORDLxaZ9WCyairiFsWBnyJ9Pn5izptULWIha5Y55osPr1oYFHNMnHWYEii2t-QY8fsQ-4q1M-lW2zDbO7KSS1A2Ow-fp1aC9DKB9Ziy2R5jCrytOBxlWqRkFHuAVjZwcO2LHVcMFlzJU5GLt0NdBU8ILQudTuPJTi7Ma2_suLfSE7hC1H79MXm3Iol0";
@@ -46,12 +57,6 @@ const weeklyFatData = [
   { label: "Sn", eaten: 64, limit: FAT_DAILY_LIMIT_GRAMS },
 ];
 
-const averageFatLimitPercent = Math.round(
-  (weeklyFatData.reduce((total, day) => total + day.eaten / day.limit, 0) /
-    weeklyFatData.length) *
-    100,
-);
-
 const weightChartConfig = {
   weight: {
     label: "Weight",
@@ -61,38 +66,49 @@ const weightChartConfig = {
 
 export function Goals() {
   const [activeTab, setActiveTab] = useState<GoalTab>("1M");
+  const [activeDrawerContent, setActiveDrawerContent] =
+    useState<AnalyticsDrawerContent | null>(null);
+
+  const handleAnalyticsDrawerOpenChange = (open: boolean) => {
+    if (!open) {
+      setActiveDrawerContent(null);
+    }
+  };
+
+  const isMobile = useIsMobile();
 
   return (
-    <main className="min-h-screen bg-surface px-4 pb-12 pt-0 antialiased md:px-10 md:pb-20">
-      <div
-        className="sticky top-14 z-20 -mx-4 border-b border-white/25 bg-surface/90 px-4 py-3 backdrop-blur-md md:-mx-10 md:px-10"
-      >
-        <div className="mx-auto w-full max-w-[64rem]">
-          <div
-            className="mx-auto grid h-14 w-full max-w-[28.5rem] grid-cols-4 rounded-full bg-surface-container px-1 py-1 shadow-inner"
-            role="tablist"
-            aria-label="Goal timeframe"
-          >
-            {GOAL_TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
-                className={cn(
-                  "rounded-full px-3 text-base font-medium text-on-surface transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 md:text-lg",
-                  activeTab === tab
-                    ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(0,0,0,0.65)]"
-                    : "hover:bg-white/45",
-                )}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </button>
-            ))}
+    <>
+      <main className="min-h-screen bg-surface px-4 pb-12 pt-0 antialiased md:px-10 md:pb-20">
+        <div
+          className="sticky top-14 z-20 -mx-4 border-b border-white/25 bg-surface/90 px-4 py-3 backdrop-blur-md md:-mx-10 md:px-10"
+        >
+          <div className="mx-auto w-full max-w-[64rem]">
+            <div
+              className="mx-auto grid h-14 w-full max-w-[28.5rem] grid-cols-4 rounded-full bg-surface-container px-1 py-1 shadow-inner"
+              role="tablist"
+              aria-label="Goal timeframe"
+            >
+              {GOAL_TABS.map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
+                  className={cn(
+                    "rounded-full px-3 text-base font-medium text-on-surface transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 md:text-lg",
+                    activeTab === tab
+                      ? "bg-white text-primary shadow-[0_10px_24px_-18px_rgba(0,0,0,0.65)]"
+                      : "hover:bg-white/45",
+                  )}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
 
       <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-8 pt-8 md:pt-10">
         <header className="flex self-stretch flex-col gap-5">
@@ -133,7 +149,10 @@ export function Goals() {
 
         <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
           <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
-            <div className="text-center">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <Typography className="text-sm font-medium uppercase tracking-[0.28em] text-on-surface md:text-base">
+                Weight
+              </Typography>
               <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
                 -7.4 lbs
               </p>
@@ -228,10 +247,29 @@ export function Goals() {
           </div>
         </section>
 
-        <StatBarChart data={weeklyFatData}>
-          {averageFatLimitPercent}% of {FAT_DAILY_LIMIT_GRAMS}g
-        </StatBarChart>
+        <FatBarChart
+          ariaLabel="Open fats analytics"
+          data={weeklyFatData}
+          onClick={() => setActiveDrawerContent("fats")}
+        />
       </div>
-    </main>
+      </main>
+
+      <Drawer
+        direction={isMobile ? "bottom" : "right"}
+        open={activeDrawerContent !== null}
+        onOpenChange={handleAnalyticsDrawerOpenChange}
+      >
+        <DrawerContent className="w-full bg-surface-container-low md:max-w-[28rem]">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Fats Analytics</DrawerTitle>
+            <DrawerDescription>
+              Total fat summary and food source contributions.
+            </DrawerDescription>
+          </DrawerHeader>
+          {activeDrawerContent === "fats" ? <FatsAnalytics /> : null}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }
