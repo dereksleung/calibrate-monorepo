@@ -182,7 +182,7 @@ export function FatsAnalytics() {
                 color={activeTab === "trend" ? "primary" : "onSurfaceVariant"}
                 weight={activeTab === "trend" ? "medium" : "normal"}
               >
-                Trend
+                Change
               </Typography>
             </button>
           </div>
@@ -198,7 +198,7 @@ export function FatsAnalytics() {
               color="muted"
               className="text-center tracking-[0.18em]"
             >
-              Total Fat For Last 28 Days
+              Total Fat By Food For Last 28 Days
             </Typography>
 
             <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_24px_52px_-34px_rgba(0,0,0,0.55)]">
@@ -250,7 +250,7 @@ export function FatsAnalytics() {
               color="muted"
               className="text-center tracking-[0.18em]"
             >
-              Change in fat from last month to this month
+              Fats by food from last month to this month
             </Typography>
 
             <div className="flex flex-col gap-4">
