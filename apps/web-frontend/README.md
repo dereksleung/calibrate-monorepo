@@ -2,7 +2,7 @@
 
 This project is a calorie tracking app prototype for someone trying to lose weight to become more fit or build healthier habits. I happened to get into healthier eating, jogging, and calisthenics myself, so this domain holds interest for me.
 
-The first goal right now is to demonstrate product judgment: take what could easily become a dense, data-heavy areas in the Dashboard and Goals pages, and keep them simple enough to be useful. The target user is not an expert mathematician or nutrition analyst. They need to understand what to do next. The most important product work is surfacing actions and actionable insights that help them keep momentum with new habits, while suggesting small tweaks they may not have realized were available.
+The first goal right now is to demonstrate product judgment: take what could easily become dense, data-heavy areas in the Dashboard and Goals pages, and keep them simple enough to be useful. The target user is not an expert mathematician or nutrition analyst, rather they are people wanting to change themselves, who may need help building new habits, and need to understand what to do next, and what is working or not working. The most important product work is surfacing actions and actionable insights that help them keep momentum with new habits, while suggesting small tweaks they may not have realized were available.
 
 The current UI is built with mock data, most things are not actually functional, pages do not load live data yet. That is intentional. It lets the product direction, information hierarchy, and interaction patterns come first before backend contracts or analytics plumbing harden too early.
 
@@ -10,9 +10,9 @@ Charts and data stay at overview level by default. When a user chooses to drill 
 
 ## Tech Stack Notes
 
-TanStack Router is a good fit because it gives the app fully-typed routing with room to grow into route loaders for high network performance for mobile users taking time of their busy day to jot down meal entries.
+TanStack Router was chosen because it gives the app fully-typed routing with room to grow into route loaders for high network performance for mobile users taking time of their busy day to jot down meal entries.
 
-shadcn/ui is useful here for helping build battle-tested, accessible, polished UI quickly while still allowing keeping ownership over styling, behavior, and product-specific details.
+shadcn/ui is useful here for helping build battle-tested, accessible, polished UI quickly while still allowing keeping ownership over styling.
 
 ## Running Locally
 
