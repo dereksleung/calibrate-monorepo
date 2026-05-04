@@ -45,7 +45,7 @@ On clicking the High Impact Swap card's Learn More link -> panel with actionable
 <img width="1829" height="930" alt="Screenshot 2026-05-03 at 6 17 44 PM" src="https://github.com/user-attachments/assets/ae5fc0c5-0525-4192-8d08-4e9c8576dc4c" />
 
 <br></br>
-Hovering over the Dashboard's Fats chart will show a tooltip saying you can click the chart to go to a detail view (a panel on the Goals page), making that discoverable. Only the fats detail view mock UI is built right now.
+Hovering over the Dashboard's Fats chart will show a tooltip saying you can click the chart to go to [a panel on the Goals page](#fats-analytics-panel), making that discoverable. Only the fats detail view mock UI is built right now.
 <br></br>
 
 
