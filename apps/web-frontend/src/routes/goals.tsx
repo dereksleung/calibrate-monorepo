@@ -2,6 +2,23 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Goals } from '#/pages/goals/Goals.tsx'
 
+type GoalsSearch = {
+  openFatsAnalytics?: boolean
+}
+
 export const Route = createFileRoute('/goals')({
-  component: Goals,
+  validateSearch: (search: Record<string, unknown>): GoalsSearch => {
+    const openFatsAnalytics =
+      search.openFatsAnalytics === true ||
+      search.openFatsAnalytics === 'true'
+
+    return openFatsAnalytics ? { openFatsAnalytics } : {}
+  },
+  component: GoalsRoute,
 })
+
+function GoalsRoute() {
+  const { openFatsAnalytics } = Route.useSearch()
+
+  return <Goals openFatsAnalytics={openFatsAnalytics} />
+}

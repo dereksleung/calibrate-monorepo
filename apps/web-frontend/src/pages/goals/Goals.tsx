@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrendingDown } from "lucide-react";
 import { Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -32,6 +32,10 @@ const GOAL_TABS = ["1W", "1M", "3M", "Plan"] as const;
 type GoalTab = (typeof GOAL_TABS)[number];
 type AnalyticsDrawerContent = "fats";
 
+type GoalsProps = {
+  openFatsAnalytics?: boolean;
+};
+
 const JOURNEY_IMAGE_URL =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCXHD-C_7DzoORGBlhQEayIAZvNgeTVMM4FMeM6BGWET_HfdXvcm_MnHFn2_7QL9hVMQ9RmC-ROXAkFA-epORDLxaZ9WCyairiFsWBnyJ9Pn5izptULWIha5Y55osPr1oYFHNMnHWYEii2t-QY8fsQ-4q1M-lW2zDbO7KSS1A2Ow-fp1aC9DKB9Ziy2R5jCrytOBxlWqRkFHuAVjZwcO2LHVcMFlzJU5GLt0NdBU8ILQudTuPJTi7Ma2_suLfSE7hC1H79MXm3Iol0";
 
@@ -64,10 +68,11 @@ const weightChartConfig = {
   },
 } satisfies ChartConfig;
 
-export function Goals() {
+export function Goals({ openFatsAnalytics = false }: GoalsProps) {
   const [activeTab, setActiveTab] = useState<GoalTab>("1M");
   const [activeDrawerContent, setActiveDrawerContent] =
     useState<AnalyticsDrawerContent | null>(null);
+  const fatsChartRef = useRef<HTMLDivElement>(null);
 
   const handleAnalyticsDrawerOpenChange = (open: boolean) => {
     if (!open) {
@@ -76,6 +81,23 @@ export function Goals() {
   };
 
   const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!openFatsAnalytics) {
+      return;
+    }
+
+    setActiveDrawerContent("fats");
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      fatsChartRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [openFatsAnalytics]);
 
   return (
     <>
@@ -247,11 +269,13 @@ export function Goals() {
           </div>
         </section>
 
-        <FatBarChart
-          ariaLabel="Open fats analytics"
-          data={weeklyFatData}
-          onClick={() => setActiveDrawerContent("fats")}
-        />
+        <div ref={fatsChartRef}>
+          <FatBarChart
+            ariaLabel="Open fats analytics"
+            data={weeklyFatData}
+            onClick={() => setActiveDrawerContent("fats")}
+          />
+        </div>
       </div>
       </main>
 

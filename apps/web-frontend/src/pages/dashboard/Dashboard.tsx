@@ -5,6 +5,7 @@ import { DayAndWeekCalories } from "#/verticals/dashboard/components/DayAndWeekC
 import { DayAndWeekStat } from "#/verticals/dashboard/components/DayAndWeekStat.tsx";
 import { HighImpactSwap } from "#/verticals/dashboard/components/HighImpactSwap.tsx";
 import { YesterdayRecap } from "#/verticals/dashboard/components/YesterdayRecap.tsx";
+import { Link } from "@tanstack/react-router";
 
 export const Dashboard = ({
   
@@ -31,7 +32,9 @@ export const Dashboard = ({
               <DayAndWeekCalories />
             </div>
             <div className="flex-1">
-              <DayAndWeekStat title="Fats" />  
+              <Link to="/goals" search={{ openFatsAnalytics: true }}>
+                <DayAndWeekStat title="Fats" />  
+              </Link>
             </div>
           </section>
           <section className="flex gap-8 mt-8">
@@ -51,7 +54,9 @@ export const Dashboard = ({
               <DayAndWeekCalories />
             </div>
             <div className="flex-1">
-              <DayAndWeekStat title="Fats" />  
+              <Link to="/goals" search={{ openFatsAnalytics: true }}>
+                <DayAndWeekStat title="Fats" />  
+              </Link>
             </div>
             <div className="flex-1">
               <DayAndWeekStat title="Protein" />  
