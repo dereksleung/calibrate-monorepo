@@ -9,6 +9,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "#/shared/components/base/chart.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "#/shared/components/base/tooltip/Tooltip.tsx";
 
 type StatBarChartDatum = {
   label: string;
@@ -22,6 +27,7 @@ type StatBarChartProps = {
   children: ReactNode;
   data: StatBarChartDatum[];
   onClick?: () => void;
+  tooltipContent?: ReactNode;
   valueUnit?: string;
 };
 
@@ -31,6 +37,7 @@ export function StatBarChart({
   children,
   data,
   onClick,
+  tooltipContent,
   valueUnit,
 }: StatBarChartProps) {
   const limit = data[0]?.limit ?? 0;
@@ -39,7 +46,7 @@ export function StatBarChart({
     : 0;
   const yAxisMax = Math.ceil((maxValue * 1.1) / 10) * 10;
 
-  return (
+  const chartCard = (
     <Card
       aria-label={ariaLabel}
       className={cn(
@@ -150,6 +157,17 @@ export function StatBarChart({
         </div>
       </CardContent>
     </Card>
+  );
+
+  if (!tooltipContent) {
+    return chartCard;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{chartCard}</TooltipTrigger>
+      <TooltipContent side="top">{tooltipContent}</TooltipContent>
+    </Tooltip>
   );
 }
 

@@ -274,6 +274,7 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
             ariaLabel="Open fats analytics"
             data={weeklyFatData}
             onClick={() => setActiveDrawerContent("fats")}
+            tooltipContent="Click to open a more detailed fats view."
           />
         </div>
       </div>

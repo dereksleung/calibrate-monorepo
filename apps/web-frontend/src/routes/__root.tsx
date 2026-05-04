@@ -5,6 +5,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools'
 import '../styles.css'
 import Header from '#/shared/components/Header.tsx';
 import Footer from '#/shared/components/Footer.tsx';
+import { TooltipProvider } from '#/shared/components/base/tooltip/Tooltip.tsx';
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -12,7 +13,7 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   return (
-    <>
+    <TooltipProvider>
       <Header />
       <Outlet />
       <Footer />
@@ -27,6 +28,6 @@ function RootComponent() {
           },
         ]}
       />
-    </>
+    </TooltipProvider>
   )
 }

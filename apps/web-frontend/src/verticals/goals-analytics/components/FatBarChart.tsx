@@ -15,6 +15,7 @@ type FatBarChartProps = {
   ariaLabel?: string;
   data: FatBarChartDatum[];
   onClick?: () => void;
+  tooltipContent?: string;
 };
 
 const fatBarChartConfig = {
@@ -28,7 +29,12 @@ const fatBarChartConfig = {
   },
 } satisfies ChartConfig;
 
-export function FatBarChart({ ariaLabel, data, onClick }: FatBarChartProps) {
+export function FatBarChart({
+  ariaLabel,
+  data,
+  onClick,
+  tooltipContent,
+}: FatBarChartProps) {
   const dailyLimitGrams = data[0]?.limit ?? 0;
   const chartData: StatBarChartDatum[] = data.map(({ eaten, label, limit }) => ({
     label,
@@ -52,6 +58,7 @@ export function FatBarChart({ ariaLabel, data, onClick }: FatBarChartProps) {
       chartConfig={fatBarChartConfig}
       data={chartData}
       onClick={onClick}
+      tooltipContent={tooltipContent}
       valueUnit="g"
     >
       <div className="flex flex-col items-center gap-3 text-center">

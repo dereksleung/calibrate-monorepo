@@ -1,4 +1,9 @@
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "#/shared/components/base/tooltip/Tooltip.tsx";
 import { useIsLgAndAbove } from "#/shared/hooks/use-media-query.ts";
 import { ConsistencyScore } from "#/verticals/dashboard/components/ConsistencyScore.tsx";
 import { DayAndWeekCalories } from "#/verticals/dashboard/components/DayAndWeekCalories.tsx";
@@ -6,6 +11,8 @@ import { DayAndWeekStat } from "#/verticals/dashboard/components/DayAndWeekStat.
 import { HighImpactSwap } from "#/verticals/dashboard/components/HighImpactSwap.tsx";
 import { YesterdayRecap } from "#/verticals/dashboard/components/YesterdayRecap.tsx";
 import { Link } from "@tanstack/react-router";
+
+const FATS_ANALYTICS_TOOLTIP = "Click to open a more detailed fats view.";
 
 export const Dashboard = ({
   
@@ -32,9 +39,16 @@ export const Dashboard = ({
               <DayAndWeekCalories />
             </div>
             <div className="flex-1">
-              <Link to="/goals" search={{ openFatsAnalytics: true }}>
-                <DayAndWeekStat title="Fats" />  
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/goals" search={{ openFatsAnalytics: true }}>
+                    <DayAndWeekStat title="Fats" />  
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {FATS_ANALYTICS_TOOLTIP}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </section>
           <section className="flex gap-8 mt-8">
@@ -54,9 +68,16 @@ export const Dashboard = ({
               <DayAndWeekCalories />
             </div>
             <div className="flex-1">
-              <Link to="/goals" search={{ openFatsAnalytics: true }}>
-                <DayAndWeekStat title="Fats" />  
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/goals" search={{ openFatsAnalytics: true }}>
+                    <DayAndWeekStat title="Fats" />  
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  {FATS_ANALYTICS_TOOLTIP}
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="flex-1">
               <DayAndWeekStat title="Protein" />  
