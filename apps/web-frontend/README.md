@@ -33,3 +33,35 @@ The app runs at:
 ```text
 http://localhost:3000
 ```
+
+## Screenshots
+### Dashboard page
+Initial page:
+<br></br>
+<img width="1820" height="932" alt="Screenshot 2026-05-03 at 6 17 09 PM" src="https://github.com/user-attachments/assets/97d5fe74-0583-4620-bf64-446ff2f40127" />
+<br></br>
+On clicking the High Impact Swap card's Learn More link -> panel with actionable insights:
+<br></br>
+<img width="1829" height="930" alt="Screenshot 2026-05-03 at 6 17 44 PM" src="https://github.com/user-attachments/assets/ae5fc0c5-0525-4192-8d08-4e9c8576dc4c" />
+
+### Goals page
+Allows deeper drilling into stats and progress.
+
+- Initial view:
+<br></br>
+<img width="1242" height="949" alt="Screenshot 2026-05-03 at 6 18 50 PM" src="https://github.com/user-attachments/assets/1427dd89-c3a7-4362-8860-d784edea9306" />
+<br></br>
+- Scrolling down - can see encouragement about journey, as well as charts about fats:
+<br></br>
+<img width="1232" height="950" alt="Screenshot 2026-05-03 at 6 19 11 PM" src="https://github.com/user-attachments/assets/2bb2a236-c1fe-41c8-be1b-c3bbad402cd0" />
+<br></br>
+Clicking the Fats bar chart opens a panel with deeper data the user can find trends with.
+- Greatest sources of fat by food in the last month:
+<br></br>
+<img width="1228" height="940" alt="Screenshot 2026-05-03 at 7 31 07 PM" src="https://github.com/user-attachments/assets/bf3d56cb-9d9b-485e-958a-30bfc1c6c6d8" />
+<br></br>
+- Largest changes in fat contributions from food between last month to this month:
+<br></br>
+<img width="1247" height="946" alt="Screenshot 2026-05-03 at 6 27 50 PM" src="https://github.com/user-attachments/assets/22b50006-90a7-472a-8ef2-bb78a4e56b00" />
+
+
