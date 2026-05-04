@@ -1,6 +1,6 @@
 # Calibrate Web Frontend
 
-This project is a calorie tracking app prototype for someone trying to lose weight, feel more fit, or build healthier habits.
+This project is a calorie tracking app prototype for someone trying to lose weight to become more fit or build healthier habits. I happened to get into healthier eating, jogging, and calisthenics myself, so this domain holds interest for me.
 
 The first goal right now is to demonstrate product judgment: take what could easily become a dense, data-heavy application and keep it simple enough to be useful. The current UI is built with mock data, most things are not actually functional, pages do not load live data yet. That is intentional. It lets the product direction, information hierarchy, and interaction patterns come first before backend contracts or analytics plumbing harden too early.
 
