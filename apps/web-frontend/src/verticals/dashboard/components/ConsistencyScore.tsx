@@ -10,7 +10,7 @@ export const ConsistencyScore = () => {
     <Card className="p-4 lg:p-8 gap-4">
       <div className="flex gap-3 text-primary">
         <ChartColumnIncreasing className="mt-1" />
-        <Typography as="h3" size="lg" color="primary" weight="semibold">
+        <Typography as="h3" variant="capsCardTitle" color="primary">
           Consistency Score
         </Typography>
       </div>
@@ -23,5 +23,5 @@ export const ConsistencyScore = () => {
         You stayed inside your calorie limit 94% of the last 30 days. Great job!
       </Typography>
     </Card>
-  )
+  );
 };

@@ -10,7 +10,7 @@ import {
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
 import { cn } from "#/lib/utils";
-import { ArrowLeftRight, EyeOff, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowLeftRight, EyeOff, Lightbulb } from "lucide-react";
 import type { ReactNode } from "react";
 
 const smartSwaps = [
@@ -22,6 +22,33 @@ type TipCardProps = {
   children: ReactNode;
   className?: string;
 };
+
+const fruitBackground = (
+  <svg
+    aria-hidden="true"
+    className="pointer-events-none absolute -right-8 bottom-[-3.25rem] size-44 text-primary-fixed opacity-25"
+    fill="none"
+    viewBox="0 0 176 176"
+  >
+    <path
+      className="fill-current"
+      d="M98 51c-1-22 13-36 35-35 1 23-13 36-35 35Z"
+    />
+    <path
+      className="stroke-current"
+      d="M101 56c8-21 20-31 36-36"
+      strokeLinecap="round"
+      strokeWidth="14"
+    />
+    <circle
+      className="stroke-current"
+      cx="78"
+      cy="106"
+      r="51"
+      strokeWidth="14"
+    />
+  </svg>
+);
 
 export const SmartSwap = ({ children, className }: TipCardProps) => (
   <div
@@ -52,16 +79,16 @@ export const HiddenContributor = ({ children, className }: TipCardProps) => (
 export const PrimaryBgTipCard = ({ children, className }: TipCardProps) => (
   <div
     className={cn(
-      "relative flex flex-col gap-14 rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-6 text-primary-foreground shadow-lg after:absolute after:inset-0",
+      "relative flex min-h-40 flex-col justify-end overflow-hidden rounded-3xl border border-primary-fixed/20 bg-radial from-primary/87 to-primary p-6 text-on-primary",
       className,
     )}
   >
-    <Sparkles className="size-5" />
+    {fruitBackground}
     <Typography
       as="p"
       color="inherit"
-      weight="bold"
-      className="text-base leading-6"
+      weight="light"
+      className="relative z-10 max-w-[17rem] text-base leading-6"
     >
       {children}
     </Typography>
@@ -72,14 +99,17 @@ export const HighImpactSwap = () => {
   const isMobile = useIsMobile();
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
-      <Card className="rounded-radius-sm p-4 lg:p-8 gap-4">
-        <div className="flex gap-3 text-primary">
+      <Card
+        className="relative overflow-hidden rounded-radius-sm bg-primary p-4 text-white lg:p-8 gap-4"
+        style={{ backgroundColor: "var(--color-primary)" }}
+      >
+        {fruitBackground}
+        <div className="relative z-10 flex gap-3 text-on-primary-container">
           <ArrowLeftRight className="mt-1" />
           <Typography
             as="h3"
-            variant="bodyLg"
-            color="primary"
-            weight="semibold"
+            variant="capsCardTitle"
+            color="inherit"
             className="self-start"
           >
             High-Impact Swap
@@ -88,18 +118,24 @@ export const HighImpactSwap = () => {
         {/* TODO: Make text dynamic.
           Just showing judgment presenting the most important metrics and data for a normal user trying to stay on track
           with new habits and weight loss for now. */}
-        <Typography as="p" color="onSurfaceVariant" size="sm" weight="light">
+        <Typography
+          as="p"
+          color="inherit"
+          size="sm"
+          weight="light"
+          className="relative z-10"
+        >
           Reducing your snack almonds by 20g would save 80cal.
         </Typography>
         <DrawerTrigger asChild>
           <button
             type="button"
-            className="mt-auto flex cursor-pointer items-center gap-2 pt-4 text-left text-primary hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30"
+            className="relative z-10 mt-auto flex cursor-pointer items-center gap-2 pt-4 text-left text-white hover:underline focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-white/30"
           >
-            <Typography as="span" color="primary" weight="medium" size="sm">
+            <Typography as="span" color="inherit" weight="medium" size="sm">
               Learn More
             </Typography>
-            <Lightbulb className="size-4 text-primary" />
+            <Lightbulb className="size-4" />
           </button>
         </DrawerTrigger>
       </Card>
@@ -115,15 +151,9 @@ export const HighImpactSwap = () => {
 
         <div className="flex flex-col gap-9 overflow-y-auto px-6 pb-8">
           <section className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 text-primary">
+            <div className="flex items-center gap-3 text-primary mt-4">
               <ArrowLeftRight className="size-5" />
-              <Typography
-                as="h3"
-                variant="label"
-                color="primary"
-                weight="bold"
-                className="tracking-[0.18em]"
-              >
+              <Typography as="h3" variant="capsCardTitle" color="primary">
                 Smart Swaps
               </Typography>
             </div>
@@ -138,13 +168,7 @@ export const HighImpactSwap = () => {
           <section className="flex flex-col gap-4">
             <div className="flex items-center gap-3 text-on-surface">
               <EyeOff className="size-5" />
-              <Typography
-                as="h3"
-                variant="label"
-                color="onSurface"
-                weight="bold"
-                className="tracking-[0.18em]"
-              >
+              <Typography as="h3" variant="capsCardTitle" color="onSurface">
                 Hidden Contributors
               </Typography>
             </div>

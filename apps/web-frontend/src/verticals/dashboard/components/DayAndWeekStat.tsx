@@ -25,22 +25,20 @@ const weeklyStatData = [
   { label: "Sn", eaten: 48, limit: 68 },
 ];
 
-export const DayAndWeekStat = ({
-  title,
-}: {
-  title: string;
-}) => {
+export const DayAndWeekStat = ({ title }: { title: string }) => {
   return (
     <Card className="p-4 md:px-6 gap-4 flex-col lg:items-center">
-      <Typography as="h3" variant="bodyLg" color="primary" weight="semibold" className="self-start ml-3">
+      <Typography
+        as="h3"
+        variant="capsCardTitle"
+        color="primary"
+        className="self-start ml-3"
+      >
         {title}
       </Typography>
       <div className="flex flex-1 self-stretch gap-4 md:gap-8">
         <div className="flex min-w-0 flex-1 justify-center">
-          <EatenDonutChart
-            eaten={dailyStat.eaten}
-            limit={dailyStat.limit}
-          />
+          <EatenDonutChart eaten={dailyStat.eaten} limit={dailyStat.limit} />
         </div>
 
         <div className="min-w-0 flex-2">
