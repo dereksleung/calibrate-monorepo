@@ -8,6 +8,7 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
+  base: '/calibrate-frontend/', // For temp Github page deployment of mock UI, remove for production deployment
   plugins: [
     devtools(),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),

@@ -3,6 +3,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 
 const router = createRouter({
+  basepath: '/calibrate-frontend', // For temp Github page deployment of mock UI, remove for production deployment
   routeTree,
   defaultPreload: 'intent',
   scrollRestoration: true,
