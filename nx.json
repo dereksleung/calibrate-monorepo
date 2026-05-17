@@ -26,6 +26,10 @@
       "cache": true
     }
   },
+  "workspaceLayout": {
+    "appsDir": "apps"
+  },
+  "defaultProject": "backend",
   "analytics": false,
   "plugins": [
     {

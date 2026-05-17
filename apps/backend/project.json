@@ -1,0 +1,72 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "backend",
+  "projectType": "application",
+  "sourceRoot": "apps/backend/src",
+  "tags": ["type:app", "scope:backend"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "command": "nodemon --exec \"tsx --tsconfig apps/backend/tsconfig.json\" apps/backend/src/app.ts"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "cache": true,
+      "options": {
+        "command": "tsc -p apps/backend/tsconfig.json"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "node apps/backend/dist/src/app.js"
+      }
+    },
+    "kysely": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "kysely --config apps/backend/kysely.config.ts --experimental-resolve-tsconfig-paths"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "oxlint --type-aware --type-check --tsconfig apps/backend/tsconfig.json apps/backend"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "oxlint --config .oxlintrc.json apps/backend"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "oxlint --fix --config .oxlintrc.json apps/backend"
+      }
+    },
+    "fmt": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/."],
+      "cache": true,
+      "options": {
+        "command": "oxfmt apps/backend"
+      }
+    },
+    "fmt:check": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "command": "oxfmt --check apps/backend"
+      }
+    }
+  }
+}

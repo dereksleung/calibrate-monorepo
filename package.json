@@ -16,17 +16,17 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "nx vitest:test",
-    "dev": "nodemon --exec tsx src/app.ts",
-    "build": "tsc",
-    "start": "node dist/app.js",
-    "kysely": "kysely --experimental-resolve-tsconfig-paths",
+    "test": "nx run backend:vitest:test",
+    "dev": "nx run backend:dev",
+    "build": "nx run backend:build",
+    "start": "nx run backend:start",
+    "kysely": "nx run backend:kysely --",
     "prepare": "husky",
-    "typecheck": "oxlint --type-aware --type-check",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "typecheck": "nx run backend:typecheck",
+    "lint": "nx run backend:lint",
+    "lint:fix": "nx run backend:lint:fix",
+    "fmt": "nx run backend:fmt",
+    "fmt:check": "nx run backend:fmt:check"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.54.1",
@@ -60,5 +60,7 @@
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.0.18"
   },
-  "nx": {}
+  "nx": {
+    "includedScripts": []
+  }
 }

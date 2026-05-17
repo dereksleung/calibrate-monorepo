@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2020"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@domain": ["./src/domain/index.ts"],
+      "@validation": ["./src/presentation/validation/index.ts"],
+      "@services": ["./src/application/services/index.ts"],
+      "@controllers": ["./src/presentation/controllers/index.ts"],
+      "@routes": ["./src/presentation/routes/index.ts"],
+      "@infrastructure": ["./src/infrastructure/index.ts"],
+      "@application": ["./src/application/index.ts"],
+      "@presentation": ["./src/presentation/index.ts"],
+      "@factories": ["./test/factories/index.ts"],
+      "@common": ["./src/common/index.ts"],
+      "*": ["./*"]
+    },
+    "types": ["vitest/globals"]
+  },
+  "include": ["./src/**/*", "./kysely.config.ts", "./migrationScript.ts", "./test/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

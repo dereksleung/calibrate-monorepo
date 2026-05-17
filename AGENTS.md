@@ -6,8 +6,9 @@ Instructions for working in this repository.
 
 ## Required Context
 
-- For architecture/layering questions or cross-layer changes, read `docs/ai/architecture.md` first.
-- Treat `docs/ai/architecture.md` as the source of truth for boundaries and dependency direction.
+- For backend architecture/layering questions or backend cross-layer changes, read `apps/backend/docs/ai/architecture.md` first.
+- For other apps or projects, first look for project-local architecture docs under `apps/<project>/docs/` or the relevant project folder.
+- Treat project-local architecture docs as the source of truth for that project's boundaries and dependency direction.
 
 ## Skill Routing
 
@@ -37,15 +38,16 @@ Instructions for working in this repository.
 
 ## Testing Policy
 
-- Add/update tests in `src/**/__tests__/`, and factories in `test/`.
+- Add/update tests under the relevant project root, such as `apps/<project>/src/**/__tests__/`.
+- Put project-specific test factories under that same project, such as `apps/<project>/test/`.
 - Cover happy path, error path, and edge cases.
 - Never remove or disable a failing test to make checks pass unless user explicitly authorizes it.
 
 ## Lint Policy
 
 - `@typescript-eslint/no-explicit-any` is intentionally relaxed for:
-- test files (`*.test.*`, `*.spec.*`, `__tests__`, `test/`)
-- migration files (`src/infrastructure/persistence/migrations/**`)
+- test files (`*.test.*`, `*.spec.*`, `__tests__`, `apps/<project>/test/`)
+- migration files under the relevant app, such as `apps/backend/src/infrastructure/persistence/migrations/**`
 - Keep strict typing elsewhere.
 
 ## Dependency Policy

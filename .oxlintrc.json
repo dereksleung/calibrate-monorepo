@@ -126,14 +126,14 @@
       "files": [
         "**/*.{test,spec}.{ts,tsx,mts,cts}",
         "**/__tests__/**/*.{ts,tsx,mts,cts}",
-        "test/**/*.{ts,tsx,mts,cts}"
+        "**/test/**/*.{ts,tsx,mts,cts}"
       ],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }
     },
     {
-      "files": ["src/infrastructure/persistence/migrations/**/*.{ts,tsx,mts,cts}"],
+      "files": ["apps/backend/src/infrastructure/persistence/migrations/**/*.{ts,tsx,mts,cts}"],
       "rules": {
         "@typescript-eslint/no-explicit-any": "off"
       }

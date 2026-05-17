@@ -4,10 +4,10 @@
 
 The project follows clean architecture with these layers:
 
-- `src/domain/` — domain entities, value objects, business rules, no dependencies on outer layers
-- `src/application/` — services (use case coordination), ports (interfaces for particular technology adapters, e.g. db repositories), DTOs
-- `src/infrastructure/` — concrete implementations and technology choices (e.g. Postgres repositories, Kysely query builder, argon2 password hasher, jose JWT signing/verification)
-- `src/presentation/` - controllers, http request/response shapes, mappers transforming application layer values to response values, validation of http requests, routes definitions
+- `apps/backend/src/domain/` — domain entities, value objects, business rules, no dependencies on outer layers
+- `apps/backend/src/application/` — services (use case coordination), ports (interfaces for particular technology adapters, e.g. db repositories), DTOs
+- `apps/backend/src/infrastructure/` — concrete implementations and technology choices (e.g. Postgres repositories, Kysely query builder, argon2 password hasher, jose JWT signing/verification)
+- `apps/backend/src/presentation/` - controllers, http request/response shapes, mappers transforming application layer values to response values, validation of http requests, routes definitions
 
 ---
 
@@ -15,8 +15,8 @@ The project follows clean architecture with these layers:
 
 As an example, see the aggregate root `DayLog` and its child entity `FoodEntry`.
 
-- src/domain/entities/day-log.ts
-- src/domain/entities/food-entry.ts
+- apps/backend/src/domain/entities/day-log.ts
+- apps/backend/src/domain/entities/food-entry.ts
 
 `DayLog` is the aggregate root for a user's nutrition data on a given day. It is a consistency enforcement boundary for child entities: `DayLog` and its child entities must be strongly consistent, for business rules to work correctly and not lead to an invalid system state.
 
@@ -38,7 +38,7 @@ When adding a food entry, the `DayLogService`:
 
 This is not a full `save(aggregate)` — the repository exposes a targeted write method `addFoodEntry` rather than a full upsert. This is an intentional trade-off: it is more efficient than a `save()` with full diffing, adding a single food entry is a very frequent operation. `save()` with full diffing also would be more purist DDD but adds complexity.
 
-This is reflected in src/application/services/day-log-service.ts `DayLogServiceImpl.addFoodEntry()` and src/infrastructure/persistence/repositories/postgres-day-log-repository.ts `PostgresDayLogRepository.addFoodEntry()`.
+This is reflected in apps/backend/src/application/services/day-log-service.ts `DayLogServiceImpl.addFoodEntry()` and apps/backend/src/infrastructure/persistence/repositories/postgres-day-log-repository.ts `PostgresDayLogRepository.addFoodEntry()`.
 
 ---
 
@@ -63,13 +63,13 @@ The distinction in this codebase:
 
 - `FoodEntryController` is acceptable even though the operation goes through `DayLogService`. Controllers are an HTTP routing concern, not a domain modeling concern. The service dependency determines domain ownership, not the controller name.
 - Domain factory methods are named `Entity.create(props)` for new entities and `Entity.reconstitute(props)` for rehydrating from persistence. This makes clear which path generates a new ID vs. restoring an existing one.
-- HTTP request/response shapes live in `src/presentation/http`.
+- HTTP request/response shapes live in `apps/backend/src/presentation/http`.
 
 ---
 
 ## Transactions
 
-See `PostgresDayLogRepository.addFoodEntry()` in src/infrastructure/persistence/repositories/postgres-day-log-repository.ts. The repository owns the transaction boundary; the service layer does not manage transactions directly.
+See `PostgresDayLogRepository.addFoodEntry()` in apps/backend/src/infrastructure/persistence/repositories/postgres-day-log-repository.ts. The repository owns the transaction boundary; the service layer does not manage transactions directly.
 
 ---
 
