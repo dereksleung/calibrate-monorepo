@@ -1,5 +1,5 @@
 import { AuthenticationError, IAccessTokenService, IssuedAccessToken } from "@application";
-import * as dotenvx from "@dotenvx/dotenvx";
+import dotenvx from "@dotenvx/dotenvx";
 import { importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
 import { createPrivateKey, createPublicKey, type KeyObject } from "node:crypto";
 import path from "node:path";
@@ -25,9 +25,9 @@ export class JoseAccessTokenService implements IAccessTokenService {
   }
 
   async issue({ userId }: { userId: string }): Promise<IssuedAccessToken> {
-    // "EdDSA" has been in the JOSE ecosystem since RFC 8037 (2017). 
-    // Every JWT library in every language recognizes it. 
-    // The newer "Ed25519" identifier (RFC 9864, late 2024) is still gaining adoption; 
+    // "EdDSA" has been in the JOSE ecosystem since RFC 8037 (2017).
+    // Every JWT library in every language recognizes it.
+    // The newer "Ed25519" identifier (RFC 9864, late 2024) is still gaining adoption;
     // some consuming services or older libraries may not accept it yet.
     const protectedHeader = this.config.keyId
       ? { alg: "EdDSA" as const, kid: this.config.keyId }
@@ -74,9 +74,9 @@ export class JoseAccessTokenService implements IAccessTokenService {
 
   private static resolveConfig(config?: Partial<JoseAccessTokenServiceConfig>): JoseAccessTokenServiceConfig {
     const expiresIn =
-      config?.expiresInSeconds ?? parseExpiresInSeconds(process.env.JWT_ACCESS_TOKEN_TTL_SECONDS);
-    const issuer = config?.issuer ?? process.env.JWT_ISSUER;
-    const audience = config?.audience ?? process.env.JWT_AUDIENCE;
+      config?.expiresInSeconds ?? parseExpiresInSeconds(dotenvx.get("JWT_ACCESS_TOKEN_TTL_SECONDS"));
+    const issuer = config?.issuer ?? dotenvx.get("JWT_ISSUER");
+    const audience = config?.audience ?? dotenvx.get("JWT_AUDIENCE");
 
     if (!issuer) {
       throw new Error("JWT_ISSUER is not configured");
@@ -92,10 +92,10 @@ export class JoseAccessTokenService implements IAccessTokenService {
       issuer,
       audience,
       expiresInSeconds: expiresIn,
-      keyId: config?.keyId ?? process.env.JWT_KEY_ID,
+      keyId: config?.keyId ?? dotenvx.get("JWT_KEY_ID"),
       envFilePath: config?.envFilePath ?? path.resolve(process.cwd(), ".env"),
       envKeysFilePath: config?.envKeysFilePath ?? path.resolve(process.cwd(), ".env.keys"),
-      publicKeyPem: config?.publicKeyPem ?? process.env.JWT_PUBLIC_KEY_PEM,
+      publicKeyPem: config?.publicKeyPem, // optional; if not provided, will be derived from the private key
     };
   }
 

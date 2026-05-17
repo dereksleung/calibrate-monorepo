@@ -7,14 +7,17 @@ import { JoseAccessTokenService } from "../jose-access-token-service.js";
 
 vi.mock("@dotenvx/dotenvx", async () => {
   const actual = await vi.importActual<typeof import("@dotenvx/dotenvx")>("@dotenvx/dotenvx");
+
   return {
-    ...actual,
-    get: vi.fn(),
+    default: {
+      ...actual,
+      get: vi.fn(),
+    },
   };
 });
 
 describe("JoseAccessTokenService", () => {
-  const mockedGet = vi.mocked(dotenvx.get);
+  const mockedGet = vi.mocked(dotenvx.default.get);
 
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   const privateKeyPem = privateKey.export({ type: "pkcs8", format: "pem" }).toString().trim();
