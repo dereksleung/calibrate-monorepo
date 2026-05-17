@@ -7,6 +7,10 @@
   "bugs": {
     "url": "https://github.com/dereksleung/clean-architecture-backend/issues"
   },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "license": "ISC",
   "author": "",
   "repository": {
