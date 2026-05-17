@@ -4,3 +4,11 @@
 node_modules
 dist
 .env.keys*
+
+
+.nx/cache
+.nx/workspace-data
+vitest.config.*.timestamp*
+.nx/polygraph
+.claude/worktrees
+.claude/settings.local.json
