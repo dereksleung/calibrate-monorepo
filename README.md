@@ -34,10 +34,21 @@ DB_HOST="localhost"
 DB_PORT="5432"
 DB_USER="postgres"
 DB_PASSWORD=""
+JWT_KEY_ID="local-dev"
+JWT_ACCESS_TOKEN_TTL_SECONDS="900"
+ISSUER="http://localhost:3000/"
+JWT_AUDIENCE="http://localhost:3000/api"
 ```
 
-3. Run `npm ci` in the project root.
+3. Generate an Ed25519 private key .pem file using `openssl genpkey -algorithm ED25519 -out jwt-ed25519-private.pem`.
 
-4. Run `npm run kysely migrate:latest`. Documentation for kysely's CLI [here](https://github.com/kysely-org/kysely-ctl), see "Project-scoped installation", as it is not installed globally.
+4. Copy the .pem file contents to the .env file like JWT_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n(the_private_key)\n-----END PRIVATE KEY-----". It will be encrypted using dotenvx, which is a project dependency.
 
-5. Run `npm run dev`.
+5. Run `npm ci` in the project root.
+
+6. Run `npx dotenvx encrypt`. It should generate a .env.keys file with a private key, and encrypt the values in .env.
+   https://dotenvx.com/docs/learn/encrypting/introduction
+
+7. Run `npm run kysely migrate:latest`. Documentation for kysely's CLI [here](https://github.com/kysely-org/kysely-ctl), see "Project-scoped installation", as it is not installed globally.
+
+8. Run `npm run dev`.

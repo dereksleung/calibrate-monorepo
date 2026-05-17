@@ -1,3 +1,4 @@
+import dotenvx from "@dotenvx/dotenvx";
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 
@@ -13,11 +14,11 @@ export interface Database {
 
 const dialect = new PostgresDialect({
   pool: new Pool({
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || "5432"),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    database: dotenvx.get("DB_NAME"),
+    host: dotenvx.get("DB_HOST"),
+    port: Number(dotenvx.get("DB_PORT") || "5432"),
+    user: dotenvx.get("DB_USER"),
+    password: dotenvx.get("DB_PASSWORD"),
     max: 10,
   }),
 });
