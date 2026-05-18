@@ -17,7 +17,7 @@
     "fmt": "prettier --write ."
   },
   "dependencies": {
-    "@calibrate/api-contracts": "workspace:*",
+    "@calibrate/api-contracts": "1.0.0",
     "@fontsource-variable/inter": "5.2.8",
     "@fontsource-variable/manrope": "5.2.8",
     "@tailwindcss/vite": "4.2.2",

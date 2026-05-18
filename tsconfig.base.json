@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
   }
 }

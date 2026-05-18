@@ -1,6 +1,9 @@
 {
+  "extends": "./tsconfig.base.json",
   "files": [],
   "references": [
-    { "path": "./apps/backend" }
+    { "path": "./apps/backend" },
+    { "path": "./apps/web-frontend" },
+    { "path": "./packages/api-contracts" }
   ]
 }

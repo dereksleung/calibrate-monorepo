@@ -30,5 +30,6 @@
     "types": ["vitest/globals"]
   },
   "include": ["./src/**/*", "./kysely.config.ts", "./migrationScript.ts", "./test/**/*"],
+  "references": [{ "path": "../../packages/api-contracts" }],
   "exclude": ["node_modules", "dist"]
 }

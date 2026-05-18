@@ -1,6 +1,12 @@
 {
+  "extends": "../../tsconfig.base.json",
+  "files": [], // intentionally empty
   "include": ["**/*.ts", "**/*.tsx"],
+  "outDir": "./dist",
+  "rootDir": ".",
+  "references": [{ "path": "../../packages/api-contracts" }],
   "compilerOptions": {
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
     "target": "ES2022",
     "jsx": "react-jsx",
     "module": "ESNext",

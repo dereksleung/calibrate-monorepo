@@ -17,7 +17,7 @@
     "fmt:check": "cd ../.. && oxfmt --check apps/backend"
   },
   "dependencies": {
-    "@calibrate/api-contracts": "workspace:*",
+    "@calibrate/api-contracts": "1.0.0",
     "@dotenvx/dotenvx": "1.54.1",
     "argon2": "0.44.0",
     "cors": "2.8.6",
