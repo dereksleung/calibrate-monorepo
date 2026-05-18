@@ -4,7 +4,8 @@ import { cn } from "../utils"
 
 describe("cn", () => {
   it("combines conditional class values", () => {
-    const result = cn("base", ["nested", false && "hidden"], {
+    const isHidden = false
+    const result = cn("base", ["nested", isHidden && "hidden"], {
       selected: true,
       disabled: false,
     })

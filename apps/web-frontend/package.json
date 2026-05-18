@@ -12,7 +12,9 @@
     "test": "vitest run",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "fmt": "prettier --write ."
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",
