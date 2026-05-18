@@ -1,5 +1,5 @@
 {
-  "name": "calibrate-web-frontend",
+  "name": "web",
   "private": true,
   "type": "module",
   "imports": {

@@ -1,1 +1,1 @@
-npx nx run backend:typecheck && npx nx run backend:vitest:test -- --run
+npx nx run backend:typecheck && npx nx run backend:vitest:test -- --run && npx nx run web:typecheck && npx nx run web:test -- --run
