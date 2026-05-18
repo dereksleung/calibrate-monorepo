@@ -18,23 +18,15 @@ Instructions for working in this repository.
 
 ## Project Commands
 
-- Dev server: `npm run dev`
-- Tests: `npm test`
-- Type-aware check: `npm run typecheck`
-- Lint: `npm run lint`
-- Lint fix: `npm run lint:fix`
-- Format: `npm run fmt`
-- Format check: `npm run fmt:check`
-- Build: `npm run build`
-- Migrations: `npm run kysely migrate:latest`
-
-## Architecture Guardrails
-
-- Keep clean-architecture boundaries:
-- `domain` must not depend on anything else, such as `infrastructure`, `presentation`, `application`.
-- `application` depends on domain contracts/ports, not framework details.
-- `presentation` maps HTTP <-> application DTOs/services.
-- `infrastructure` implements ports (DB, hashing, etc.).
+- Dev server: `npx nx run <project_name>:dev`
+- Tests: `npx nx run <project_name>:test`
+- Type-aware check: `npx nx run <project_name>:typecheck`
+- Lint: `npx nx run <project_name>:lint`
+- Lint fix: `npx nx run <project_name>:lint:fix`
+- Format: `npx nx run <project_name>:fmt`
+- Format check: `npx nx run <project_name>:fmt:check`
+- Build: `npx nx run <project_name>:build`
+- Database Migrations: `npm run kysely migrate:latest`
 
 ## Testing Policy
 
@@ -46,8 +38,8 @@ Instructions for working in this repository.
 ## Lint Policy
 
 - `@typescript-eslint/no-explicit-any` is intentionally relaxed for:
-- test files (`*.test.*`, `*.spec.*`, `__tests__`, `apps/<project>/test/`)
-- migration files under the relevant app, such as `apps/backend/src/infrastructure/persistence/migrations/**`
+  - test files (`*.test.*`, `*.spec.*`, `__tests__`, `apps/<project>/test/`)
+  - migration files under the relevant app, such as `apps/backend/src/infrastructure/persistence/migrations/**`
 - Keep strict typing elsewhere.
 
 ## Dependency Policy
