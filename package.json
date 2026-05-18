@@ -20,49 +20,12 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "nx run backend:vitest:test",
-    "dev": "nx run backend:dev",
-    "build": "nx run backend:build",
-    "start": "nx run backend:start",
-    "kysely": "nx run backend:kysely --",
-    "prepare": "husky",
-    "typecheck": "nx run backend:typecheck",
-    "lint": "nx run backend:lint",
-    "lint:fix": "nx run backend:lint:fix",
-    "fmt": "nx run backend:fmt",
-    "fmt:check": "nx run backend:fmt:check"
-  },
-  "dependencies": {
-    "@dotenvx/dotenvx": "^1.54.1",
-    "argon2": "^0.44.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "helmet": "^8.1.0",
-    "jose": "^6.2.1",
-    "kysely": "^0.28.11",
-    "kysely-ctl": "^0.20.0",
-    "morgan": "^1.10.1",
-    "pg": "^8.18.0",
-    "zod": "^4.3.6"
+    "prepare": "husky"
   },
   "devDependencies": {
     "@nx/vitest": "22.7.0",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/morgan": "^1.9.10",
-    "@types/pg": "^8.16.0",
-    "globals": "^17.3.0",
     "husky": "^9.1.7",
-    "nodemon": "^3.1.11",
-    "nx": "22.7.0",
-    "oxfmt": "^0.36.0",
-    "oxlint": "^1.51.0",
-    "oxlint-tsgolint": "^0.16.0",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vite": "^8.0.0",
-    "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^4.0.18"
+    "nx": "22.7.0"
   },
   "nx": {
     "includedScripts": []
