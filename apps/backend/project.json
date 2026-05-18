@@ -33,6 +33,22 @@
         "command": "kysely --config=apps/backend/kysely.config.ts --experimental-resolve-tsconfig-paths"
       }
     },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/backend",
+        "command": "vitest run"
+      }
+    },
+    "test:watch": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "options": {
+        "cwd": "apps/backend",
+        "command": "vitest --watch"
+      }
+    },
     "typecheck": {
       "executor": "nx:run-commands",
       "cache": true,
