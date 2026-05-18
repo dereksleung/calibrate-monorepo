@@ -35,7 +35,11 @@ ADRs capture the reasoning behind significant technical decisions. They're the h
 
 ### ADR Template
 
-Store ADRs in `docs/decisions/` with sequential numbering:
+In this Nx workspace, store ADRs in the relevant project's `docs/adr/` directory with sequential numbering:
+
+- Project-specific decisions go in `apps/<project>/docs/adr/`.
+- Cross-project or workspace-wide decisions go in root `docs/adr/`.
+- Before writing, identify the Nx project being changed and read the existing ADRs in that project's `docs/adr/` folder so numbering and context stay consistent.
 
 ```markdown
 # ADR-001: Use PostgreSQL for primary database
@@ -212,7 +216,7 @@ One-paragraph description of what this project does.
 
 ## Architecture
 Brief overview of the project structure and key design decisions.
-Link to ADRs for details.
+Link to the relevant project ADRs, such as `apps/<project>/docs/adr/`, for details.
 
 ## Contributing
 How to contribute, coding standards, PR process.

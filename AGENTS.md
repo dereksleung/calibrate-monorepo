@@ -6,9 +6,21 @@ Instructions for working in this repository.
 
 ## Required Context
 
-- For backend architecture/layering questions or backend cross-layer changes, read `apps/backend/docs/ai/architecture.md` first.
+- For backend architecture/layering questions or backend cross-layer changes, read the backend ADRs under `apps/backend/docs/adr/` first.
 - For other apps or projects, first look for project-local architecture docs under `apps/<project>/docs/` or the relevant project folder.
 - Treat project-local architecture docs as the source of truth for that project's boundaries and dependency direction.
+
+### Issue tracker
+
+Issues, PRDs, and grouped implementation plans are tracked as local markdown files under `docs/tasks/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Matt Pocock skills use the default status names, scoped only to Matt Pocock skills as identified by each skill's `skills.md` file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a multi-context Nx layout with ADRs stored under each project, such as `apps/backend/docs/adr/`. See `docs/agents/domain.md`.
 
 ## Skill Routing
 

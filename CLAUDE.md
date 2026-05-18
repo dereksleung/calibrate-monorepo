@@ -1,3 +1,17 @@
+## Agent skills
+
+### Issue tracker
+
+Issues, PRDs, and grouped implementation plans are tracked as local markdown files under `docs/tasks/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Matt Pocock skills use the default status names, scoped only to Matt Pocock skills as identified by each skill's `skills.md` file. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This repo uses a multi-context Nx layout with ADRs stored under each project, such as `apps/backend/docs/adr/`. See `docs/agents/domain.md`.
+
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
 
