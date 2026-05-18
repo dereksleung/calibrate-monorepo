@@ -12,3 +12,6 @@ vitest.config.*.timestamp*
 .nx/polygraph
 .claude/worktrees
 .claude/settings.local.json
+vite.config.*.timestamp*
+
+storybook-static

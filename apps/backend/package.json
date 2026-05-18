@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest",
-    "test:ci": "vitest run",
+    "test": "nx test",
+    "test:ci": "nx test run",
     "dev": "nodemon --exec \"tsx --tsconfig tsconfig.json\" src/app.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/app.js",
