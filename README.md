@@ -33,7 +33,7 @@ DB_NAME="postgres"
 DB_HOST="localhost"
 DB_PORT="5432"
 DB_USER="postgres"
-DB_PASSWORD=""
+DB_PASSWORD="<password_from_earlier>"
 JWT_KEY_ID="local-dev"
 JWT_ACCESS_TOKEN_TTL_SECONDS="900"
 ISSUER="http://localhost:3000/"
@@ -47,8 +47,14 @@ JWT_AUDIENCE="http://localhost:3000/api"
 5. Run `npm ci` in the project root.
 
 6. Run `npx dotenvx encrypt`. It should generate a .env.keys file with a private key, and encrypt the values in .env.
-   https://dotenvx.com/docs/learn/encrypting/introduction
+   Dotenvx docs [here](https://dotenvx.com/docs/learn/encrypting/introduction)
 
-7. Run `npm run kysely migrate:latest`. Documentation for kysely's CLI [here](https://github.com/kysely-org/kysely-ctl), see "Project-scoped installation", as it is not installed globally.
+7. Run `npx nx run backend:kysely migrate:latest`. Documentation for kysely's CLI [here](https://github.com/kysely-org/kysely-ctl), see "Project-scoped installation", as it is not installed globally.
 
-8. Run `npm run dev`.
+8. Run `npx nx run backend:dev`.
+
+9. Other commands can be run like `npx nx run (project_name):(command_name) (args)`. Project names are found in `apps/app-folder/package.json`'s `name` field, the available command names comes from the `scripts` field.
+Nx documentation [here](https://nx.dev/docs/getting-started/tutorials/running-tasks#running-a-single-task)
+
+
+
