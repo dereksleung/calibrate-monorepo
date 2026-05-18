@@ -16,16 +16,10 @@ shadcn/ui is useful here for helping build battle-tested, accessible, polished U
 
 ## Running Locally
 
-Install dependencies once:
-
-```bash
-npm ci
-```
-
 Start the dev server:
 
 ```bash
-npm run dev
+npx nx run web:dev
 ```
 
 The app runs at:
