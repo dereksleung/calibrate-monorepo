@@ -6,12 +6,12 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "nx serve dev --port 3000",
-    "build": "nx vite:build",
-    "preview": "nx vite:preview",
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "vitest run",
-    "storybook": "nx serve:storybook -p 6006",
-    "build-storybook": "nx build:storybook",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
