@@ -30,7 +30,7 @@
     "kysely": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "kysely --config apps/backend/kysely.config.ts --experimental-resolve-tsconfig-paths"
+        "command": "kysely --config=apps/backend/kysely.config.ts --experimental-resolve-tsconfig-paths"
       }
     },
     "typecheck": {
