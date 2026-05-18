@@ -1,6 +1,6 @@
 import { User } from "@domain";
 
-import { UserResponse } from "../http/user-responses.js";
+import type { UserResponse } from "@calibrate/api-contracts";
 
 export class UserResponseMapper {
   public static toResponse(user: User): UserResponse {

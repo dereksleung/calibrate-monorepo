@@ -3,8 +3,7 @@ import { IUserService } from "@services";
 import { validate } from "@validation";
 import { Request, Response } from "express";
 
-import { CreateUserRequestBodySchema } from "../http/user-requests.js";
-import { UserResponse } from "../http/user-responses.js";
+import { CreateUserRequestBodySchema, type UserResponse } from "@calibrate/api-contracts";
 import { UserResponseMapper } from "../mappers/user-response-mapper.js";
 
 export class UserController {

@@ -4,7 +4,7 @@ import { buildDayLogResponse, buildFoodEntry, buildFoodEntryResponse } from "@fa
 import { DayLogResponse, GetDayLogRequestRouteParams } from "@presentation";
 import { Request } from "express";
 import { DayLogController } from "src/presentation/controllers/day-log-controller.js";
-import { CreateFoodEntryRequestRouteParams } from "src/presentation/http/food-entry-requests.js";
+import type { CreateFoodEntryRequestRouteParams } from "@calibrate/api-contracts";
 import { vi, MockedObject } from "vitest";
 
 describe("DayLogController", () => {

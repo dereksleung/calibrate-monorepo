@@ -1,4 +1,4 @@
-import { MealNameEnumType } from "../../domain/entities/food-entry.js";
+import type { MealNameEnumType } from "./food-entry-requests.js";
 
 export interface FoodEntryResponse {
   id: string;

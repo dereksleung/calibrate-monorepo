@@ -1,6 +1,6 @@
 import { DayLog } from "@domain";
 
-import { DayLogResponse } from "../http/day-log-responses.js";
+import type { DayLogResponse } from "@calibrate/api-contracts";
 import { FoodEntryResponseMapper } from "./food-entry-response-mapper.js";
 
 export class DayLogResponseMapper {

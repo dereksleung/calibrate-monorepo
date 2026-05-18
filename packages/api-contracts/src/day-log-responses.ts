@@ -1,4 +1,4 @@
-import { FoodEntryResponse } from "./food-entry-responses.js";
+import type { FoodEntryResponse } from "./food-entry-responses.js";
 
 export interface DayLogResponse {
   id: string;

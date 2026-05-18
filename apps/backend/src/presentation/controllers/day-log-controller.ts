@@ -4,13 +4,14 @@ import { IDayLogService } from "@services";
 import { validate } from "@validation";
 import { Request, Response } from "express";
 
-import { GetDayLogRequestRouteParams, GetDayLogRequestRouteParamsSchema } from "../http/day-log-requests.js";
-import { DayLogResponse } from "../http/day-log-responses.js";
 import {
-  CreateFoodEntryRequestRouteParamsSchema,
   CreateFoodEntryRequestRouteParams,
+  CreateFoodEntryRequestRouteParamsSchema,
   CreateFoodEntryRequestSchema,
-} from "../http/food-entry-requests.js";
+  DayLogResponse,
+  GetDayLogRequestRouteParams,
+  GetDayLogRequestRouteParamsSchema,
+} from "@calibrate/api-contracts";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
 
 /**

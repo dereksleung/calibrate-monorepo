@@ -1,5 +1,8 @@
-import { MealNameSchema } from "@domain";
 import * as z from "zod";
+
+export const MealNameSchema = z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACKS"]);
+
+export type MealNameEnumType = z.infer<typeof MealNameSchema>;
 
 export const CommonFoodEntryFieldsSchema = z.object({
   meal: MealNameSchema,

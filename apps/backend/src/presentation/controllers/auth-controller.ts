@@ -3,8 +3,7 @@ import { IAuthService } from "@services";
 import { validate } from "@validation";
 import { Request, Response } from "express";
 
-import { LoginRequestBodySchema } from "../http/auth-requests.js";
-import { LoginResponse } from "../http/auth-responses.js";
+import { LoginRequestBodySchema, type LoginResponse } from "@calibrate/api-contracts";
 import { UserResponseMapper } from "../mappers/user-response-mapper.js";
 
 export class AuthController {

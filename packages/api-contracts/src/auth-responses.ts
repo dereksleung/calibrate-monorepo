@@ -1,4 +1,4 @@
-import { UserResponse } from "./user-responses.js";
+import type { UserResponse } from "./user-responses.js";
 
 export interface LoginResponse {
   accessToken: string;

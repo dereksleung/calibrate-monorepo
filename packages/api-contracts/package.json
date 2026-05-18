@@ -1,4 +1,14 @@
 {
   "name": "@calibrate/api-contracts",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "zod": "4.3.6"
+  }
 }

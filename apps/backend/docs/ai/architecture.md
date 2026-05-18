@@ -63,7 +63,7 @@ The distinction in this codebase:
 
 - `FoodEntryController` is acceptable even though the operation goes through `DayLogService`. Controllers are an HTTP routing concern, not a domain modeling concern. The service dependency determines domain ownership, not the controller name.
 - Domain factory methods are named `Entity.create(props)` for new entities and `Entity.reconstitute(props)` for rehydrating from persistence. This makes clear which path generates a new ID vs. restoring an existing one.
-- HTTP request/response shapes live in `apps/backend/src/presentation/http`.
+- HTTP request/response shapes live in `packages/api-contracts` (`@calibrate/api-contracts`).
 
 ---
 

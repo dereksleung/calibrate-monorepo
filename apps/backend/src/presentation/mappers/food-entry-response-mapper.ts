@@ -1,6 +1,6 @@
 import { FoodEntry } from "@domain";
 
-import { FoodEntryResponse } from "../http/food-entry-responses.js";
+import type { FoodEntryResponse } from "@calibrate/api-contracts";
 
 export class FoodEntryResponseMapper {
   public static toResponse(foodEntry: FoodEntry): FoodEntryResponse {
