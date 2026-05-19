@@ -54,7 +54,7 @@ The user should be able to:
 ## Project Structure
 
 - `docs/ideas/log-page.md` - original product idea and scope notes.
-- `docs/specs/log-page.md` - living specification for the feature.
+- `docs/tasks/log-page/PRD.md` - living specification for the feature.
 - `apps/web-frontend/src/routes/logs.tsx` - route entry for `/logs`.
 - `apps/web-frontend/src/pages/logs/Logs.tsx` - page composition for the daily log.
 - `apps/web-frontend/src/pages/logs/components/` - page-local UI components such as progress summary, meal sections, food search drawer, confirmation form, and recent foods list.

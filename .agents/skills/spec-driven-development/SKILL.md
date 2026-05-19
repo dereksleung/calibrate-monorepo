@@ -48,6 +48,8 @@ ASSUMPTIONS I'M MAKING:
 
 Don't silently fill in ambiguous requirements. The spec's entire purpose is to surface misunderstandings *before* code gets written — assumptions are the most dangerous form of misunderstanding.
 
+Place the document under the root-level docs/tasks/<short-descriptive-name>/ directory, named PRD.md. This keeps the spec close to the code but clearly separate from implementation details.
+
 **Write a spec document covering these six core areas:**
 
 1. **Objective** — What are we building and why? Who is the user? What does success look like?
