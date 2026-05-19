@@ -295,11 +295,12 @@ describe('TaskService', () => {
 | No test isolation | Tests pass individually but fail together | Each test sets up and tears down its own state |
 | Mocking everything | Tests pass but production breaks | Prefer real implementations > fakes > stubs > mocks. Mock only at boundaries where real deps are slow or non-deterministic |
 
-## Browser Testing with DevTools
+## Browser Testing with Codex's browser or DevTools
 
-For anything that runs in a browser, unit tests alone aren't enough — you need runtime verification. Use Chrome DevTools MCP to give your agent eyes into the browser: DOM inspection, console logs, network requests, performance traces, and screenshots.
+For anything that runs in a browser, unit tests alone aren't enough — you need runtime verification. Use Codex's browser or Chrome DevTools MCP to give your agent eyes into the browser: DOM inspection, console logs, network requests, performance traces, and screenshots.
+Tell me if Codex's browser cannot do certain things, I may need to set up Chrome Devtools MCP.
 
-### The DevTools Debugging Workflow
+### The Browser/DevTools Debugging Workflow
 
 ```
 1. REPRODUCE: Navigate to the page, trigger the bug, screenshot
@@ -374,7 +375,7 @@ For detailed testing patterns, examples, and anti-patterns across frameworks, se
 After completing any implementation:
 
 - [ ] Every new behavior has a corresponding test
-- [ ] All tests pass: `npm test`
+- [ ] All tests pass: `npx nx run <project_name>:test`
 - [ ] Bug fixes include a reproduction test that failed before the fix
 - [ ] Test names describe the behavior being verified
 - [ ] No tests were skipped or disabled
