@@ -24,9 +24,7 @@ This repo uses a multi-context Nx layout with ADRs stored under each project, su
 
 ## Skill Routing
 
-- Use `$test-agent` for any request involving tests, coverage, regressions, edge cases, or failing test diagnosis.
-- Load and follow `.codex/skills/test-agent/SKILL.md` for those tasks.
-- If the skill is unavailable, continue with best-effort and state that clearly.
+- Look in the .agents/skills/ folder. Some tests are specifically from Matt Pocock and will say so inside their respective SKILLS.md file, they have certain special conventions.
 
 ## Project Commands
 
