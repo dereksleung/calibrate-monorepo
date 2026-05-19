@@ -29,7 +29,9 @@ This repo uses a multi-context Nx layout with ADRs stored under each project, su
 ## Project Commands
 
 - Dev server: `npx nx run <project_name>:dev`
-- Tests: `npx nx run <project_name>:test`
+- Tests, fast/default suite: `npx nx run <project_name>:test`
+- Tests, integration suite: `npx nx run <project_name>:test:integration`
+- Tests, end-to-end suite: `npx nx run <project_name>:test:e2e`
 - Type-aware check: `npx nx run <project_name>:typecheck`
 - Lint: `npx nx run <project_name>:lint`
 - Lint fix: `npx nx run <project_name>:lint:fix`
@@ -42,6 +44,12 @@ This repo uses a multi-context Nx layout with ADRs stored under each project, su
 
 - Add/update tests under the relevant project root, such as `apps/<project>/src/**/__tests__/`.
 - Put project-specific test factories under that same project, such as `apps/<project>/test/`.
+- Use `*.test.ts` / `*.test.tsx` for the normal fast suite run by `npx nx run <project_name>:test`.
+- Use `*.integration.test.ts` / `*.integration.test.tsx` for integration tests run by `npx nx run <project_name>:test:integration`.
+- Use `*.e2e.test.ts` / `*.e2e.test.tsx` for end-to-end tests run by `npx nx run <project_name>:test:e2e`.
+- Prefer the normal suite for pure units, isolated components, mappers, validators, and service behavior with test doubles.
+- Prefer the integration suite when the test crosses a real project boundary, such as database persistence, HTTP adapters, filesystem, queues, framework middleware, or multiple layers wired together locally.
+- Prefer the end-to-end suite for critical user/system flows exercised through the outermost interface, such as browser flows or full HTTP flows through the running app.
 - Cover happy path, error path, and edge cases.
 - Never remove or disable a failing test to make checks pass unless user explicitly authorizes it.
 

@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run",
-    "test:ci": "vitest run",
+    "test": "vitest run --exclude \"**/*.integration.test.ts\" --exclude \"**/*.e2e.test.ts\" --exclude \"integration/**\" --exclude \"e2e/**\" --exclude \"test/integration/**\" --exclude \"test/e2e/**\"",
+    "test:integration": "vitest run --passWithNoTests \"src/**/*.integration.test.ts\" \"integration/**/*.test.ts\" \"test/integration/**/*.test.ts\"",
+    "test:e2e": "vitest run --passWithNoTests \"src/**/*.e2e.test.ts\" \"e2e/**/*.test.ts\" \"test/e2e/**/*.test.ts\"",
+    "test:ci": "vitest run --exclude \"**/*.integration.test.ts\" --exclude \"**/*.e2e.test.ts\" --exclude \"integration/**\" --exclude \"e2e/**\" --exclude \"test/integration/**\" --exclude \"test/e2e/**\"",
     "dev": "nodemon --exec \"tsx --tsconfig tsconfig.json\" src/app.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/app.js",
@@ -14,7 +16,8 @@
     "lint": "cd ../.. && oxlint --config .oxlintrc.json apps/backend",
     "lint:fix": "cd ../.. && oxlint --fix --config .oxlintrc.json apps/backend",
     "fmt": "cd ../.. && oxfmt apps/backend",
-    "fmt:check": "cd ../.. && oxfmt --check apps/backend"
+    "fmt:check": "cd ../.. && oxfmt --check apps/backend",
+    "test:watch": "vitest --watch --exclude \"**/*.integration.test.ts\" --exclude \"**/*.e2e.test.ts\" --exclude \"integration/**\" --exclude \"e2e/**\" --exclude \"test/integration/**\" --exclude \"test/e2e/**\""
   },
   "dependencies": {
     "@calibrate/api-contracts": "1.0.0",

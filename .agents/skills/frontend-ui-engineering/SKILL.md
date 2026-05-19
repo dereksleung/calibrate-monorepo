@@ -33,6 +33,12 @@ src/components/
     types.ts              # Component-specific types (if needed)
 ```
 
+Use the repo test suite suffixes deliberately:
+
+- `*.test.tsx` for fast component, hook, utility, and route-unit tests run by `npx nx run <project_name>:test`.
+- `*.integration.test.tsx` for slower provider/router/API-boundary integration tests run by `npx nx run <project_name>:test:integration`.
+- `*.e2e.test.tsx` for full user flows through the app UI run by `npx nx run <project_name>:test:e2e`.
+
 ### Component Patterns
 
 **Prefer composition over configuration:**

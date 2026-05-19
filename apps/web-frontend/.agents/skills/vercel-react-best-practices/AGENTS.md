@@ -10,6 +10,12 @@ January 2026
 > may also find it useful, but guidance here is optimized for automation  
 > and consistency by AI-assisted workflows.
 
+## Repository Test Suite Convention
+
+- Use `*.test.ts` / `*.test.tsx` for fast component, hook, utility, and route-unit tests run by `npx nx run web:test`.
+- Use `*.integration.test.ts` / `*.integration.test.tsx` for slower tests run by `npx nx run web:test:integration`, such as component trees with real providers, router integration, API boundary behavior, or browser-like runtime wiring that stays local.
+- Use `*.e2e.test.ts` / `*.e2e.test.tsx` for full user flows run by `npx nx run web:test:e2e`, especially tests that drive the app through its outer UI boundary.
+
 ---
 
 ## Abstract

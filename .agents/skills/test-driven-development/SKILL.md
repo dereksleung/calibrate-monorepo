@@ -163,13 +163,23 @@ Small tests should make up the vast majority of your suite. They're fast, reliab
 ```
 Is it pure logic with no side effects?
   → Unit test (small)
+  → File: *.test.ts[x]
+  → Run: npx nx run <project_name>:test
 
 Does it cross a boundary (API, database, file system)?
   → Integration test (medium)
+  → File: *.integration.test.ts[x]
+  → Run: npx nx run <project_name>:test:integration
 
 Is it a critical user flow that must work end-to-end?
   → E2E test (large) — limit these to critical paths
+  → File: *.e2e.test.ts[x]
+  → Run: npx nx run <project_name>:test:e2e
 ```
+
+### Repository Test Suite Convention
+
+- Keep the default `test` target fast; put slower database, browser, network, or full-stack flows in the integration or e2e suite.
 
 ## Writing Good Tests
 
@@ -376,6 +386,7 @@ After completing any implementation:
 
 - [ ] Every new behavior has a corresponding test
 - [ ] All tests pass: `npx nx run <project_name>:test`
+- [ ] Slower integration or e2e changes pass their specific suite: `npx nx run <project_name>:test:integration` or `npx nx run <project_name>:test:e2e`
 - [ ] Bug fixes include a reproduction test that failed before the fix
 - [ ] Test names describe the behavior being verified
 - [ ] No tests were skipped or disabled

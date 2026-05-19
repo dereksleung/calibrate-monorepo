@@ -144,6 +144,12 @@ Generators provide a starting point. Modify the output as needed to:
 
 **Important:** If you replace or delete generated test files (e.g., `*.spec.ts`), either write meaningful replacement tests or remove the `test` target from the project configuration. Empty test suites will cause `nx test` to fail.
 
+When adding tests, use this repo's suite suffixes so Nx runs the right target:
+
+- Fast/default tests: `*.test.ts` / `*.test.tsx`, run by `npx nx run <project_name>:test`
+- Integration tests: `*.integration.test.ts` / `*.integration.test.tsx`, run by `npx nx run <project_name>:test:integration`
+- End-to-end tests: `*.e2e.test.ts` / `*.e2e.test.tsx`, run by `npx nx run <project_name>:test:e2e`
+
 ### 9. Format and Verify
 
 Format all generated/modified files:

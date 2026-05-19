@@ -38,7 +38,23 @@
     "vitest": "4.1.5"
   },
   "nx": {
-    "includedScripts": []
+    "includedScripts": [],
+    "targets": {
+      "test:integration": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "command": "vitest run --passWithNoTests \"src/**/*.integration.test.{ts,tsx}\" \"integration/**/*.test.{ts,tsx}\" \"test/integration/**/*.test.{ts,tsx}\""
+        }
+      },
+      "test:e2e": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "command": "vitest run --passWithNoTests \"src/**/*.e2e.test.{ts,tsx}\" \"e2e/**/*.test.{ts,tsx}\" \"test/e2e/**/*.test.{ts,tsx}\""
+        }
+      }
+    }
   },
   "dependencies": {
     "typescript-eslint": "8.59.0"

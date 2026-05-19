@@ -32,8 +32,16 @@ You can pass a `-p` flag to filter to specific projects, otherwise it runs on al
 Examples:
 
 - `nx run-many -t test -p proj1 proj2` — test specific projects
+- `nx run-many -t test:integration -p proj1 proj2` — run slower integration suites for specific projects
+- `nx run-many -t test:e2e -p proj1 proj2` — run end-to-end suites for specific projects
 - `nx run-many -t test --projects=*-app --exclude=excluded-app` — test projects matching a pattern
 - `nx run-many -t test --projects=tag:api-*` — test projects by tag
+
+This repo uses separate test targets by file suffix:
+
+- `*.test.ts` / `*.test.tsx` -> `nx run <project>:test`
+- `*.integration.test.ts` / `*.integration.test.tsx` -> `nx run <project>:test:integration`
+- `*.e2e.test.ts` / `*.e2e.test.tsx` -> `nx run <project>:test:e2e`
 
 ## Run tasks for affected projects
 

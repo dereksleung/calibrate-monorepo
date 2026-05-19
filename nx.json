@@ -16,6 +16,12 @@
     "test": {
       "cache": true
     },
+    "test:integration": {
+      "cache": true
+    },
+    "test:e2e": {
+      "cache": true
+    },
     "typecheck": {
       "cache": true
     },

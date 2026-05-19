@@ -2,7 +2,7 @@
 
 ## Phase
 
-Phase 2 implementation plan for `docs/tasks/log-page/PRD.md`. Do not break this into Phase 3 tasks or start implementation until this plan is reviewed.
+Phase 3 task breakdown for `docs/tasks/log-page/PRD.md`. Do not start implementation until this task breakdown is reviewed.
 
 ## Planning Assumptions
 
@@ -331,3 +331,213 @@ Checkpoint 6: End-to-end manual smoke
 - [x] Confirmation route path and transition strategy recorded.
 - [x] API response shape decision recorded for weight update.
 - [x] Approved for Phase 3 task breakdown.
+
+## Phase 3 Task Breakdown
+
+These tasks are ordered by dependency. Each task is intended to fit in a focused implementation session and touch no more than about five files, excluding generated lockfile or route-tree updates when a tool necessarily changes them.
+
+- [ ] Task: Add shared contracts for weight updates and food search
+  - Acceptance: `PATCH /daylogs/:date/weight`, `GET /foods/search?query=<text>`, and optional recent-food response shapes have Zod schemas and exported TypeScript types. Food search results include source type, display metadata, serving metadata, calories/macros needed for confirmation, and optional recency metadata. The food search query enforces the 3-character minimum decided in Phase 2.
+  - Verify: `npx nx run backend:typecheck`
+  - Files:
+    - `packages/api-contracts/src/day-log-requests.ts`
+    - `packages/api-contracts/src/day-log-responses.ts`
+    - `packages/api-contracts/src/food-search-requests.ts`
+    - `packages/api-contracts/src/food-search-responses.ts`
+    - `packages/api-contracts/src/index.ts`
+
+- [ ] Task: Add day-log weight behavior to the domain and service layer
+  - Acceptance: `DayLog` owns weight mutation through an explicit behavior method, the application DTOs include an update-weight request, and `IDayLogService.updateWeight({ userId, date, weight })` returns the updated `DayLog`. Service tests cover successful update, missing user, empty selected day creation, and validation of the aggregate behavior.
+  - Verify: `npx nx run backend:test -- src/domain/entities/__tests__/day-log.test.ts src/application/services/__tests__/day-log-service.test.ts`
+  - Files:
+    - `apps/backend/src/domain/entities/day-log.ts`
+    - `apps/backend/src/domain/entities/__tests__/day-log.test.ts`
+    - `apps/backend/src/application/dtos/day-log-dtos.ts`
+    - `apps/backend/src/application/services/day-log-service.ts`
+    - `apps/backend/src/application/services/__tests__/day-log-service.test.ts`
+
+- [ ] Task: Persist weight updates and fix day-log find-or-create
+  - Acceptance: `IDayLogRepository` exposes a targeted `updateWeight(dayLogId, weight)` write, `PostgresDayLogRepository.findOrCreateByDateAndUserId()` creates the requested dated row when none exists, and weight updates persist against the authenticated user's selected day log without bypassing the aggregate boundary.
+  - Verify: `npx nx run backend:typecheck`
+  - Files:
+    - `apps/backend/src/application/ports/day-log-repository.ts`
+    - `apps/backend/src/infrastructure/persistence/repositories/postgres-day-log-repository.ts`
+    - `apps/backend/src/application/services/__tests__/day-log-service.test.ts`
+
+- [ ] Task: Expose the day-log weight HTTP endpoint
+  - Acceptance: `PATCH /daylogs/:date/weight` validates route params and body with shared schemas, requires authentication, calls `DayLogService.updateWeight`, and returns the updated `DayLogResponse`. Controller tests cover success, validation failure, unauthenticated access, and service error handling.
+  - Verify: `npx nx run backend:test -- src/presentation/controllers/__tests__/day-log-controller.test.ts`
+  - Files:
+    - `apps/backend/src/presentation/controllers/day-log-controller.ts`
+    - `apps/backend/src/presentation/controllers/__tests__/day-log-controller.test.ts`
+    - `apps/backend/src/presentation/routes/day-log-routes.ts`
+    - `apps/backend/src/presentation/mappers/day-log-response-mapper.ts`
+
+- [ ] Task: Add food-search application contracts and orchestration
+  - Acceptance: The application layer has DTOs, a `FoodSearchProvider` port, a recent-food read port, and a small service/query handler that trims input, applies the result limit and 3-character minimum, requests matching recent foods, requests USDA foods, and returns one ordered app-owned result list with recent foods first.
+  - Verify: `npx nx run backend:test -- src/application/services/__tests__/food-search-service.test.ts`
+  - Files:
+    - `apps/backend/src/application/dtos/food-search-dtos.ts`
+    - `apps/backend/src/application/ports/food-search-provider.ts`
+    - `apps/backend/src/application/ports/recent-food-query.ts`
+    - `apps/backend/src/application/services/food-search-service.ts`
+    - `apps/backend/src/application/services/__tests__/food-search-service.test.ts`
+
+- [ ] Task: Implement the FoodData Central infrastructure adapter
+  - Acceptance: The adapter reads `FOODDATA_CENTRAL_API_KEY` only from backend environment/configuration, builds FoodData Central requests, maps provider responses into app-owned DTOs, handles provider errors without leaking internals, and isolates USDA branded-versus-generic ranking heuristics behind unit-tested functions.
+  - Verify: `npx nx run backend:test -- src/infrastructure/food-data-central/__tests__/food-data-central-food-search-provider.test.ts`
+  - Files:
+    - `apps/backend/src/infrastructure/food-data-central/food-data-central-food-search-provider.ts`
+    - `apps/backend/src/infrastructure/food-data-central/food-data-central-mappers.ts`
+    - `apps/backend/src/infrastructure/food-data-central/food-data-central-ranking.ts`
+    - `apps/backend/src/infrastructure/food-data-central/__tests__/food-data-central-food-search-provider.test.ts`
+    - `apps/backend/src/infrastructure/index.ts`
+
+- [ ] Task: Implement recent-food read query and dedupe
+  - Acceptance: Recent foods are read from the authenticated user's food entries from the past 2 weeks, matched against the search query, deduplicated only against other recent foods by normalized name, brand, serving unit, and nutrition values, and returned with last-used metadata for labels such as `Thur` or `Mar 31`.
+  - Verify: `npx nx run backend:test -- src/infrastructure/persistence/repositories/__tests__/postgres-recent-food-query.test.ts`
+  - Files:
+    - `apps/backend/src/infrastructure/persistence/repositories/postgres-recent-food-query.ts`
+    - `apps/backend/src/infrastructure/persistence/repositories/__tests__/postgres-recent-food-query.test.ts`
+    - `apps/backend/src/infrastructure/persistence/repositories/index.ts`
+    - `apps/backend/src/application/dtos/food-search-dtos.ts`
+
+- [ ] Task: Expose backend food search routes and container wiring
+  - Acceptance: `GET /foods/search?query=<text>` is authenticated, validates query params with the shared schema, returns backend-ordered results, maps service/provider errors into safe HTTP responses, and is wired through the backend container and route index. No response includes the FoodData Central API key or provider-specific private fields.
+  - Verify: `npx nx run backend:test -- src/presentation/controllers/__tests__/food-search-controller.test.ts`
+  - Files:
+    - `apps/backend/src/presentation/controllers/food-search-controller.ts`
+    - `apps/backend/src/presentation/controllers/__tests__/food-search-controller.test.ts`
+    - `apps/backend/src/presentation/routes/food-search-routes.ts`
+    - `apps/backend/src/presentation/routes/index.ts`
+    - `apps/backend/src/infrastructure/container.ts`
+
+- [ ] Task: Generate the shared API client package
+  - Acceptance: `packages/api-client` exists as package `@calibrate/api-client`, follows workspace package conventions, exports from `src/index.ts`, depends on `@calibrate/api-contracts`, and is visible to Nx/workspaces. Run the generator as a dry run first and compare the generated shape against `packages/api-contracts`.
+  - Verify: `npx nx show project @calibrate/api-client --json`
+  - Files:
+    - `packages/api-client/package.json`
+    - `packages/api-client/src/index.ts`
+    - `packages/api-client/tsconfig.json`
+    - `package.json`
+    - `package-lock.json`
+
+- [ ] Task: Add portable API request functions
+  - Acceptance: `@calibrate/api-client` exposes configurable request functions for selected day log fetch, food entry save, weight update, food search, and optional recent-food fetch. The client accepts `baseUrl`, injected `fetch`, and auth/session options where needed, parses responses through shared schemas where practical, and has no React DOM, TanStack Router, browser global, React Native, or UI primitive dependency.
+  - Verify: `npx nx run @calibrate/api-client:typecheck` if a target exists; otherwise `npx nx run web:typecheck`
+  - Files:
+    - `packages/api-client/src/client.ts`
+    - `packages/api-client/src/day-logs.ts`
+    - `packages/api-client/src/foods.ts`
+    - `packages/api-client/src/errors.ts`
+    - `packages/api-client/src/index.ts`
+
+- [ ] Task: Add React Query helpers and approved dependency declarations
+  - Acceptance: `@calibrate/api-client` declares `@tanstack/react-query` as peer and dev dependency, `web` declares it as an app dependency, and the API client exports portable query options/hooks/mutation helpers without owning platform provider setup. Before any package install during implementation, present the exact install command if the lockfile needs to change.
+  - Verify: `npx nx run web:typecheck`
+  - Files:
+    - `packages/api-client/package.json`
+    - `packages/api-client/src/query-options.ts`
+    - `packages/api-client/src/mutations.ts`
+    - `packages/api-client/src/index.ts`
+    - `apps/web-frontend/package.json`
+
+- [ ] Task: Add web-level query provider and API client configuration
+  - Acceptance: The web app owns `QueryClientProvider`, optional devtools/provider wiring, and base API client configuration. Platform setup remains outside `@calibrate/api-client`, and existing router setup continues to render current routes.
+  - Verify: `npx nx run web:typecheck`
+  - Files:
+    - `apps/web-frontend/src/main.tsx`
+    - `apps/web-frontend/src/router.tsx`
+    - `apps/web-frontend/src/shared/api/api-client.ts`
+    - `apps/web-frontend/src/shared/api/query-client.ts`
+
+- [ ] Task: Add selected-date search validation and confirmation route shell
+  - Acceptance: `/logs` validates selected-date URL search params through TanStack Router if URL search is used, `/logs/confirm-food` exists as a hidden workflow route, and direct entry or refresh without selected-food context shows a recoverable empty state or returns the user to search. Search-to-confirmation navigation is prepared for per-navigation `viewTransition: true` with normal navigation fallback.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/logs-routing.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/routes/logs.tsx`
+    - `apps/web-frontend/src/routes/logs/confirm-food.tsx`
+    - `apps/web-frontend/src/pages/logs/ConfirmFood.tsx`
+    - `apps/web-frontend/src/pages/logs/__tests__/logs-routing.test.tsx`
+    - `apps/web-frontend/src/routeTree.gen.ts`
+
+- [ ] Task: Add log-page state helpers and contract-shaped fixtures
+  - Acceptance: Pure helpers normalize `DayLogResponse | null` into renderable empty/loaded state, compute daily and meal totals, calculate placeholder target progress, derive yesterday-momentum copy inputs, and provide contract-shaped fixtures for normal, empty, loading, and error UI tests.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/log-page-helpers.test.ts`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/log-page-helpers.ts`
+    - `apps/web-frontend/src/pages/logs/log-page-fixtures.ts`
+    - `apps/web-frontend/src/pages/logs/__tests__/log-page-helpers.test.ts`
+
+- [ ] Task: Build the daily log mobile-first page shell with mock data
+  - Acceptance: `/logs` renders date stepper, daily progress summary, weight summary/empty state, meal sections in Breakfast/Lunch/Dinner/Snacks order, empty meal states, meal add actions, and a FAB bottom sheet shell using contract-shaped fixture data and existing UI primitives first.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/Logs.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/Logs.tsx`
+    - `apps/web-frontend/src/pages/logs/components/DateStepper.tsx`
+    - `apps/web-frontend/src/pages/logs/components/DailySummary.tsx`
+    - `apps/web-frontend/src/pages/logs/components/MealSection.tsx`
+    - `apps/web-frontend/src/pages/logs/components/QuickLogDrawer.tsx`
+
+- [ ] Task: Build food search UI against mock results
+  - Acceptance: Search can open from the FAB or a meal section, meal-specific add actions preselect the meal, results render in backend-provided order without client re-ranking, recent results show compact recency labels, and loading/empty/error states are represented before live APIs are wired.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/food-search.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/components/FoodSearchSheet.tsx`
+    - `apps/web-frontend/src/pages/logs/components/FoodResultRow.tsx`
+    - `apps/web-frontend/src/pages/logs/components/RecentFoodLabel.tsx`
+    - `apps/web-frontend/src/pages/logs/__tests__/food-search.test.tsx`
+    - `apps/web-frontend/src/pages/logs/Logs.tsx`
+
+- [ ] Task: Build confirmation page UI against selected-food state
+  - Acceptance: The confirmation page shows selected food details, allows quantity, serving unit, and meal edits, excludes direct calorie editing, handles missing/stale selected-food state safely, and keeps the route hidden from header/drawer navigation.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/ConfirmFood.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/ConfirmFood.tsx`
+    - `apps/web-frontend/src/pages/logs/components/ConfirmFoodForm.tsx`
+    - `apps/web-frontend/src/pages/logs/components/ServingUnitSelect.tsx`
+    - `apps/web-frontend/src/pages/logs/__tests__/ConfirmFood.test.tsx`
+
+- [ ] Task: Wire selected-day fetch and optimistic weight mutation
+  - Acceptance: `/logs` loads the selected day through `@calibrate/api-client`, renders empty state when the API returns `null`, updates weight optimistically, rolls back on mutation failure, shows an error state, and invalidates/refetches the selected day log after success.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/logs-live-day-log.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/Logs.tsx`
+    - `apps/web-frontend/src/pages/logs/use-selected-day-log.ts`
+    - `apps/web-frontend/src/pages/logs/use-update-weight.ts`
+    - `apps/web-frontend/src/pages/logs/__tests__/logs-live-day-log.test.tsx`
+    - `apps/web-frontend/src/shared/api/api-client.ts`
+
+- [ ] Task: Wire live food search and confirmation navigation
+  - Acceptance: Food search calls `GET /foods/search`, enforces/debounces the 3-character minimum as needed, renders backend-ordered live results, carries selected food and preselected meal context into `/logs/confirm-food`, and uses per-navigation `viewTransition: true` only for the search-to-confirmation transition.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/food-search-live.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/components/FoodSearchSheet.tsx`
+    - `apps/web-frontend/src/pages/logs/use-food-search.ts`
+    - `apps/web-frontend/src/pages/logs/food-confirmation-state.ts`
+    - `apps/web-frontend/src/pages/logs/__tests__/food-search-live.test.tsx`
+    - `apps/web-frontend/src/pages/logs/Logs.tsx`
+
+- [ ] Task: Wire confirmed food save flow
+  - Acceptance: The confirmation page saves through `POST /daylogs/:date/food-entries`, preserves the selected meal unless changed by the user, invalidates/refetches the selected day log after success, navigates back to `/logs`, and surfaces save errors without losing the user's confirmation edits.
+  - Verify: `npx nx run web:test -- src/pages/logs/__tests__/confirm-food-live.test.tsx`
+  - Files:
+    - `apps/web-frontend/src/pages/logs/ConfirmFood.tsx`
+    - `apps/web-frontend/src/pages/logs/use-save-food-entry.ts`
+    - `apps/web-frontend/src/pages/logs/food-confirmation-state.ts`
+    - `apps/web-frontend/src/pages/logs/__tests__/confirm-food-live.test.tsx`
+    - `apps/web-frontend/src/pages/logs/log-page-helpers.ts`
+
+- [ ] Task: Run targeted quality gates and manual smoke verification
+  - Acceptance: Backend and frontend targeted tests pass for touched areas, type-aware checks pass for touched projects, backend and frontend dev servers can run together, and the manual smoke path covers previous/next day navigation, empty day display, weight logging, food search, recent food display, confirmation edits, save, and totals update.
+  - Verify: `npx nx run backend:test`, `npx nx run backend:typecheck`, `npx nx run web:test`, `npx nx run web:typecheck`, then `npx nx run backend:dev` and `npx nx run web:dev` for manual smoke when ready.
+  - Files:
+    - `docs/tasks/log-page/PLAN.md`
+    - `docs/tasks/log-page/PRD.md`
+
+## Phase 3 Review Gate
+
+- [ ] Task breakdown reviewed.
+- [ ] Task order approved.
+- [ ] Verification commands approved for implementation sessions.
+- [ ] Approved for Phase 4 implementation.
