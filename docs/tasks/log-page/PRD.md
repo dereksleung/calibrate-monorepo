@@ -2,7 +2,7 @@
 
 ## Phase
 
-Draft specification for review. Do not proceed to implementation planning until this spec is approved.
+Specification approved for Phase 2 implementation planning. Do not proceed to Phase 3 task breakdown until the implementation plan is approved.
 
 ## Assumptions
 
@@ -56,11 +56,14 @@ The user should be able to:
 - `docs/ideas/log-page.md` - original product idea and scope notes.
 - `docs/tasks/log-page/PRD.md` - living specification for the feature.
 - `apps/web-frontend/src/routes/logs.tsx` - route entry for `/logs`.
+- `apps/web-frontend/src/routes/logs/confirm-food.tsx` - hidden route-level page for food confirmation before save.
 - `apps/web-frontend/src/pages/logs/Logs.tsx` - page composition for the daily log.
-- `apps/web-frontend/src/pages/logs/components/` - page-local UI components such as progress summary, meal sections, food search drawer, confirmation form, and recent foods list.
+- `apps/web-frontend/src/pages/logs/ConfirmFood.tsx` - page composition for quantity, serving unit, and meal confirmation.
+- `apps/web-frontend/src/pages/logs/components/` - page-local UI components such as progress summary, meal sections, food search drawer, confirmation controls, and recent foods list.
 - `apps/web-frontend/src/pages/logs/__tests__/` - page and interaction tests.
 - `apps/web-frontend/src/shared/components/base/` - existing reusable primitives such as `Button`, `Card`, and `Drawer`; use these first, but do not expand primitives or add variants without review.
 - `packages/api-contracts/src/` - shared request/response contracts for day logs, food entries, and new food search/recent food APIs.
+- `packages/api-client/src/` - shared React-platform API client for request/response logic and React Query integration used by the web app and planned React Native app.
 - `apps/backend/src/domain/` - existing `DayLog` aggregate and `FoodEntry` entity. Food entry writes stay behind the aggregate.
 - `apps/backend/src/application/` - use cases, DTOs, and ports for day logs, USDA search, and read-only recent foods.
 - `apps/backend/src/infrastructure/` - concrete FoodData Central client and persistence-backed recent food query adapter.
@@ -129,18 +132,24 @@ export class FoodSearchService {
 - Meal sections render Breakfast, Lunch, Dinner, and Snacks in that order.
 - Each meal section shows meal calories, food rows, and an add action that opens search with that meal preselected.
 - The floating action button opens a bottom sheet with Search food and Log weight actions.
-- Recent foods appear inside the general food search experience by default instead of as a separate first-level sheet action.
+- Recent foods appear inside the general food search response by default instead of as a separate first-level sheet action or separate frontend-only list.
 - Recent food results are visually distinguished with a small date label: weekday abbreviation such as "Thur" for foods logged up to a week ago, or a compact date such as "Mar 31" for older foods.
-- Recent foods are deduplicated by normalized name, brand, serving unit, and nutrition values.
+- Recent foods are queried from the past 2 weeks of food entries only.
+- Recent foods are deduplicated against other recent-food entries by exact normalized name, brand, serving unit, and nutrition values.
+- Recent foods with different serving units or nutrition values remain distinct, because the user may want to repeat that serving size as its own habit.
+- Recent-food entries do not need to be deduplicated against USDA results in this cut.
 - Food search calls a backend endpoint that mediates FoodData Central requests instead of calling FoodData Central directly from the browser.
-- Search results include generic and branded foods, with enough metadata to distinguish name, brand, source type, serving, and calories in the result list.
-- USDA search uses a single ranked result list. If the search string includes a brand name, branded results rank first; otherwise common/generic results rank first.
+- Search results include recent foods plus generic and branded USDA foods, with enough metadata to distinguish name, brand, source type, serving, calories, and recency in the result list.
+- The backend returns search results in display order. Recent foods that match the query come first, followed by USDA FoodData Central results.
+- USDA results use a single ranked list after recent foods. If the search string includes a brand name, branded USDA results rank first; otherwise common/generic USDA results rank first.
+- The frontend renders food search results in the order returned by the backend and does not re-rank recent or USDA results.
 - Search result payloads may include macros for the later confirmation/save flow, but macros are not required in the search results list UI.
-- Selecting a search result opens a confirmation step before saving.
-- The confirmation step allows quantity, serving unit, and meal to be reviewed or adjusted.
-- The confirmation step does not allow direct calorie editing in this cut. A later nutrition customization flow can expose an edit action that opens a dedicated screen before save.
+- Selecting a search result navigates to a separate food confirmation page before saving. This page is not linked from the header or first-level drawer actions.
+- The confirmation page allows quantity, serving unit, and meal to be reviewed or adjusted.
+- The confirmation page does not allow direct calorie editing in this cut. A later nutrition customization flow can expose an edit action that opens a dedicated screen before save.
+- Navigation from search results to the confirmation page should visibly transition to a new page. Consider TanStack Router View Transitions for this route transition, with normal navigation as the fallback when the browser does not support view transitions.
 - Saving a confirmed food creates an entry through `POST /daylogs/:date/food-entries`.
-- Recent foods are global per user, based on previously logged foods, and can be selected into the same confirmation flow.
+- Recent foods are global per user, based on food entries logged in the past 2 weeks, and can be selected into the same confirmation flow.
 - Mobile rows show food name, quantity, and calories.
 - Larger viewports do not show macro detail for entries or meal summaries in this cut.
 
@@ -153,8 +162,8 @@ Existing APIs:
 
 Proposed MVP APIs:
 
-- `GET /foods/search?query=<text>` returns ranked USDA search results.
-- `GET /foods/recent` returns the authenticated user's globally recent logged foods.
+- `GET /foods/search?query=<text>` returns a single ordered result list: matching recent foods first, then ranked USDA search results.
+- `GET /foods/recent` may still exist if a standalone recent-food endpoint is needed later, but the MVP search UI should not depend on a separate frontend merge of recent foods and USDA results.
 - `PATCH /daylogs/:date/weight` persists the selected day's weight under the authenticated user's `DayLog`.
 
 FoodData Central mediation:
@@ -196,7 +205,7 @@ Recommendation for this cut:
 ## Testing Strategy
 
 - Frontend pure helpers: unit test nutrition totals, placeholder target progress calculations, over-target states, and empty log normalization.
-- Frontend component tests: cover date changes, meal-specific add preselection, FAB drawer actions, search result selection, confirmation edits, save success, optimistic weight update, weight rollback on API error, loading state, and error state.
+- Frontend component tests: cover date changes, meal-specific add preselection, FAB drawer actions, search result selection, navigation to the confirmation page, confirmation edits, save success, optimistic weight update, weight rollback on API error, loading state, and error state.
 - Backend application tests: cover USDA search service behavior through a mocked provider, recent-food read behavior, and day-log weight persistence.
 - Backend presentation tests: cover query validation, authentication requirements, search success, weight update success/failure, provider errors, and no API key leakage in responses.
 - Contract tests or schema tests: cover new request/response schemas in `packages/api-contracts`.
@@ -208,8 +217,13 @@ Recommendation for this cut:
 - Always: preserve `DayLog` as the write boundary for saved food entries.
 - Always: validate route params, query params, and request bodies with shared Zod schemas where practical.
 - Always: when frontend URL search params are used, validate and type them through TanStack Router `validateSearch`; with Zod v4, prefer passing the Zod schema directly to `validateSearch` unless the app needs an adapter-specific behavior.
+- Always: use route-level navigation for food confirmation rather than presenting confirmation as only an in-drawer or inline step.
+- Always: keep hidden workflow routes out of header/drawer navigation while preserving direct route ownership and error handling.
 - Always: keep FoodData Central calls behind backend infrastructure.
 - Always: show loading, empty, and error states for network-backed UI.
+- Always: keep common API request/response logic in a shared Nx package, planned as `@calibrate/api-client`, so web and future React Native clients can reuse it.
+- Always: `@calibrate/api-client` may use `@tanstack/react-query` because React Query supports React Native, but it must avoid browser-only APIs and web UI state.
+- Always: keep platform-specific React Query setup, such as React Native online/focus managers or web-specific provider/devtools wiring, in the consuming app.
 - Always: use existing UI primitives and the design language from `apps/web-frontend/docs/DESIGN.md`.
 - Always: try existing UI primitives first, but treat them as unevenly mature; page-level composition is acceptable when a primitive does not yet encode the needed style.
 - Ask first: codifying a repeated UI style into a primitive variant. Bring examples of the repeated style and a proposed variant API before changing the primitive.
@@ -227,9 +241,9 @@ Recommendation for this cut:
 - A user can view a selected day's grouped meal entries and total calories/macros.
 - A user can open Search food from the FAB or a meal section.
 - Recent foods appear inside general search by default and show compact recency labels.
-- Meal-specific add actions preselect the requested meal in the confirmation step.
+- Meal-specific add actions preselect the requested meal on the confirmation page.
 - A user can search USDA foods through the backend and see ranked branded/generic results.
-- A user can select a result, adjust quantity, serving unit, and meal, then save.
+- A user can select a result, visibly navigate to a separate confirmation page, adjust quantity, serving unit, and meal, then save.
 - Saved entries appear in the correct meal and are reflected in daily and meal totals.
 - Logged weight appears immediately, persists under the selected day log, refetches the selected day log after success, and rolls back only if the API persistence call fails.
 - Recent foods are available globally for the authenticated user after foods have been logged.
@@ -239,22 +253,22 @@ Recommendation for this cut:
 
 ## Tradeoffs
 
-- A single ranked result list is the MVP decision. It keeps scanning simple while still biasing branded results first when the search string includes a brand name, and common/generic results first otherwise.
+- A single backend-ordered result list is the MVP decision. It keeps scanning simple by putting matching recent foods first, then USDA results with branded results first for brand-name searches and common/generic results first otherwise.
 - Calorie override is intentionally excluded from the first confirmation flow. It is useful for imperfect USDA data, but it creates divergence from source nutrition data and deserves a dedicated nutrition customization screen.
-- Recent foods can be implemented as a read-only query over existing food entries, avoiding a new persistence table. A dedicated recents table would support stronger ordering and deduplication later but is not required for first value.
+- Recent foods can be implemented as a read-only query over the past 2 weeks of existing food entries, avoiding a new persistence table. Dedupe intentionally preserves entries with different serving units or nutrition values because a different serving size may be useful for quick re-entry and habit building.
 - Placeholder targets unblock the UI, but they must be visually treated as provisional so users do not mistake them for personalized goals.
 - Macro detail for larger viewport entries and meal summaries is intentionally deferred. The daily summary can carry macro awareness without making the log rows feel dense.
 
 ## Resolved Questions
 
 1. Placeholder targets: 1,800 calories, 120g protein, 60g fat, and 220g carbohydrates.
-2. USDA results use a single ranked list. Brand-name searches put branded results first; non-brand searches put common/generic results first.
+2. Food search returns a single backend-ordered list: matching recent foods first, then USDA results. Brand-name USDA searches put branded results first; non-brand USDA searches put common/generic results first.
 3. FoodData Central API key env var: `FOODDATA_CENTRAL_API_KEY`.
-4. Recent foods deduplicate by normalized name, brand, serving unit, and nutrition values.
+4. Recent foods query only the past 2 weeks of food entries and deduplicate only within the recent-food subset by exact normalized name, brand, serving unit, and nutrition values; different serving units or nutrition values stay distinct.
 
 ## Review Gate
 
 - [x] Assumptions reviewed.
 - [x] Open questions answered or explicitly deferred.
-- [ ] Spec approved for Phase 2 implementation planning.
+- [x] Spec approved for Phase 2 implementation planning.
 - [ ] Spec file committed with the implementation work.
