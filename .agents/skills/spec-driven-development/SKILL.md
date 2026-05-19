@@ -62,13 +62,14 @@ Place the document under the root-level docs/tasks/<short-descriptive-name>/ dir
    Dev: npm run dev
    ```
 
-3. **Project Structure** — Where source code lives, where tests go, where docs belong.
+3. **Project Structure** — Per Nx project, where source code lives, where tests go, where docs belong.
    ```
    src/           → Application source code
-   src/components → React components
+   src/<area>/components → React components, if a frontend project
    src/lib        → Shared utilities
-   tests/         → Unit and integration tests
-   e2e/           → End-to-end tests
+   src/shared/components → For frontend projects, shared React components used across multiple areas and pages, such as Header, Footer.
+   src/shared/components/base → For frontend projects, primitive UI components like Button, Text, Dialog, Drawer, especially those coming from shadcn/ui or similar.
+   src/<area>/../ or src/<area>/../__tests__/ → Fast, integration, or E2E tests. Prefer colocating tests in same folder as code under test, but if the folder is too cluttered, use a __tests__ subfolder.
    docs/          → Documentation
    ```
 
