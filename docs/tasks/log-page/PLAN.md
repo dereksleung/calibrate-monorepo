@@ -154,6 +154,10 @@ Dependencies:
 - Frontend UI should cover normal, empty, loading, and error states against contract-shaped fixtures before live backend wiring is available.
 - Network-backed UI requires loading, empty, and error states.
 
+### Contract-First Slicing Note
+
+The implementation order below is dependency-aware, not strictly serial. Once the shared request/response contracts are known in `@calibrate/api-contracts`, mock frontend UI tasks can start against contract-shaped fixtures while backend endpoints, infrastructure adapters, and API-client transport work continue in parallel. Treat this as Contract-First Slicing: contracts first, then backend and frontend slices can independently build against the same agreed shapes before live integration.
+
 ## Implementation Order
 
 1. Shared contracts and backend day-log weight foundation.
@@ -170,22 +174,24 @@ Dependencies:
    - Add controllers/routes/container wiring.
    - Verify with mocked-provider tests and controller validation tests.
 
-3. Shared API client and frontend route/data foundation.
+3. Shared API client foundation.
    - Generate or create `packages/api-client` following workspace package conventions.
    - Add shared request functions and portable React Query options/hooks using `@calibrate/api-contracts`.
    - Install/declare TanStack Query with peer/dev dependency shape for `@calibrate/api-client` and app dependency shape for `web`.
+
+4. Frontend mock-state UI.
+   - Can begin as soon as shared request/response contracts are stable; does not need to wait for backend endpoints or API-client live wiring.
    - Add selected-date URL search validation with TanStack Router if date is URL state.
    - Add hidden confirmation route and decide how selected-food context is passed to it.
    - Decide whether search-to-confirmation uses per-navigation `viewTransition: true` or router-level `defaultViewTransition`.
    - Add web-local wrappers/hooks and selected-day loading state.
    - Verify route/search-param behavior and API helper tests where practical.
-
-4. Frontend mock-state UI.
    - Build date stepper, summary, meal sections, empty states, error states, loading states, FAB shell, search results, and confirmation page against contract-shaped mock data.
    - Cover normal, empty, and error scenarios before backend endpoints are live.
    - Verify totals, placeholder progress, empty messaging, error messaging, and responsive layout.
 
 5. Frontend live wiring and mutation flows.
+   - Add web-level QueryClient provider/configuration and app-owned API transport setup before live hooks use `@calibrate/api-client`.
    - Wire the mock-state UI to `@calibrate/api-client` and backend APIs after live endpoints are available.
    - Add optimistic weight update with rollback and selected-day invalidation/refetch.
    - Add food search that renders backend-ordered results, including recent matches first when returned.
@@ -205,13 +211,14 @@ Sequential:
 - Day-log repository/service changes before weight UI integration.
 - FoodData Central adapter contract before search UI can be wired to live data.
 - Backend search result ordering before frontend live-data search display assertions.
-- Shared API client package before web data wrappers and page integration.
+- Shared API client package before live web data wrappers and live page integration.
 - TanStack Query dependency setup before implementing optimistic cache behavior.
 - Confirmation route/context design before wiring search result selection.
 - View Transitions strategy before adding transition CSS or router-level defaults.
 
 Parallelizable after contracts:
 
+- This is the main Contract-First Slicing lane: after `@calibrate/api-contracts` defines request/response shapes, frontend mock UI can proceed with contract-shaped fixtures while backend services/controllers and API-client transport are implemented separately.
 - Backend weight persistence and backend food search can proceed independently.
 - Frontend normal, empty, loading, and error state UI can proceed against contract-shaped mock data while backend endpoints are being finished.
 - Shared API client package and frontend mock-state UI can proceed in parallel after contracts define expected shapes.
@@ -286,16 +293,14 @@ Checkpoint 2: Food search and recent foods backend
 - Confirm search returns matching recent foods before USDA results.
 - Confirm recent foods are limited to the past 2 weeks, deduplicate only exact recent-food duplicates as specified, preserve serving-size variants, and include recency metadata.
 
-Checkpoint 3: Frontend data and route foundation
+Checkpoint 3: Shared API client foundation
 
 - `npx nx run web:test`
 - `npx nx run web:test:integration`
 - `npx nx run web:typecheck`
 - Confirm `@calibrate/api-client` is portable across React web and React Native: no React DOM, browser globals, TanStack Router, React Native modules, or UI primitives.
 - Confirm React Query is declared as peer + dev dependency in `@calibrate/api-client` and as a dependency in `web`.
-- Confirm selected-date search params validate through TanStack Router if URL search params are used.
-- Confirm food confirmation is a hidden route-level page, handles missing selected-food context, and is not exposed in header/drawer navigation.
-- Confirm selected day log query/mutation behavior, including weight optimistic update and rollback.
+- Confirm operation modules use `ApiTransport` rather than a central API client object or package-level fetch singleton.
 
 Checkpoint 4: Frontend mock-state UX
 
@@ -303,6 +308,8 @@ Checkpoint 4: Frontend mock-state UX
 - `npx nx run web:test:integration`
 - `npx nx run web:lint`
 - Manual responsive check for mobile and larger viewport layouts.
+- Confirm selected-date search params validate through TanStack Router if URL search params are used.
+- Confirm food confirmation is a hidden route-level page, handles missing selected-food context, and is not exposed in header/drawer navigation.
 - Confirm normal, empty, loading, and error states render correctly from contract-shaped mock data before live backend wiring.
 - Confirm empty meal and empty weight habit copy appears in the right states.
 - Confirm food search renders results in backend-provided order and does not re-rank recent or USDA entries.
@@ -317,6 +324,7 @@ Checkpoint 5: Frontend live wiring
 - Confirm mock-state UI is wired to `@calibrate/api-client` without changing the established visual states.
 - Confirm live food search preserves backend result order.
 - Confirm selected day log, weight update, search, confirmation, and save flows use live APIs.
+- Confirm selected day log query/mutation behavior, including weight optimistic update and rollback.
 
 Checkpoint 6: End-to-end manual smoke
 
@@ -503,15 +511,6 @@ Prefer colocating new tests in the same folder as the code under test. Use a `__
     - `packages/api-client/src/index.ts`
     - `apps/web-frontend/package.json`
 
-- [ ] Task: Add web-level query provider and API client configuration
-  - Acceptance: The web app owns `QueryClientProvider`, optional devtools/provider wiring, and base API client configuration. Platform setup remains outside `@calibrate/api-client`, and existing router setup continues to render current routes.
-  - Verify: `npx nx run web:test:integration`, then `npx nx run web:typecheck`
-  - Files:
-    - `apps/web-frontend/src/main.tsx`
-    - `apps/web-frontend/src/router.tsx`
-    - `apps/web-frontend/src/shared/api/api-client.ts`
-    - `apps/web-frontend/src/shared/api/query-client.ts`
-
 - [ ] Task: Add selected-date search validation and confirmation route shell
   - Acceptance: `/logs` validates selected-date URL search params through TanStack Router if URL search is used, `/logs/confirm-food` exists as a hidden workflow route, and direct entry or refresh without selected-food context shows a recoverable empty state or returns the user to search. Search-to-confirmation navigation is prepared for per-navigation `viewTransition: true` with normal navigation fallback.
   - Verify: `npx nx run web:test:integration`
@@ -562,6 +561,15 @@ Prefer colocating new tests in the same folder as the code under test. Use a `__
     - `apps/web-frontend/src/pages/logs/components/ConfirmFoodForm.tsx`
     - `apps/web-frontend/src/pages/logs/components/ServingUnitSelect.tsx`
     - `apps/web-frontend/src/pages/logs/ConfirmFood.test.tsx`
+
+- [ ] Task: Add web-level query provider and API client configuration
+  - Acceptance: The web app owns `QueryClientProvider`, optional devtools/provider wiring, and base API client configuration. Platform setup remains outside `@calibrate/api-client`, and existing router setup continues to render current routes.
+  - Verify: `npx nx run web:test:integration`, then `npx nx run web:typecheck`
+  - Files:
+    - `apps/web-frontend/src/main.tsx`
+    - `apps/web-frontend/src/router.tsx`
+    - `apps/web-frontend/src/shared/api/api-client.ts`
+    - `apps/web-frontend/src/shared/api/query-client.ts`
 
 - [ ] Task: Wire selected-day fetch and optimistic weight mutation
   - Acceptance: `/logs` loads the selected day through `@calibrate/api-client`, renders empty state when the API returns `null`, updates weight optimistically, rolls back on mutation failure, shows an error state, and invalidates/refetches the selected day log after success.
