@@ -10,6 +10,14 @@
   },
   "nx": {
     "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "cwd": "packages/api-contracts",
+          "command": "vitest run src"
+        }
+      },
       "test:integration": {
         "executor": "nx:run-commands",
         "cache": true,
