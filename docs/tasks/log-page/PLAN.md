@@ -154,11 +154,9 @@ Dependencies:
 - Frontend UI should cover normal, empty, loading, and error states against contract-shaped fixtures before live backend wiring is available.
 - Network-backed UI requires loading, empty, and error states.
 
-### Contract-First Slicing Note
-
-The implementation order below is dependency-aware, not strictly serial. Once the shared request/response contracts are known in `@calibrate/api-contracts`, mock frontend UI tasks can start against contract-shaped fixtures while backend endpoints, infrastructure adapters, and API-client transport work continue in parallel. Treat this as Contract-First Slicing: contracts first, then backend and frontend slices can independently build against the same agreed shapes before live integration.
 
 ## Implementation Order
+The implementation order below is dependency-aware, not strictly serial. Once the shared request/response contracts are known in `@calibrate/api-contracts`, mock frontend UI tasks can start against contract-shaped fixtures while backend endpoints, infrastructure adapters, and API-client transport work continue in parallel. Treat this as Contract-First Slicing: contracts first, then backend and frontend slices can independently build against the same agreed shapes before live integration.
 
 1. Shared contracts.
    - Add weight request schema.
@@ -362,7 +360,7 @@ These tasks are ordered by dependency. Each task is intended to fit in a focused
 
 Prefer colocating new tests in the same folder as the code under test. Use a `__tests__` subfolder only when the source folder is getting too cluttered or when updating an existing test that already lives there. Use `*.integration.test.ts` or `*.integration.test.tsx` for tests that should run through `npx nx run <project>:test:integration`, and `*.e2e.test.ts` or `*.e2e.test.tsx` for tests that should run through `npx nx run <project>:test:e2e`.
 
-- [ ] Task: Add shared contracts for weight updates and food search
+- [x] Task: Add shared contracts for weight updates and food search
   - Acceptance: `PATCH /daylogs/:date/weight`, `GET /foods/search?query=<text>`, and optional recent-food response shapes have Zod schemas and exported TypeScript types. Food search returns one ordered `FoodSearchResult` discriminated union with recent-food and USDA variants. All variants share display metadata, calories/macros needed for confirmation, `quantityServing`, `servingLabel`, optional `quantityMass`/`massUnit`, and optional `quantityVolume`/`volumeUnit`; only `quantityServing` and `servingLabel` default to `1` and `"serving"`. Mass and volume fields have no defaults and are omitted unless the result provides a real mass or volume serving basis for the same nutrition values. Source-specific recency and provider metadata stay on their own variants. The food search query enforces the 3-character minimum decided in Phase 2.
   - Verify: `npx nx run backend:typecheck`
   - Files:
