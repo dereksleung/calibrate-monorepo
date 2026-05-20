@@ -129,6 +129,7 @@ Dependencies:
 ### Frontend Page And Components
 
 - Replace the current placeholder `Logs` page with a mobile-first daily log composition.
+- Before starting any frontend UI task, ask the user for screenshots and describe what the task entails so they know which existing screens, states, and viewport sizes to capture. For example, say whether the task touches the daily log overview, search flow, confirmation flow, loading/error states, mobile viewport, or larger viewport layout.
 - Page-local components:
   - Date stepper with previous/next day only.
   - Daily progress summary with placeholder targets and weight.
@@ -531,6 +532,7 @@ Prefer colocating new tests in the same folder as the code under test. Use a `__
 
 - [ ] Task: Build the daily log mobile-first page shell with mock data
   - Acceptance: `/logs` renders date stepper, daily progress summary, weight summary/empty state, meal sections in Breakfast/Lunch/Dinner/Snacks order, empty meal states, meal add actions, and a FAB bottom sheet shell using contract-shaped fixture data and existing UI primitives first.
+  - Before implementation: ask the user for screenshots of the current `/logs` page and any nearby app screens that establish mobile layout, spacing, typography, navigation, empty states, and larger-viewport behavior. Explain that this task builds the daily overview shell, not live data wiring.
   - Verify: `npx nx run web:test -- src/pages/logs/Logs.test.tsx`
   - Files:
     - `apps/web-frontend/src/pages/logs/Logs.tsx`
@@ -541,6 +543,7 @@ Prefer colocating new tests in the same folder as the code under test. Use a `__
 
 - [ ] Task: Build food search UI against mock results
   - Acceptance: Search can open from the FAB or a meal section, meal-specific add actions preselect the meal, results render in backend-provided order without client re-ranking, recent food entry results show compact recency labels, and loading/empty/error states are represented before live APIs are wired.
+  - Before implementation: ask the user for screenshots of any existing search, list, bottom-sheet/page transition, loading, empty, and error UI patterns. Explain that this task builds the mock food-search experience and result rows before live API wiring.
   - Verify: `npx nx run web:test -- src/pages/logs/food-search.test.tsx`, then `npx nx run web:test:integration`
   - Files:
     - `apps/web-frontend/src/pages/logs/components/FoodSearchPage.tsx`
@@ -552,6 +555,7 @@ Prefer colocating new tests in the same folder as the code under test. Use a `__
 
 - [ ] Task: Build confirmation page UI against selected-food state
   - Acceptance: The confirmation page shows selected food details, allows quantity, serving unit, and meal edits, excludes direct calorie editing, handles missing/stale selected-food state safely, and keeps the route hidden from header/drawer navigation.
+  - Before implementation: ask the user for screenshots of any existing form, select/input, detail, save/cancel, and error-state patterns. Explain that this task builds the hidden food-confirmation route UI, including quantity, serving unit, meal selection, and missing-context handling.
   - Verify: `npx nx run web:test -- src/pages/logs/ConfirmFood.test.tsx`
   - Files:
     - `apps/web-frontend/src/pages/logs/ConfirmFood.tsx`
