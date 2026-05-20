@@ -1,1 +1,1 @@
-npx nx affected -t lint typecheck
+npx nx affected -t lint typecheck test
