@@ -279,6 +279,8 @@ Parallelizable after contracts:
 
 ## Verification Checkpoints
 
+These checkpoints are scheduled moments to run additional tests, checks, and manual verification after the verification in each defined task in the Phase 3 Task Breakdown. They are not intended to define commit boundaries. Commit according to the `incremental-implementation` skill's "Rule 1: One Thing at a Time": each commit should capture one logical change, even if that means committing before, between, or after these verification checkpoints.
+
 Checkpoint 1: Day-log weight foundation
 
 - `npx nx run backend:test`
