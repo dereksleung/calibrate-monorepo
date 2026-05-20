@@ -1,0 +1,58 @@
+import * as z from "zod";
+
+const FoodSearchResultBaseSchema = z.object({
+  name: z.string().min(1),
+  brand: z.string().min(1).nullable(),
+  sourceLabel: z.string().min(1),
+  calories: z.number().nonnegative(),
+  totalFatGrams: z.number().nonnegative(),
+  saturatedFatGrams: z.number().nonnegative().nullable(),
+  cholesterolMg: z.number().nonnegative().nullable(),
+  sodiumMg: z.number().nonnegative().nullable(),
+  totalCarbohydrateGrams: z.number().nonnegative(),
+  fiberGrams: z.number().nonnegative().nullable(),
+  sugarGrams: z.number().nonnegative().nullable(),
+  proteinGrams: z.number().nonnegative(),
+  quantityServing: z.number().positive().default(1),
+  servingLabel: z.string().min(1).default("serving"),
+  quantityMass: z.number().positive().nullable().default(null),
+  massUnit: z.string().min(1).nullable().default(null),
+  quantityVolume: z.number().positive().nullable().default(null),
+  volumeUnit: z.string().min(1).nullable().default(null),
+});
+
+export const RecentFoodRecencyMetadataSchema = z.object({
+  lastUsedDate: z.iso.date(),
+  displayLabel: z.string().min(1).max(12),
+});
+
+export const RecentFoodSearchResultSchema = FoodSearchResultBaseSchema.extend({
+  source: z.literal("recent"),
+  foodEntryId: z.string().min(1),
+  recency: RecentFoodRecencyMetadataSchema,
+});
+
+export const UsdaFoodSearchResultSchema = FoodSearchResultBaseSchema.extend({
+  source: z.literal("usda"),
+  fdcId: z.number().int().positive(),
+});
+
+export const FoodSearchResultSchema = z.discriminatedUnion("source", [
+  RecentFoodSearchResultSchema,
+  UsdaFoodSearchResultSchema,
+]);
+
+export const FoodSearchResponseSchema = z.object({
+  results: z.array(FoodSearchResultSchema),
+});
+
+export const RecentFoodsResponseSchema = z.object({
+  results: z.array(RecentFoodSearchResultSchema),
+});
+
+export type RecentFoodRecencyMetadata = z.infer<typeof RecentFoodRecencyMetadataSchema>;
+export type RecentFoodSearchResult = z.infer<typeof RecentFoodSearchResultSchema>;
+export type UsdaFoodSearchResult = z.infer<typeof UsdaFoodSearchResultSchema>;
+export type FoodSearchResult = z.infer<typeof FoodSearchResultSchema>;
+export type FoodSearchResponse = z.infer<typeof FoodSearchResponseSchema>;
+export type RecentFoodsResponse = z.infer<typeof RecentFoodsResponseSchema>;

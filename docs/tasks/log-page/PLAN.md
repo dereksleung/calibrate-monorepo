@@ -160,26 +160,28 @@ The implementation order below is dependency-aware, not strictly serial. Once th
 
 ## Implementation Order
 
-1. Shared contracts and backend day-log weight foundation.
+1. Shared contracts.
    - Add weight request schema.
+   - Add search/recent contracts.
+
+2. Backend day-log weight foundation.
    - Add domain/application/repository weight update path.
    - Correct day-log find-or-create behavior.
    - Verify with backend unit/controller tests.
 
-2. Backend food search and recent-food APIs.
-   - Add search/recent contracts.
+3. Backend food search and recent-food APIs.
    - Add FoodData Central adapter behind an application port.
    - Add recent-food query with 2-week bound, query matching, and recent-only dedupe.
    - Merge matching recent foods before USDA results in the backend search response.
    - Add controllers/routes/container wiring.
    - Verify with mocked-provider tests and controller validation tests.
 
-3. Shared API client foundation.
+4. Shared API client foundation.
    - Generate or create `packages/api-client` following workspace package conventions.
    - Add shared request functions and portable React Query options/hooks using `@calibrate/api-contracts`.
    - Install/declare TanStack Query with peer/dev dependency shape for `@calibrate/api-client` and app dependency shape for `web`.
 
-4. Frontend mock-state UI.
+5. Frontend mock-state UI.
    - Can begin as soon as shared request/response contracts are stable; does not need to wait for backend endpoints or API-client live wiring.
    - Add selected-date URL search validation with TanStack Router if date is URL state.
    - Add hidden confirmation route and decide how selected-food context is passed to it.
@@ -190,7 +192,7 @@ The implementation order below is dependency-aware, not strictly serial. Once th
    - Cover normal, empty, and error scenarios before backend endpoints are live.
    - Verify totals, placeholder progress, empty messaging, error messaging, and responsive layout.
 
-5. Frontend live wiring and mutation flows.
+6. Frontend live wiring and mutation flows.
    - Add web-level QueryClient provider/configuration and app-owned API transport setup before live hooks use `@calibrate/api-client`.
    - Wire the mock-state UI to `@calibrate/api-client` and backend APIs after live endpoints are available.
    - Add optimistic weight update with rollback and selected-day invalidation/refetch.
@@ -198,7 +200,7 @@ The implementation order below is dependency-aware, not strictly serial. Once th
    - Add route-level confirmation page flow and save into selected meal.
    - Verify search, confirmation route navigation, confirmation edits, save, optimistic weight, rollback, and refetch behavior.
 
-6. Integration polish and manual verification.
+7. Integration polish and manual verification.
    - Run targeted frontend/backend tests first.
    - Run typecheck/lint for touched projects.
    - Start backend/frontend dev servers only when ready for manual flow verification.

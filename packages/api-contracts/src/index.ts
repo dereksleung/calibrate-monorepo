@@ -4,5 +4,7 @@ export * from "./day-log-requests.js";
 export * from "./day-log-responses.js";
 export * from "./food-entry-requests.js";
 export * from "./food-entry-responses.js";
+export * from "./food-search-requests.js";
+export * from "./food-search-responses.js";
 export * from "./user-requests.js";
 export * from "./user-responses.js";
