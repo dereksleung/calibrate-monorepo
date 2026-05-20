@@ -140,6 +140,10 @@ export class FoodSearchService {
 - Recent-food entries do not need to be deduplicated against USDA results in this cut.
 - Food search calls a backend endpoint that mediates FoodData Central requests instead of calling FoodData Central directly from the browser.
 - Search results include recent foods plus generic and branded USDA foods, with enough metadata to distinguish name, brand, source type, serving, calories, and recency in the result list.
+- Search results are returned as one ordered list whose item type is a discriminated union, such as `RecentFoodSearchResult | UsdaFoodSearchResult`, rather than one flat type with source-specific optional fields.
+- All search result variants share normalized serving fields for confirmation: `quantityServing` defaults to `1`, and `servingLabel` defaults to `"serving"`. `quantityMass`, `massUnit`, `quantityVolume`, and `volumeUnit` are optional with no default values; they should only be present when the search result provides a real mass or volume serving basis for the same nutrition values.
+- `servingLabel` is a human serving unit such as `"serving"`, `"piece"`, or `"each"`; it should remain separate from mass and volume units so confirmation can choose between serving, mass, or volume-based entry.
+- Do not infer that `1 serving` equals `1g` or `1mL`. If mass or volume serving data is unavailable, omit those fields so confirmation does not present misleading unit conversions.
 - The backend returns search results in display order. Recent foods that match the query come first, followed by USDA FoodData Central results.
 - USDA results use a single ranked list after recent foods. If the search string includes a brand name, branded USDA results rank first; otherwise common/generic USDA results rank first.
 - The frontend renders food search results in the order returned by the backend and does not re-rank recent or USDA results.
@@ -165,6 +169,13 @@ Proposed MVP APIs:
 - `GET /foods/search?query=<text>` returns a single ordered result list: matching recent foods first, then ranked USDA search results.
 - `GET /foods/recent` may still exist if a standalone recent-food endpoint is needed later, but the MVP search UI should not depend on a separate frontend merge of recent foods and USDA results.
 - `PATCH /daylogs/:date/weight` persists the selected day's weight under the authenticated user's `DayLog`.
+
+Food search result contracts:
+
+- Export one top-level `FoodSearchResult` type as a discriminated union of source-specific variants, currently recent-food and USDA variants.
+- Keep shared display and confirmation fields in a common base shape: name, brand/source display metadata, calories/macros needed for confirmation, `quantityServing`, `servingLabel`, optional mass fields, and optional volume fields.
+- Keep source-specific fields on their own variant: recent-food recency metadata on the recent variant, and FoodData Central identifiers/provider metadata on the USDA variant.
+- Apply defaults only for `quantityServing` and `servingLabel` during backend mapping and/or Zod parsing. Do not default mass or volume fields; missing provider data should remain absent before it reaches the frontend.
 
 FoodData Central mediation:
 
@@ -254,6 +265,7 @@ Recommendation for this cut:
 ## Tradeoffs
 
 - A single backend-ordered result list is the MVP decision. It keeps scanning simple by putting matching recent foods first, then USDA results with branded results first for brand-name searches and common/generic results first otherwise.
+- A discriminated union is preferred over one flat search-result type. The API still returns one list for display order, but recent-food and USDA variants keep identity, recency, and provider metadata honest without a broad set of nullable fields.
 - Calorie override is intentionally excluded from the first confirmation flow. It is useful for imperfect USDA data, but it creates divergence from source nutrition data and deserves a dedicated nutrition customization screen.
 - Recent foods can be implemented as a read-only query over the past 2 weeks of existing food entries, avoiding a new persistence table. Dedupe intentionally preserves entries with different serving units or nutrition values because a different serving size may be useful for quick re-entry and habit building.
 - Placeholder targets unblock the UI, but they must be visually treated as provisional so users do not mistake them for personalized goals.
@@ -265,6 +277,7 @@ Recommendation for this cut:
 2. Food search returns a single backend-ordered list: matching recent foods first, then USDA results. Brand-name USDA searches put branded results first; non-brand USDA searches put common/generic results first.
 3. FoodData Central API key env var: `FOODDATA_CENTRAL_API_KEY`.
 4. Recent foods query only the past 2 weeks of food entries and deduplicate only within the recent-food subset by exact normalized name, brand, serving unit, and nutrition values; different serving units or nutrition values stay distinct.
+5. Food search results use one top-level discriminated union type with recent-food and USDA variants, plus shared normalized serving fields: `quantityServing`, `servingLabel`, `quantityMass`, `massUnit`, `quantityVolume`, and `volumeUnit`.
 
 ## Review Gate
 
