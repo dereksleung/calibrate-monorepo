@@ -141,6 +141,12 @@ With the validated spec, generate a technical implementation plan:
 4. Identify what can be built in parallel vs. what must be sequential
 5. Define verification checkpoints between phases
 
+When writing a verification checkpoints section, add this note to clarify that checkpoints are verification cadence, not commit boundaries:
+
+```
+These checkpoints are scheduled moments to run additional tests, checks, and manual verification after the verification in each defined task in the Phase 3 Task Breakdown. They are not intended to define commit boundaries. Commit according to the `incremental-implementation` skill's "Rule 1: One Thing at a Time": each commit should capture one logical change, even if that means committing before, between, or after these verification checkpoints.
+```
+
 The plan should be reviewable: the human should be able to read it and say "yes, that's the right approach" or "no, change X."
 
 ### Phase 3: Tasks
