@@ -278,58 +278,9 @@ Parallelizable after contracts:
 
 ## Verification Checkpoints
 
-These checkpoints are scheduled moments to run additional tests, checks, and manual verification after the verification in each defined task in the Phase 3 Task Breakdown. They are not intended to define commit boundaries. Commit according to the `incremental-implementation` skill's "Rule 1: One Thing at a Time": each commit should capture one logical change, even if that means committing before, between, or after these verification checkpoints.
+These checkpoints are scheduled moments to run additional tests, checks, and manual verification after the verification in each defined task in the Phase 3 Task Breakdown. They are not intended to define commit boundaries. Commit according to `AGENTS.md` section "Story Branch And PR Gates", even if that means committing before, between, or after these verification checkpoints.
 
-Checkpoint 1: Day-log weight foundation
-
-- `npx nx run backend:test`
-- `npx nx run backend:test:integration`
-- `npx nx run backend:typecheck`
-- Confirm `PATCH /daylogs/:date/weight` creates/updates the selected day log and returns safe response data.
-
-Checkpoint 2: Food search and recent foods backend
-
-- `npx nx run backend:test`
-- `npx nx run backend:test:integration`
-- `npx nx run backend:typecheck`
-- Confirm search validates missing/short query, handles provider errors, and never returns API key data.
-- Confirm search returns matching recent foods before USDA results.
-- Confirm recent foods are limited to the past 2 weeks, deduplicate only exact recent-food duplicates as specified, preserve serving-size variants, and include recency metadata.
-
-Checkpoint 3: Shared API client foundation
-
-- `npx nx run web:test`
-- `npx nx run web:test:integration`
-- `npx nx run web:typecheck`
-- Confirm `@calibrate/api-client` is portable across React web and React Native: no React DOM, browser globals, TanStack Router, React Native modules, or UI primitives.
-- Confirm React Query is declared as peer + dev dependency in `@calibrate/api-client` and as a dependency in `web`.
-- Confirm operation modules use `ApiTransport` rather than a central API client object or package-level fetch singleton.
-
-Checkpoint 4: Frontend mock-state UX
-
-- `npx nx run web:test`
-- `npx nx run web:test:integration`
-- `npx nx run web:lint`
-- Manual responsive check for mobile and larger viewport layouts.
-- Confirm selected-date search params validate through TanStack Router if URL search params are used.
-- Confirm food confirmation is a hidden route-level page, handles missing selected-food context, and is not exposed in header/drawer navigation.
-- Confirm normal, empty, loading, and error states render correctly from contract-shaped mock data before live backend wiring.
-- Confirm empty meal and empty weight habit copy appears in the right states.
-- Confirm food search renders results in backend-provided order and does not re-rank recent or USDA entries.
-- Confirm search result selection visibly navigates to the confirmation page; if View Transitions are enabled, confirm unsupported browsers still fall back to normal navigation.
-
-Checkpoint 5: Frontend live wiring
-
-- `npx nx run web:test`
-- `npx nx run web:test:integration`
-- `npx nx run web:test:e2e`
-- `npx nx run web:typecheck`
-- Confirm mock-state UI is wired to `@calibrate/api-client` without changing the established visual states.
-- Confirm live food search preserves backend result order.
-- Confirm selected day log, weight update, search, confirmation, and save flows use live APIs.
-- Confirm selected day log query/mutation behavior, including weight optimistic update and rollback.
-
-Checkpoint 6: End-to-end manual smoke
+Final Checkpoint: End-to-end manual smoke
 
 - `npx nx run backend:test:e2e`
 - `npx nx run web:test:e2e`
