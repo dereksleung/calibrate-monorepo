@@ -7,6 +7,13 @@ export const DAILY_TARGETS = {
   totalCarbohydrateGrams: 220,
 } as const;
 
+export const MACRO_PROGRESS_COLORS = {
+  calories: "#44403C",
+  proteinGrams: "#F72585",
+  totalCarbohydrateGrams: "#4CC9F0",
+  totalFatGrams: "#7209B7",
+} as const;
+
 export const MEAL_SECTIONS: ReadonlyArray<{ meal: MealNameEnumType; title: string }> = [
   { meal: "BREAKFAST", title: "Breakfast" },
   { meal: "LUNCH", title: "Lunch" },
@@ -62,6 +69,26 @@ export function isIsoDateOnly(value: unknown): value is string {
 
 export function getTodayDateString(now = new Date()): string {
   return formatLocalDate(now);
+}
+
+export function formatDateHeading(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+export function formatCompactDateHeading(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+export function isToday(selectedDate: string, now = new Date()): boolean {
+  return selectedDate === getTodayDateString(now);
 }
 
 export function normalizeLogsSearch(search: Record<string, unknown>, now = new Date()): LogsSearch {

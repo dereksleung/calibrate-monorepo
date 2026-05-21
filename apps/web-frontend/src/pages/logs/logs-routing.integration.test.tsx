@@ -6,7 +6,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
-import { formatLocalDate } from "./log-page-helpers.ts";
+import { formatCompactDateHeading, formatDateHeading } from "./log-page-helpers.ts";
 import { routeTree } from "../../routeTree.gen.ts";
 
 vi.mock("@tanstack/react-devtools", () => ({
@@ -57,14 +57,14 @@ describe("logs route", () => {
   it("uses a valid selected date from URL search", async () => {
     renderLogsRoute("/logs?date=2026-04-30");
 
-    expect(await screen.findByText("Food and activity logs for 2026-04-30 will appear here.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Thursday, April 30" })).toBeTruthy();
   });
 
   it("normalizes invalid selected-date search to today", async () => {
     renderLogsRoute("/logs?date=not-a-date");
+    const today = new Date();
 
-    expect(
-      await screen.findByText(`Food and activity logs for ${formatLocalDate(new Date())} will appear here.`)
-    ).toBeTruthy();
+    expect(await screen.findByText(formatCompactDateHeading(today))).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: formatDateHeading(today) })).toBeTruthy();
   });
 });

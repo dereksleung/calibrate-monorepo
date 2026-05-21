@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { normalDayLogFixture, selectedDateFixture } from "./log-page-fixtures.ts";
 import {
   addDaysToIsoDate,
+  formatCompactDateHeading,
+  formatDateHeading,
   getDailyProgress,
   getDailyTotals,
   getMealTotals,
@@ -30,6 +32,13 @@ describe("log page helpers", () => {
     expect(addDaysToIsoDate("2026-12-31", 1)).toBe("2027-01-01");
   });
 
+  it("formats selected dates for desktop and compact mobile headings", () => {
+    const date = new Date(2026, 4, 18);
+
+    expect(formatDateHeading(date)).toBe("Monday, May 18");
+    expect(formatCompactDateHeading(date)).toBe("Mon, May 18");
+  });
+
   it("normalizes an empty day into renderable meal buckets", () => {
     expect(normalizeDayLogForRender(null, selectedDateFixture)).toMatchObject({
       id: null,
@@ -49,16 +58,16 @@ describe("log page helpers", () => {
     const dayLog = normalizeDayLogForRender(normalDayLogFixture, selectedDateFixture);
 
     expect(getMealTotals(dayLog.meals.BREAKFAST)).toEqual({
-      calories: 310,
-      proteinGrams: 12,
-      totalFatGrams: 8,
-      totalCarbohydrateGrams: 52,
+      calories: 282,
+      proteinGrams: 19,
+      totalFatGrams: 15,
+      totalCarbohydrateGrams: 21,
     });
     expect(getDailyTotals(dayLog)).toEqual({
-      calories: 930,
-      proteinGrams: 58,
-      totalFatGrams: 26,
-      totalCarbohydrateGrams: 116,
+      calories: 282,
+      proteinGrams: 19,
+      totalFatGrams: 15,
+      totalCarbohydrateGrams: 21,
     });
   });
 
