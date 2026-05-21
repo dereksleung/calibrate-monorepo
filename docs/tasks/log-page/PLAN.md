@@ -157,52 +157,7 @@ Dependencies:
 
 
 ## Implementation Order
-The implementation order below is dependency-aware, not strictly serial. Once the shared request/response contracts are known in `@calibrate/api-contracts`, mock frontend UI tasks can start against contract-shaped fixtures while backend endpoints, infrastructure adapters, and API-client transport work continue in parallel. Treat this as Contract-First Slicing: contracts first, then backend and frontend slices can independently build against the same agreed shapes before live integration.
-
-1. Shared contracts.
-   - Add weight request schema.
-   - Add search/recent contracts.
-
-2. Backend day-log weight foundation.
-   - Add domain/application/repository weight update path.
-   - Correct day-log find-or-create behavior.
-   - Verify with backend unit/controller tests.
-
-3. Backend food search and recent-food APIs.
-   - Add FoodData Central adapter behind an application port.
-   - Add recent-food query with 2-week bound, query matching, and recent-only dedupe.
-   - Merge matching recent foods before USDA results in the backend search response.
-   - Add controllers/routes/container wiring.
-   - Verify with mocked-provider tests and controller validation tests.
-
-4. Shared API client foundation.
-   - Generate or create `packages/api-client` following workspace package conventions.
-   - Add shared request functions and portable React Query options/hooks using `@calibrate/api-contracts`.
-   - Install/declare TanStack Query with peer/dev dependency shape for `@calibrate/api-client` and app dependency shape for `web`.
-
-5. Frontend mock-state UI.
-   - Can begin as soon as shared request/response contracts are stable; does not need to wait for backend endpoints or API-client live wiring.
-   - Add selected-date URL search validation with TanStack Router if date is URL state.
-   - Add hidden confirmation route and decide how selected-food context is passed to it.
-   - Decide whether search-to-confirmation uses per-navigation `viewTransition: true` or router-level `defaultViewTransition`.
-   - Add web-local page composition and selected-day loading state using package-owned API-client hooks when live wiring begins.
-   - Verify route/search-param behavior and API helper tests where practical.
-   - Build date stepper, summary, meal sections, empty states, error states, loading states, FAB shell, search results, and confirmation page against contract-shaped mock data.
-   - Cover normal, empty, and error scenarios before backend endpoints are live.
-   - Verify totals, placeholder progress, empty messaging, error messaging, and responsive layout.
-
-6. Frontend live wiring and mutation flows.
-   - Add web-level QueryClient provider/configuration and app-owned API transport setup before live package hooks from `@calibrate/api-client` are used.
-   - Wire the mock-state UI to `@calibrate/api-client` and backend APIs after live endpoints are available.
-   - Add optimistic weight update with rollback and selected-day invalidation/refetch.
-   - Add food search that renders backend-ordered results, including recent matches first when returned.
-   - Add route-level confirmation page flow and save into selected meal.
-   - Verify search, confirmation route navigation, confirmation edits, save, optimistic weight, rollback, and refetch behavior.
-
-7. Integration polish and manual verification.
-   - Run targeted frontend/backend tests first.
-   - Run typecheck/lint for touched projects.
-   - Start backend/frontend dev servers only when ready for manual flow verification.
+Once the shared request/response contracts are known in `@calibrate/api-contracts`, mock frontend UI tasks can start against contract-shaped fixtures while backend endpoints, infrastructure adapters, and API-client transport work continue in parallel. Treat this as Contract-First Slicing: contracts first, then backend and frontend slices can independently build against the same agreed shapes before live integration.
 
 ## Sequential Vs Parallel Work
 
