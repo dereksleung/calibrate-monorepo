@@ -72,6 +72,26 @@ This repo uses a multi-context Nx layout with ADRs stored under each project, su
 - If unexpected unrelated changes are detected, stop and ask.
 - Never store secrets, keys, or sensitive info in version control.
 
+## Story Branch And PR Gates
+
+- At the start of each story, create a story integration feature branch before implementation work begins.
+  - Default branch name: `codex/<story-slug>`.
+  - This branch is the merge target for the story's subtask PRs.
+- For every implementation subtask, create a dedicated subtask branch.
+  - Default branch name: `codex/<story-slug>/<subtask-slug>`.
+  - Branch from the story integration branch unless the subtask depends on another unmerged subtask; in that case, branch from the dependency subtask branch.
+- Treat each subtask as a hard workflow gate:
+  - Implement only that subtask's logical change.
+  - Run the smallest relevant verification for that subtask.
+  - Commit before starting the next subtask.
+  - Do not let unrelated or future-subtask changes accumulate in the same commit.
+- Open pull requests back to the story integration feature branch at these gates:
+  - Immediately after any `api-contracts` subtask finishes.
+  - After all backend subtasks for the story finish.
+  - After all mock frontend subtasks for the story finish.
+  - After the frontend/backend wiring subtasks finish.
+- Before switching branches or opening a PR, inspect the diff and confirm the branch contains only the intended subtask or gate scope.
+
 
 <!-- nx configuration start-->
 <!-- Leave the start & end comments to automatically receive updates. -->
