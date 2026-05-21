@@ -1,0 +1,32 @@
+{
+  "name": "@calibrate/api-client",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "nx": {
+    "targets": {
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "cwd": "packages/api-client",
+          "command": "tsc --noEmit -p tsconfig.json"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@calibrate/api-contracts": "1.0.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.100.5"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.100.5"
+  }
+}
