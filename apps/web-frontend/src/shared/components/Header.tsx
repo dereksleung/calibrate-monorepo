@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 
 import { cn } from '#/lib/utils'
+import { getTodayDateString } from '#/pages/logs/log-page-helpers.ts'
 
 import ThemeToggle from './ThemeToggle'
 
@@ -31,6 +32,7 @@ export default function Header() {
           </Link>
           <Link
             to="/logs"
+            search={{ date: getTodayDateString() }}
             className={navLinkBase}
             activeProps={{ className: cn(navLinkBase, navLinkActive) }}
           >
