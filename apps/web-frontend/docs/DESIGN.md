@@ -48,6 +48,10 @@ colors:
   background: '#f9f9f9'
   on-background: '#1a1c1c'
   surface-variant: '#e2e2e2'
+  calories-stone: '#44403C'
+  carbs-vibrant-azure: '#4CC9F0'
+  protein-vibrant-rose: '#F72585'
+  fats-vibrant-violet: '#7209B7'
 typography:
   display-lg:
     fontFamily: Manrope
