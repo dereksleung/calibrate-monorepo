@@ -64,6 +64,6 @@ Greatest sources of fat by food in the last month:
 <br></br>
 Largest changes in fat contributions from food between last month to this month:
 <br></br>
-<img width="1247" height="946" alt="Screenshot 2026-05-03 at 6 27 50 PM" src="https://github.com/user-attachments/assets/22b50006-90a7-472a-8ef2-bb78a4e56b00" />
+<img width="1264" height="959" alt="Screenshot 2026-05-24 at 2 17 08 PM" src="https://github.com/user-attachments/assets/6f09793e-acd6-49f2-a8d1-a18b118ee441" />
 
 
