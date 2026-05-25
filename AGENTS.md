@@ -43,7 +43,7 @@ Use the repo commit message convention in `docs/agents/commit-messages.md`.
 - Format: `npx nx run <project_name>:fmt`
 - Format check: `npx nx run <project_name>:fmt:check`
 - Build: `npx nx run <project_name>:build`
-- Database Migrations: `npm run kysely migrate:latest`
+- Database Migrations: `npx nx run kysely migrate:latest`
 
 ## Testing Policy
 
