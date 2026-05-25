@@ -1,25 +1,13 @@
 import * as z from "zod";
 
-export const MealNameSchema = z.enum(["BREAKFAST", "LUNCH", "DINNER", "SNACKS"]);
+import {
+  FoodEntryBaseSchema,
+  FoodEntryChosenFieldsSchema,
+  MealNameSchema,
+} from "./common/food-entry-base.js";
 
-export type MealNameEnumType = z.infer<typeof MealNameSchema>;
-
-export const CommonFoodEntryFieldsSchema = z.object({
+export const CommonFoodEntryFieldsSchema = FoodEntryBaseSchema.extend(FoodEntryChosenFieldsSchema.shape).extend({
   meal: MealNameSchema,
-  name: z.string(),
-  brand: z.string().nullable(),
-  iconName: z.string().nullable(),
-  quantity: z.number(),
-  quantityUnit: z.string(),
-  calories: z.number(),
-  totalFatGrams: z.number(),
-  saturatedFatGrams: z.number().nullable(),
-  cholesterolMg: z.number().nullable(),
-  sodiumMg: z.number().nullable(),
-  totalCarbohydrateGrams: z.number(),
-  fiberGrams: z.number().nullable(),
-  sugarGrams: z.number().nullable(),
-  proteinGrams: z.number(),
 });
 
 export const CreateFoodEntryRequestSchema = CommonFoodEntryFieldsSchema;
@@ -28,4 +16,5 @@ export const CreateFoodEntryRequestRouteParamsSchema = z.object({
   date: z.iso.date(),
 });
 
+export type CreateFoodEntryRequest = z.infer<typeof CreateFoodEntryRequestSchema>;
 export type CreateFoodEntryRequestRouteParams = z.infer<typeof CreateFoodEntryRequestRouteParamsSchema>;

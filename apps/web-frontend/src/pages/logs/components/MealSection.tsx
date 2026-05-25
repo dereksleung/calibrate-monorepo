@@ -11,10 +11,6 @@ type MealSectionProps = {
   onAddFood: (meal: MealNameEnumType) => void;
 };
 
-function formatQuantity(entry: FoodEntryResponse): string {
-  return `${entry.quantity} ${entry.quantityUnit}`;
-}
-
 export function MealSection({ meal, title, entries, onAddFood }: MealSectionProps) {
   const totals = getMealTotals(entries);
   const headingId = `${meal.toLowerCase()}-heading`;
@@ -38,7 +34,7 @@ export function MealSection({ meal, title, entries, onAddFood }: MealSectionProp
                 <li key={entry.id} className="grid grid-cols-[1fr_auto] gap-4 px-8 py-7 md:px-0 md:py-4">
                   <div className="min-w-0">
                     <p className="text-xl font-light leading-snug text-on-surface md:text-lg">{entry.name}</p>
-                    <p className="mt-1 text-sm font-light text-on-surface-variant/70">{formatQuantity(entry)}</p>
+                    <p className="mt-1 text-sm font-light text-on-surface-variant/70">{`${entry.chosenQuantity} ${entry.chosenUnit}`}</p>
                   </div>
                   <p className="text-xl font-light text-on-surface-variant md:text-lg">{Math.round(entry.calories)}</p>
                 </li>

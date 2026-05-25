@@ -8,8 +8,14 @@ export interface FoodEntriesTable {
   name: string;
   brand: string | null;
   icon_name: string | null;
-  quantity: number;
-  quantity_unit: string;
+  chosen_quantity: number;
+  chosen_unit: string;
+  quantity_serving: number;
+  serving_label: string;
+  quantity_mass: number | null;
+  mass_unit: string | null;
+  quantity_volume: number | null;
+  volume_unit: string | null;
   calories: number;
   total_fat_grams: number;
   saturated_fat_grams: number | null;

@@ -1,24 +1,9 @@
 import * as z from "zod";
 
-const FoodSearchResultBaseSchema = z.object({
-  name: z.string().min(1),
-  brand: z.string().min(1).nullable(),
+import { FoodEntryBaseSchema } from "./common/food-entry-base.js";
+
+const FoodSearchResultBaseSchema = FoodEntryBaseSchema.extend({
   sourceLabel: z.string().min(1),
-  calories: z.number().nonnegative(),
-  totalFatGrams: z.number().nonnegative(),
-  saturatedFatGrams: z.number().nonnegative().nullable(),
-  cholesterolMg: z.number().nonnegative().nullable(),
-  sodiumMg: z.number().nonnegative().nullable(),
-  totalCarbohydrateGrams: z.number().nonnegative(),
-  fiberGrams: z.number().nonnegative().nullable(),
-  sugarGrams: z.number().nonnegative().nullable(),
-  proteinGrams: z.number().nonnegative(),
-  quantityServing: z.number().positive().default(1),
-  servingLabel: z.string().min(1).default("serving"),
-  quantityMass: z.number().positive().nullable().default(null),
-  massUnit: z.string().min(1).nullable().default(null),
-  quantityVolume: z.number().positive().nullable().default(null),
-  volumeUnit: z.string().min(1).nullable().default(null),
 });
 
 export const RecentFoodRecencyMetadataSchema = z.object({

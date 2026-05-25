@@ -1,20 +1,14 @@
-import type { MealNameEnumType } from "./food-entry-requests.js";
+import * as z from "zod";
 
-export interface FoodEntryResponse {
-  id: string;
-  meal: MealNameEnumType;
-  name: string;
-  brand: string | null;
-  iconName: string | null;
-  quantity: number;
-  quantityUnit: string;
-  calories: number;
-  totalFatGrams: number;
-  saturatedFatGrams: number | null;
-  cholesterolMg: number | null;
-  sodiumMg: number | null;
-  totalCarbohydrateGrams: number;
-  fiberGrams: number | null;
-  sugarGrams: number | null;
-  proteinGrams: number;
-}
+import {
+  FoodEntryBaseSchema,
+  FoodEntryChosenFieldsSchema,
+  MealNameSchema,
+} from "./common/food-entry-base.js";
+
+export const FoodEntryResponseSchema = FoodEntryBaseSchema.extend(FoodEntryChosenFieldsSchema.shape).extend({
+  id: z.string().min(1),
+  meal: MealNameSchema,
+});
+
+export type FoodEntryResponse = z.infer<typeof FoodEntryResponseSchema>;

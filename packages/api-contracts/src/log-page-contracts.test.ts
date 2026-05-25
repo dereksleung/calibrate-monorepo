@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CreateFoodEntryRequestSchema,
   FoodSearchRequestQuerySchema,
   FoodSearchResponseSchema,
   RecentFoodSearchResultSchema,
@@ -38,6 +39,26 @@ describe("log page request contracts", () => {
   it("trims and validates food search query params", () => {
     expect(FoodSearchRequestQuerySchema.parse({ query: "  yogurt  " })).toEqual({ query: "yogurt" });
     expect(() => FoodSearchRequestQuerySchema.parse({ query: "   " })).toThrow();
+  });
+
+  it("uses the shared food entry base for create-food-entry requests", () => {
+    const { sourceLabel: _sourceLabel, ...baseFoodEntry } = baseFoodResult;
+
+    const result = CreateFoodEntryRequestSchema.parse({
+      ...baseFoodEntry,
+      meal: "BREAKFAST",
+      chosenQuantity: 2,
+      chosenUnit: "cups",
+    });
+
+    expect(result.chosenQuantity).toBe(2);
+    expect(result.chosenUnit).toBe("cups");
+    expect(result.quantityServing).toBe(1);
+    expect(result.servingLabel).toBe("serving");
+    expect(result.quantityMass).toBeNull();
+    expect(result.massUnit).toBeNull();
+    expect(result.quantityVolume).toBeNull();
+    expect(result.volumeUnit).toBeNull();
   });
 });
 

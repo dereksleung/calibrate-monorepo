@@ -56,7 +56,7 @@ describe("Logs", () => {
     expect(screen.getByText("1,518 calories remaining today.")).toBeTruthy();
     expect(screen.getByText("184.2")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Breakfast" })).toBeTruthy();
-    expect(screen.getByText("Poached eggs on rye")).toBeTruthy();
+    expect(screen.getByText("Oatmeal")).toBeTruthy();
     expect(screen.getByText("Black coffee")).toBeTruthy();
   });
 

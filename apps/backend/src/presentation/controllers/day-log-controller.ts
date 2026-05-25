@@ -13,6 +13,7 @@ import {
   GetDayLogRequestRouteParamsSchema,
 } from "@calibrate/api-contracts";
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
+import { FoodEntryResponseMapper } from "../mappers/food-entry-response-mapper.js";
 
 /**
  * The controller has one main job - go between HTTP, and my application.
@@ -75,6 +76,8 @@ export class DayLogController {
 
       if (!validatedDate.isValid || !validatedInput.isValid) return;
 
+      const foodEntryInput = validatedInput.data;
+
       const authenticatedUserId = req.auth?.userId;
       if (!authenticatedUserId) {
         throw new AuthenticationError("Authentication required");
@@ -82,10 +85,32 @@ export class DayLogController {
 
       const entry = await this.dayLogService.addFoodEntry({
         userId: authenticatedUserId,
-        foodEntry: validatedInput?.data,
+        foodEntry: {
+          meal: foodEntryInput.meal,
+          name: foodEntryInput.name,
+          brand: foodEntryInput.brand,
+          iconName: null,
+          chosenQuantity: foodEntryInput.chosenQuantity,
+          chosenUnit: foodEntryInput.chosenUnit,
+          quantityServing: foodEntryInput.quantityServing,
+          servingLabel: foodEntryInput.servingLabel,
+          quantityMass: foodEntryInput.quantityMass,
+          massUnit: foodEntryInput.massUnit,
+          quantityVolume: foodEntryInput.quantityVolume,
+          volumeUnit: foodEntryInput.volumeUnit,
+          calories: foodEntryInput.calories,
+          totalFatGrams: foodEntryInput.totalFatGrams,
+          saturatedFatGrams: foodEntryInput.saturatedFatGrams,
+          cholesterolMg: foodEntryInput.cholesterolMg,
+          sodiumMg: foodEntryInput.sodiumMg,
+          totalCarbohydrateGrams: foodEntryInput.totalCarbohydrateGrams,
+          fiberGrams: foodEntryInput.fiberGrams,
+          sugarGrams: foodEntryInput.sugarGrams,
+          proteinGrams: foodEntryInput.proteinGrams,
+        },
         date: validatedDate?.data.date,
       });
-      res.status(201).json(entry);
+      res.status(201).json(FoodEntryResponseMapper.toResponse(entry));
     } catch (error) {
       handleControllerError(error, res);
     }

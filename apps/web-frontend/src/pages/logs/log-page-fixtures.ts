@@ -9,13 +9,10 @@ export type LogPageFixtureState =
 export const selectedDateFixture = "2026-05-21";
 
 export const oatmealFixture: FoodEntryResponse = {
-  id: "entry-eggs",
+  id: "entry-oatmeal",
   meal: "BREAKFAST",
-  name: "Poached eggs on rye",
+  name: "Oatmeal",
   brand: null,
-  iconName: null,
-  quantity: 2,
-  quantityUnit: "large eggs, 1 slice",
   calories: 280,
   totalFatGrams: 150,
   saturatedFatGrams: 1,
@@ -25,6 +22,14 @@ export const oatmealFixture: FoodEntryResponse = {
   fiberGrams: 3,
   sugarGrams: 600,
   proteinGrams: 190,
+  chosenQuantity: 2,
+  chosenUnit: "serving",
+  quantityServing: 1,
+  servingLabel: "serving",
+  quantityMass: null,
+  massUnit: null,
+  quantityVolume: null,
+  volumeUnit: null,
 };
 
 export const coffeeFixture: FoodEntryResponse = {
@@ -32,9 +37,6 @@ export const coffeeFixture: FoodEntryResponse = {
   meal: "BREAKFAST",
   name: "Black coffee",
   brand: null,
-  iconName: null,
-  quantity: 1,
-  quantityUnit: "250ml",
   calories: 2,
   totalFatGrams: 0,
   saturatedFatGrams: null,
@@ -44,6 +46,14 @@ export const coffeeFixture: FoodEntryResponse = {
   fiberGrams: null,
   sugarGrams: null,
   proteinGrams: 0,
+  chosenQuantity: 1,
+  chosenUnit: "cup",
+  quantityServing: 1,
+  servingLabel: "serving",
+  quantityMass: null,
+  massUnit: null,
+  quantityVolume: 250,
+  volumeUnit: "ml",
 };
 
 export const normalDayLogFixture: DayLogResponse = {
