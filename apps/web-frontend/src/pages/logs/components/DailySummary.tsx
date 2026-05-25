@@ -48,8 +48,9 @@ function MacroStat({
   return (
     <div className="min-w-0 space-y-3">
       <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">{label}</p>
-      <p className="whitespace-nowrap text-lg font-light text-on-surface md:text-base">
-        {Math.round(value)}g <span className="text-on-surface-variant/60">/ {target}g</span>
+      <p className="whitespace-nowrap text-[0.8125rem] font-light leading-6 text-on-surface sm:text-lg sm:leading-7 md:text-base md:leading-6">
+        {Math.round(value)}g{" "}
+        <span className="text-xs text-on-surface-variant/60 sm:text-lg md:text-base">/ {target}g</span>
       </p>
       <ProgressBar progress={progress} color={color} />
     </div>
@@ -68,8 +69,8 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
         Daily summary
       </Typography>
 
-      <div className="grid gap-8 md:grid-cols-[1.2fr_1fr] md:items-end md:gap-12">
-        <div className="grid grid-cols-[1fr_auto] gap-8 md:block">
+      <div className="grid gap-8 md:gap-10">
+        <div className="grid grid-cols-[1fr_auto] gap-8">
           <div>
             <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">Eaten</p>
             <div className="mt-3 flex flex-wrap items-end gap-x-2">
@@ -88,7 +89,7 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
             />
           </div>
 
-          <div className="text-right md:mt-12 md:text-left">
+          <div className="text-right">
             <div className="flex items-center justify-end gap-2 md:justify-start">
               <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">Weight</p>
               {weight ? <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} /> : null}
@@ -105,7 +106,7 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-3 gap-4 sm:gap-5 md:gap-10">
           <MacroStat
             label="Protein"
             value={totals.proteinGrams}

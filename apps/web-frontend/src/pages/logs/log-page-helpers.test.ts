@@ -59,15 +59,15 @@ describe("log page helpers", () => {
 
     expect(getMealTotals(dayLog.meals.BREAKFAST)).toEqual({
       calories: 282,
-      proteinGrams: 19,
-      totalFatGrams: 15,
-      totalCarbohydrateGrams: 21,
+      proteinGrams: 190,
+      totalFatGrams: 150,
+      totalCarbohydrateGrams: 210,
     });
     expect(getDailyTotals(dayLog)).toEqual({
       calories: 282,
-      proteinGrams: 19,
-      totalFatGrams: 15,
-      totalCarbohydrateGrams: 21,
+      proteinGrams: 190,
+      totalFatGrams: 150,
+      totalCarbohydrateGrams: 210,
     });
   });
 

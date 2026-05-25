@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, Leaf } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "#/shared/components/base/Button.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
@@ -17,8 +17,7 @@ export function DateStepper({ selectedDate, date }: DateStepperProps) {
 
   return (
     <section aria-label="Selected day" className="space-y-6">
-      <div className="flex items-center justify-between gap-4 md:hidden">
-        <Leaf aria-hidden className="size-7 text-primary" strokeWidth={1.8} />
+      <div className="flex items-center justify-center gap-4 md:hidden">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="icon-sm" aria-label="Previous day">
             <Link to="/logs" search={{ date: previousDate }}>
@@ -34,7 +33,6 @@ export function DateStepper({ selectedDate, date }: DateStepperProps) {
             </Link>
           </Button>
         </div>
-        <div aria-hidden className="size-9 rounded-full bg-surface-container-high" />
       </div>
 
       <div className="hidden items-end justify-between gap-4 md:flex">

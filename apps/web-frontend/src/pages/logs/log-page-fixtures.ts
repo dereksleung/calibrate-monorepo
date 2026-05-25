@@ -17,14 +17,14 @@ export const oatmealFixture: FoodEntryResponse = {
   quantity: 2,
   quantityUnit: "large eggs, 1 slice",
   calories: 280,
-  totalFatGrams: 15,
+  totalFatGrams: 150,
   saturatedFatGrams: 1,
   cholesterolMg: null,
   sodiumMg: 120,
-  totalCarbohydrateGrams: 21,
+  totalCarbohydrateGrams: 210,
   fiberGrams: 3,
-  sugarGrams: 6,
-  proteinGrams: 19,
+  sugarGrams: 600,
+  proteinGrams: 190,
 };
 
 export const coffeeFixture: FoodEntryResponse = {
