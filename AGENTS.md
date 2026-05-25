@@ -32,11 +32,12 @@ Use the repo commit message convention in `docs/agents/commit-messages.md`.
 
 ## Project Commands
 
+- For Nx-managed project tasks, always use `npx nx run <project_name>:<target>`; do not call package scripts directly unless the user explicitly requests them or the command is listed here as a non-Nx exception.
 - Dev server: `npx nx run <project_name>:dev`
 - Tests, fast/default suite: `npx nx run <project_name>:test`
 - Tests, integration suite: `npx nx run <project_name>:test:integration`
 - Tests, end-to-end suite: `npx nx run <project_name>:test:e2e`
-- Type-aware check: `npx nx run <project_name>:typecheck`
+- Typechecking: `npx nx run <project_name>:typecheck`
 - Lint: `npx nx run <project_name>:lint`
 - Lint fix: `npx nx run <project_name>:lint:fix`
 - Format: `npx nx run <project_name>:fmt`
