@@ -82,7 +82,7 @@ const fatTrendSources = [
     change: "50%",
     imageAlt: "Oats, Organic",
     imageUrl:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBX_AhsbK50tLy1CJmEUtFWjsUkEPrtnKxHii0TqreIhX7ogSc7nu_Z2xjGzkZAUwQm66T4qsqtvzHhxneskfUfIr2OjDduEIC5_x23aK-0zATuuKDUq3pTOXX9myY1WG9ojVBfFjYL30YST9tSdZa1A1eVXDKXtKfV0wXEzxVDb6H8qSLcFVLoaRF0ZzDhgpPvwvFupZAI3jU5gqVS2jeeKiIeVweHtzpi5wKe2AaM_-9Abn57ixvKCN-IutvtdvYnlOeTkEkkmVo",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBX_AhsbK50tLy1CJmEUtFWjsUkEPrtnKxHii0TqreIhX7ogSc7nu_Z2xjGzkZAUwQm66T4qsqtvzHhxneskfUfIr2OjDduEIC5_x23aK-0zATuuKDUq3pTOXX9myY1WG9ojVBfFjYL30YST9tSdZa1A1eVXDKXtKfV0wXEzxVDb6H8qSLcFVLoaRF0ZzDhgpPvwvFUpZAI3jU5gqVS2jeeKiIeVweHtzpi5wKe2AaM_-9Abn57ixvKCN-IutvtdvYnlOeTkEkkmVo",
     name: "Oats, Organic",
   },
 ] as const;
