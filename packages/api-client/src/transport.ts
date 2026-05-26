@@ -70,12 +70,6 @@ async function buildHeaders(options: ApiTransportOptions, requestHeaders?: Heade
 }
 
 export function createApiTransport(options: ApiTransportOptions): ApiTransport {
-  const fetchImplementation = options.fetch ?? globalThis.fetch?.bind(globalThis);
-
-  if (!fetchImplementation) {
-    throw new Error("ApiTransport requires a fetch implementation in this runtime.");
-  }
-
   return {
     async request<TResponse>({
       path,
@@ -85,6 +79,12 @@ export function createApiTransport(options: ApiTransportOptions): ApiTransport {
       headers: requestHeaders,
       parse,
     }: ApiRequestOptions<TResponse>): Promise<TResponse> {
+      const fetchImplementation = options.fetch ?? globalThis.fetch?.bind(globalThis);
+
+      if (!fetchImplementation) {
+        throw new Error("ApiTransport requires a fetch implementation in this runtime.");
+      }
+
       const response = await fetchImplementation(buildUrl(options.baseUrl, path, query), {
         method,
         headers: await buildHeaders(options, requestHeaders, body),
