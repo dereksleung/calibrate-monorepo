@@ -32,11 +32,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Build
-        run: git checkout main; npm ci; npm run build
+        run: git checkout main; npm ci; npx nx run web:build
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./apps/web-frontend/dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
