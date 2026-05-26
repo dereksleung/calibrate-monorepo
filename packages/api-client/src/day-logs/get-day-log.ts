@@ -48,6 +48,10 @@ export function getDayLogQueryOptions(transport: ApiTransport, date: string) {
   });
 }
 
+/**
+ * Portable hook for GET `/daylogs/:date` (ISO `YYYY-MM-DD`). Pass the app-owned `ApiTransport`
+ * (for example the web `apiTransport` singleton); do not wrap this operation in app-local fetch hooks.
+ */
 export function useSelectedDayLog(transport: ApiTransport, date: string) {
   return useQuery(getDayLogQueryOptions(transport, date));
 }

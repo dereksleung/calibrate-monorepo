@@ -29,6 +29,20 @@ beforeEach(() => {
     removeListener: vi.fn(),
     dispatchEvent: vi.fn(),
   }));
+
+  vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+    if (url.includes("/daylogs/")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(null), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
+    }
+
+    return Promise.resolve(new Response("not found", { status: 404 }));
+  });
 });
 
 afterEach(() => {

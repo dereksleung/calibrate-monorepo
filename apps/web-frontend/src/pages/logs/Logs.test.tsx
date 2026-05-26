@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 
+import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createQueryClient } from "#/shared/api/query-client.ts";
 import { routeTree } from "../../routeTree.gen.ts";
+import { coffeeFixture, oatmealFixture } from "./log-page-fixtures.ts";
 
 vi.mock("@tanstack/react-devtools", () => ({
   TanStackDevtools: () => null,
@@ -13,6 +16,16 @@ vi.mock("@tanstack/react-devtools", () => ({
 vi.mock("@tanstack/react-router-devtools", () => ({
   TanStackRouterDevtoolsPanel: () => null,
 }));
+
+const dayLogMay18Response = {
+  id: "day-log-518",
+  date: "2026-05-18T00:00:00.000Z",
+  breakfast: [oatmealFixture, coffeeFixture],
+  lunch: [],
+  dinner: [],
+  snacks: [],
+  weight: 184.2,
+};
 
 beforeEach(() => {
   window.scrollTo = vi.fn();
@@ -26,6 +39,20 @@ beforeEach(() => {
     removeListener: vi.fn(),
     dispatchEvent: vi.fn(),
   }));
+
+  vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+    const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+    if (url.includes("/daylogs/2026-05-18")) {
+      return Promise.resolve(
+        new Response(JSON.stringify(dayLogMay18Response), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
+    }
+
+    return Promise.resolve(new Response("not found", { status: 404 }));
+  });
 });
 
 afterEach(() => {
@@ -43,7 +70,11 @@ function renderLogsRoute() {
     scrollRestoration: false,
   });
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <QueryClientProvider client={createQueryClient()}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
 
 describe("Logs", () => {
@@ -51,7 +82,7 @@ describe("Logs", () => {
     renderLogsRoute();
 
     expect(await screen.findByRole("heading", { name: "Monday, May 18" })).toBeTruthy();
-    expect(screen.getByText("282")).toBeTruthy();
+    expect(await screen.findByText("282")).toBeTruthy();
     expect(screen.getByText("/ 1,800")).toBeTruthy();
     expect(screen.getByText("1,518 calories remaining today.")).toBeTruthy();
     expect(screen.getByText("184.2")).toBeTruthy();

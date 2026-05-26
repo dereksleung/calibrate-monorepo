@@ -325,7 +325,7 @@ As a calorie tracking person, I want to see a Logs overview screen opened to the
     - `apps/web-frontend/src/pages/logs/components/MealSection.tsx`
     - `apps/web-frontend/src/pages/logs/components/QuickLogDrawer.tsx`
 
-- [ ] Subtask: Wire selected-day live fetch into the overview
+- [x] Subtask: Wire selected-day live fetch into the overview
   - Acceptance: `/logs` loads the selected day through the package-owned `@calibrate/api-client` selected-day query hook/options, passing the web app's configured `ApiTransport`. The page renders empty state when the API returns `null`, shows loading and error states, preserves the mock-state visual structure when live data is connected, and updates totals when selected day data changes. Do not add a web-local data-fetching hook for this operation.
   - Verify: `npx nx run web:test:integration`
   - Files:
