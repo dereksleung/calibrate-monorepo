@@ -1,4 +1,9 @@
-## Architecture Guardrails
+---
+description: 
+alwaysApply: false
+---
+
+## Backend Architecture Guardrails
 
 - Before backend architecture, layering, or cross-layer changes, read the ADRs under `apps/backend/docs/adr/`.
 - Keep clean-architecture boundaries:

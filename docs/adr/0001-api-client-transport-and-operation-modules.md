@@ -64,11 +64,12 @@ Consuming apps own the configured transport instance:
 
 ```ts
 export const apiTransport = createApiTransport({
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
-  fetch: window.fetch.bind(window),
+  baseUrl: import.meta.env.VITE_API_BASE_URL ?? "",
   getAccessToken: () => localStorage.getItem("accessToken"),
 });
 ```
+
+When `fetch` is omitted, each request uses the current `globalThis.fetch` (so tests can `vi.spyOn(globalThis, "fetch")`). Pass an explicit `fetch` when the app needs a stable reference (for example a wrapped client with tracing).
 
 ## Alternatives Considered
 

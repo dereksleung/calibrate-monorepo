@@ -61,8 +61,9 @@ DB_USER="postgres"
 DB_PASSWORD="<password_from_earlier>"
 JWT_KEY_ID="local-dev"
 JWT_ACCESS_TOKEN_TTL_SECONDS="900"
-ISSUER="http://localhost:3000/"
-JWT_AUDIENCE="http://localhost:3000/api"
+JWT_ISSUER="http://localhost:3001/"
+JWT_AUDIENCE="http://localhost:3001/api"
+API_BASE_URL="http://localhost:3001/"
 ```
 
 3. Generate an Ed25519 private key .pem file using `openssl genpkey -algorithm ED25519 -out jwt-ed25519-private.pem`.

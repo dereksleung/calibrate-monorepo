@@ -13,8 +13,14 @@ export interface CommonFoodEntryProps {
   name: string;
   brand: string | null;
   iconName: string | null;
-  quantity: number;
-  quantityUnit: string;
+  chosenQuantity: number;
+  chosenUnit: string;
+  quantityServing: number;
+  servingLabel: string;
+  quantityMass: number | null;
+  massUnit: string | null;
+  quantityVolume: number | null;
+  volumeUnit: string | null;
   calories: number;
   totalFatGrams: number;
   saturatedFatGrams: number | null;
@@ -37,8 +43,14 @@ export class FoodEntry {
   private _name: string;
   private _brand: string | null;
   private _iconName: string | null;
-  private _quantity: number;
-  private _quantityUnit: string;
+  private _chosenQuantity: number;
+  private _chosenUnit: string;
+  private _quantityServing: number;
+  private _servingLabel: string;
+  private _quantityMass: number | null;
+  private _massUnit: string | null;
+  private _quantityVolume: number | null;
+  private _volumeUnit: string | null;
   private _calories: number;
   private _totalFatGrams: number;
   private _saturatedFatGrams: number | null;
@@ -55,8 +67,14 @@ export class FoodEntry {
     name,
     brand,
     iconName,
-    quantity,
-    quantityUnit,
+    chosenQuantity,
+    chosenUnit,
+    quantityServing,
+    servingLabel,
+    quantityMass,
+    massUnit,
+    quantityVolume,
+    volumeUnit,
     calories,
     totalFatGrams,
     saturatedFatGrams,
@@ -74,8 +92,14 @@ export class FoodEntry {
     this._name = name;
     this._brand = brand;
     this._iconName = iconName;
-    this._quantity = quantity;
-    this._quantityUnit = quantityUnit;
+    this._chosenQuantity = chosenQuantity;
+    this._chosenUnit = chosenUnit;
+    this._quantityServing = quantityServing;
+    this._servingLabel = servingLabel;
+    this._quantityMass = quantityMass;
+    this._massUnit = massUnit;
+    this._quantityVolume = quantityVolume;
+    this._volumeUnit = volumeUnit;
     this._calories = calories;
     this._totalFatGrams = totalFatGrams;
     this._saturatedFatGrams = saturatedFatGrams;
@@ -116,11 +140,29 @@ export class FoodEntry {
   public get iconName(): string | null {
     return this._iconName;
   }
-  public get quantity(): number {
-    return this._quantity;
+  public get chosenQuantity(): number {
+    return this._chosenQuantity;
   }
-  public get quantityUnit(): string {
-    return this._quantityUnit;
+  public get chosenUnit(): string {
+    return this._chosenUnit;
+  }
+  public get quantityServing(): number {
+    return this._quantityServing;
+  }
+  public get servingLabel(): string {
+    return this._servingLabel;
+  }
+  public get quantityMass(): number | null {
+    return this._quantityMass;
+  }
+  public get massUnit(): string | null {
+    return this._massUnit;
+  }
+  public get quantityVolume(): number | null {
+    return this._quantityVolume;
+  }
+  public get volumeUnit(): string | null {
+    return this._volumeUnit;
   }
   public get calories(): number {
     return this._calories;

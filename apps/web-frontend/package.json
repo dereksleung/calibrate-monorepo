@@ -10,13 +10,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --exclude \"**/*.integration.test.{ts,tsx}\" --exclude \"**/*.e2e.test.{ts,tsx}\" --exclude \"integration/**\" --exclude \"e2e/**\" --exclude \"test/integration/**\" --exclude \"test/e2e/**\"",
-    "test:integration": "vitest run --passWithNoTests \"src/**/*.integration.test.{ts,tsx}\" \"integration/**/*.test.{ts,tsx}\" \"test/integration/**/*.test.{ts,tsx}\"",
+    "test:integration": "sh -c 'files=$(find src integration test/integration -type f \\( -name \"*.integration.test.ts\" -o -name \"*.integration.test.tsx\" -o -path \"integration/*.test.ts\" -o -path \"integration/*.test.tsx\" -o -path \"test/integration/*.test.ts\" -o -path \"test/integration/*.test.tsx\" \\) 2>/dev/null); if [ -z \"$files\" ]; then vitest run --passWithNoTests __no_integration_tests__; else vitest run $files; fi'",
     "test:e2e": "vitest run --passWithNoTests \"src/**/*.e2e.test.{ts,tsx}\" \"e2e/**/*.test.{ts,tsx}\" \"test/e2e/**/*.test.{ts,tsx}\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts,.tsx",
-    "fmt": "prettier --write ."
+    "lint": "cd ../.. && oxlint --config .oxlintrc.json apps/web-frontend",
+    "lint:fix": "cd ../.. && oxlint --fix --config .oxlintrc.json apps/web-frontend",
+    "fmt": "cd ../.. && oxfmt --config .oxlintrc.json apps/web-frontend",
+    "fmt:check": "cd ../.. && oxfmt --check --config .oxlintrc.json apps/web-frontend"
   },
   "dependencies": {
     "@calibrate/api-client": "1.0.0",
@@ -54,6 +56,9 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.2.0",
     "jsdom": "28.1.0",
+    "oxfmt": "0.36.0",
+    "oxlint": "1.51.0",
+    "oxlint-tsgolint": "0.16.0",
     "shadcn": "4.5.0",
     "storybook": "10.3.5",
     "typescript": "5.9.3",

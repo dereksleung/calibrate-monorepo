@@ -12,7 +12,7 @@ describe("DayLogController", () => {
   let mockDayLogService: MockedObject<DayLogServiceImpl>;
   const mockDayLog: DayLog = DayLog.reconstitute({
     id: "123",
-    date: new Date("2026-02-22"),
+    date: Temporal.PlainDate.from("2026-02-22"),
     breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
     lunch: [buildFoodEntry({ meal: MealNameEnum.LUNCH })],
     dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
@@ -21,7 +21,7 @@ describe("DayLogController", () => {
   });
   const mockDayLogResponse: DayLogResponse = buildDayLogResponse({
     id: "123",
-    date: new Date("2026-02-22"),
+    date: "2026-02-22",
     breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
     lunch: [buildFoodEntryResponse({ meal: MealNameEnum.LUNCH })],
     dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
@@ -32,9 +32,37 @@ describe("DayLogController", () => {
     meal: MealNameEnum.BREAKFAST,
     name: "Scrambled Eggs",
     brand: null,
+    calories: 180,
+    totalFatGrams: 12,
+    saturatedFatGrams: 4,
+    cholesterolMg: 370,
+    sodiumMg: 140,
+    totalCarbohydrateGrams: 2,
+    fiberGrams: 0,
+    sugarGrams: 1,
+    proteinGrams: 14,
+    chosenQuantity: 2,
+    chosenUnit: "pieces",
+    quantityServing: 1,
+    servingLabel: "serving",
+    quantityMass: null,
+    massUnit: null,
+    quantityVolume: null,
+    volumeUnit: null,
+  };
+  const mockCreateFoodEntryServiceInput = {
+    meal: MealNameEnum.BREAKFAST,
+    name: "Scrambled Eggs",
+    brand: null,
     iconName: null,
-    quantity: 2,
-    quantityUnit: "pieces",
+    chosenQuantity: 2,
+    chosenUnit: "pieces",
+    quantityServing: 1,
+    servingLabel: "serving",
+    quantityMass: null,
+    massUnit: null,
+    quantityVolume: null,
+    volumeUnit: null,
     calories: 180,
     totalFatGrams: 12,
     saturatedFatGrams: 4,
@@ -274,8 +302,14 @@ describe("DayLogController", () => {
       name: "Scrambled Eggs",
       brand: null,
       iconName: null,
-      quantity: 2,
-      quantityUnit: "pieces",
+      chosenQuantity: 2,
+      chosenUnit: "pieces",
+      quantityServing: 1,
+      servingLabel: "serving",
+      quantityMass: null,
+      massUnit: null,
+      quantityVolume: null,
+      volumeUnit: null,
       calories: 180,
       totalFatGrams: 12,
       saturatedFatGrams: 4,
@@ -298,10 +332,30 @@ describe("DayLogController", () => {
     expect(mockDayLogService.addFoodEntry).toHaveBeenCalledWith({
       userId: "user-1",
       date: "2026-02-22",
-      foodEntry: mockCreateFoodEntryRequestBody,
+      foodEntry: mockCreateFoodEntryServiceInput,
     });
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(createdFoodEntry);
+    expect(res.json).toHaveBeenCalledWith(
+      buildFoodEntryResponse({
+        id: createdFoodEntry.id,
+        meal: MealNameEnum.BREAKFAST,
+        name: "Scrambled Eggs",
+        brand: null,
+        calories: 180,
+        totalFatGrams: 12,
+        saturatedFatGrams: 4,
+        cholesterolMg: 370,
+        sodiumMg: 140,
+        totalCarbohydrateGrams: 2,
+        fiberGrams: 0,
+        sugarGrams: 1,
+        proteinGrams: 14,
+        chosenQuantity: 2,
+        chosenUnit: "pieces",
+        quantityServing: 1,
+        servingLabel: "serving",
+      }),
+    );
   });
 
   it("should return 400 when date param is invalid", async () => {
@@ -338,8 +392,6 @@ describe("DayLogController", () => {
         meal: MealNameEnum.BREAKFAST,
         name: "Scrambled Eggs",
         brand: null,
-        iconName: null,
-        quantity: 2,
       },
       params: {
         date: "2026-02-22",

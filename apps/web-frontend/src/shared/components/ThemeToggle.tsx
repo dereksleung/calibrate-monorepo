@@ -7,7 +7,7 @@ function getInitialMode(): ThemeMode {
     return 'auto'
   }
 
-  const stored = window.localStorage.getItem('theme')
+  const stored = window?.localStorage?.getItem('theme')
   if (stored === 'light' || stored === 'dark' || stored === 'auto') {
     return stored
   }

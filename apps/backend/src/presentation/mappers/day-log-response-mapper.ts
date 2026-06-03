@@ -7,7 +7,7 @@ export class DayLogResponseMapper {
   public static toResponse(dayLog: DayLog): DayLogResponse {
     return {
       id: dayLog.id,
-      date: dayLog.date,
+      date: dayLog.date.toString(),
       breakfast: dayLog.breakfast?.map(FoodEntryResponseMapper.toResponse) ?? null,
       lunch: dayLog.lunch?.map(FoodEntryResponseMapper.toResponse) ?? null,
       dinner: dayLog.dinner?.map(FoodEntryResponseMapper.toResponse) ?? null,

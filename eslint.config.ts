@@ -1,19 +1,34 @@
-import js from "@eslint/js";
-// import pluginReact from "eslint-plugin-react";
 import { defineConfig } from "eslint/config";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 
+// Disabling ESLint
 export default defineConfig([
   {
     ignores: ["**/dist/**", "**/build/**", "node_modules/**"],
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
+    },
   },
   {
-    files: ["**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
-    plugins: { js },
-    extends: ["js/recommended"],
-    languageOptions: { globals: globals.browser },
+    files: ["**/*.{js,mjs,cjs,jsx,tsx}"],
+    languageOptions: {
+      globals: globals.browser,
+      sourceType: "module",
+      ecmaVersion: "latest",
+    },
   },
-  tseslint.configs.recommended,
-  // pluginReact.configs.flat.recommended,
+  {
+    files: ["**/*.{ts,mts,cts,tsx}"],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+        sourceType: "module",
+      },
+    },
+    rules: {},
+  },
 ]);

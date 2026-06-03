@@ -6,7 +6,7 @@ describe("DayLogResponseMapper", () => {
   it("should map a fully populated DayLog to a DayLogResponse", () => {
     const dayLog = buildDayLog({
       id: "123",
-      date: new Date("2026-02-22"),
+      date: Temporal.PlainDate.from("2026-02-22"),
       breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
       lunch: [buildFoodEntry({ meal: MealNameEnum.LUNCH })],
       dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
@@ -19,7 +19,7 @@ describe("DayLogResponseMapper", () => {
     expect(result).toEqual(
       buildDayLogResponse({
         id: "123",
-        date: new Date("2026-02-22"),
+        date: "2026-02-22",
         breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
         lunch: [buildFoodEntryResponse({ meal: MealNameEnum.LUNCH })],
         dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
@@ -32,7 +32,7 @@ describe("DayLogResponseMapper", () => {
   it("should handle a mix of populated and empty meals", () => {
     const dayLog = DayLog.reconstitute({
       id: "789",
-      date: new Date("2026-03-01"),
+      date: Temporal.PlainDate.from("2026-03-01"),
       breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
       lunch: [],
       dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
@@ -45,7 +45,7 @@ describe("DayLogResponseMapper", () => {
     expect(result).toEqual(
       buildDayLogResponse({
         id: "789",
-        date: new Date("2026-03-01"),
+        date: "2026-03-01",
         breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
         lunch: [],
         dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],
@@ -58,7 +58,7 @@ describe("DayLogResponseMapper", () => {
   it("should map empty meal arrays to empty arrays", () => {
     const dayLog = DayLog.reconstitute({
       id: "101",
-      date: new Date("2026-03-01"),
+      date: Temporal.PlainDate.from("2026-03-01"),
       breakfast: [],
       lunch: [],
       dinner: [],
@@ -71,7 +71,7 @@ describe("DayLogResponseMapper", () => {
     expect(result).toEqual(
       buildDayLogResponse({
         id: "101",
-        date: new Date("2026-03-01"),
+        date: "2026-03-01",
         breakfast: [],
         lunch: [],
         dinner: [],
@@ -89,7 +89,7 @@ describe("DayLogResponseMapper", () => {
 
     const dayLog = buildDayLog({
       id: "202",
-      date: new Date("2026-03-01"),
+      date: Temporal.PlainDate.from("2026-03-01"),
       breakfast: breakfastEntries,
       lunch: [],
       dinner: [],
@@ -99,10 +99,19 @@ describe("DayLogResponseMapper", () => {
 
     const result = DayLogResponseMapper.toResponse(dayLog);
 
-    expect(result.breakfast).toHaveLength(2);
-    expect(result.breakfast).toEqual([
-      buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
-      buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
-    ]);
+    expect(result).toEqual(
+      buildDayLogResponse({
+        id: "202",
+        date: "2026-03-01",
+        breakfast: [
+          buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
+          buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST }),
+        ],
+        lunch: [],
+        dinner: [],
+        snacks: [],
+        weight: null,
+      }),
+    );
   });
 });

@@ -4,15 +4,18 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "outDir": "./dist",
   "rootDir": ".",
-  "references": [{ "path": "../../packages/api-contracts" }],
+  "references": [],
   "compilerOptions": {
+    "composite": false,
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
     "target": "ES2022",
     "jsx": "react-jsx",
     "module": "ESNext",
     "paths": {
       "#/*": ["./src/*"],
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@calibrate/api-client": ["../../packages/api-client/src/index.ts"],
+      "@calibrate/api-contracts": ["../../packages/api-contracts/src/index.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],

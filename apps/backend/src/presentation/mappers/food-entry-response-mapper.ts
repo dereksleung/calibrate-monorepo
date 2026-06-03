@@ -9,9 +9,6 @@ export class FoodEntryResponseMapper {
       meal: foodEntry.meal,
       name: foodEntry.name,
       brand: foodEntry.brand,
-      iconName: foodEntry.iconName,
-      quantity: foodEntry.quantity,
-      quantityUnit: foodEntry.quantityUnit,
       calories: foodEntry.calories,
       totalFatGrams: foodEntry.totalFatGrams,
       saturatedFatGrams: foodEntry.saturatedFatGrams,
@@ -21,6 +18,14 @@ export class FoodEntryResponseMapper {
       fiberGrams: foodEntry.fiberGrams,
       sugarGrams: foodEntry.sugarGrams,
       proteinGrams: foodEntry.proteinGrams,
+      chosenQuantity: foodEntry.chosenQuantity,
+      chosenUnit: foodEntry.chosenUnit,
+      quantityServing: foodEntry.quantityServing,
+      servingLabel: foodEntry.servingLabel,
+      quantityMass: foodEntry.quantityMass,
+      massUnit: foodEntry.massUnit,
+      quantityVolume: foodEntry.quantityVolume,
+      volumeUnit: foodEntry.volumeUnit,
     };
   }
 }

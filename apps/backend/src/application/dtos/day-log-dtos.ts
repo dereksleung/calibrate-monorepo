@@ -24,8 +24,14 @@ export interface AddFoodEntryRequestDto {
     name: string;
     brand: string | null;
     iconName: string | null;
-    quantity: number;
-    quantityUnit: string;
+    chosenQuantity: number;
+    chosenUnit: string;
+    quantityServing: number;
+    servingLabel: string;
+    quantityMass: number | null;
+    massUnit: string | null;
+    quantityVolume: number | null;
+    volumeUnit: string | null;
     calories: number;
     totalFatGrams: number;
     saturatedFatGrams: number | null;

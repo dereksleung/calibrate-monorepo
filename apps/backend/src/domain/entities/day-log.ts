@@ -11,7 +11,7 @@ import { FoodEntry, MealNameEnum, MealNameEnumType } from "./food-entry.js";
 
 export interface DayLogProps {
   id: string;
-  date: Date;
+  date: Date | Temporal.PlainDate;
   breakfast: FoodEntry[];
   lunch: FoodEntry[];
   dinner: FoodEntry[];
@@ -21,7 +21,7 @@ export interface DayLogProps {
 
 export class DayLog {
   private readonly _id: string;
-  private readonly _date: Date;
+  private readonly _date: Temporal.PlainDate;
   private _breakfast: FoodEntry[];
   private _lunch: FoodEntry[];
   private _dinner: FoodEntry[];
@@ -30,7 +30,13 @@ export class DayLog {
 
   private constructor({ id, date, breakfast, lunch, dinner, snacks, weight }: DayLogProps) {
     this._id = id;
-    this._date = date;
+    this._date = Temporal.PlainDate.from(date instanceof Date
+      ? {
+          year: date.getUTCFullYear(),
+          month: date.getUTCMonth() + 1,
+          day: date.getUTCDate(),
+        }
+      : date);
     this._breakfast = breakfast;
     this._lunch = lunch;
     this._dinner = dinner;
@@ -81,7 +87,7 @@ export class DayLog {
   public get id(): string {
     return this._id;
   }
-  public get date(): Date {
+  public get date(): Temporal.PlainDate {
     return this._date;
   }
   public get breakfast(): FoodEntry[] | null {
