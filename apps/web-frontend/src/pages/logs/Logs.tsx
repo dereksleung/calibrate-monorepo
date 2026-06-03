@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner';
 
-import { ApiError, useSelectedDayLog } from '@calibrate/api-client'
+import { useSelectedDayLog } from '@calibrate/api-client'
 
-import { Button } from '#/shared/components/base/Button.tsx'
 import { apiTransport } from '#/shared/api/api-client.ts'
 import { DateStepper } from './components/DateStepper.tsx'
 import { DailySummary } from './components/DailySummary.tsx'
@@ -72,7 +72,15 @@ export function Logs({ selectedDate }: LogsProps) {
   const [quickLogMessage, setQuickLogMessage] = useState<string | null>(null)
   const headingDate = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate])
 
-  const { data, isPending, isError, error, refetch } = useSelectedDayLog(apiTransport, selectedDate)
+  const { data, isPending, error } = useSelectedDayLog(apiTransport, selectedDate)
+
+  useEffect(() => {
+    if (!isPending && error) {
+      toast.error(error.message, {
+        closeButton: true
+      })
+    }
+  }, [isPending, error])
 
   const dayLog = useMemo(
     () => normalizeDayLogForRender(data ?? null, selectedDate),
@@ -81,31 +89,14 @@ export function Logs({ selectedDate }: LogsProps) {
   const totals = getDailyTotals(dayLog)
   const progress = getDailyProgress(totals)
 
-  const errorMessage =
-    error instanceof ApiError
-      ? `Could not load this day (${error.status}).`
-      : 'Could not load this day. Try again in a moment.'
-
   return (
     <main className="min-h-screen bg-surface px-6 pb-24 pt-8 antialiased md:px-10 md:pb-20 md:pt-16">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 md:gap-9">
         <DateStepper selectedDate={selectedDate} date={headingDate} />
 
-        {isError ? (
-          <div
-            role="alert"
-            className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest px-6 py-8 text-center shadow-sm md:px-10"
-          >
-            <p className="text-on-surface">{errorMessage}</p>
-            <Button type="button" className="mt-6" variant="secondary" onClick={() => void refetch()}>
-              Try again
-            </Button>
-          </div>
-        ) : null}
-
         {isPending ? <LogsOverviewSkeleton /> : null}
 
-        {!isPending && !isError ? (
+        {!isPending ? (
           <>
             <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
 
