@@ -15,7 +15,7 @@ export const buildDayLog = (overrides: Partial<DayLogProps> = {}): DayLog =>
 export const buildDayLogResponse = (overrides: Partial<DayLogResponse> = {}): DayLogResponse => {
   return {
     id: "1",
-    date: new Date(),
+    date: '2026-02-22',
     breakfast: [],
     lunch: [],
     dinner: [],

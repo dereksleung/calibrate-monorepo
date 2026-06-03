@@ -110,7 +110,9 @@ export function addDaysToIsoDate(date: string, days: number): string {
 }
 
 export function normalizeDayLogForRender(dayLog: DayLogResponse | null, selectedDate: string): NormalizedDayLog {
-  const date = dayLog?.date ?? new Date(`${selectedDate}T00:00:00`);
+  const date = dayLog?.date 
+    ? new Date(dayLog.date) 
+    : new Date(`${selectedDate}T00:00:00`);
 
   return {
     id: dayLog?.id ?? null,

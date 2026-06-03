@@ -12,7 +12,7 @@ describe("DayLogController", () => {
   let mockDayLogService: MockedObject<DayLogServiceImpl>;
   const mockDayLog: DayLog = DayLog.reconstitute({
     id: "123",
-    date: new Date("2026-02-22"),
+    date: Temporal.PlainDate.from("2026-02-22"),
     breakfast: [buildFoodEntry({ meal: MealNameEnum.BREAKFAST })],
     lunch: [buildFoodEntry({ meal: MealNameEnum.LUNCH })],
     dinner: [buildFoodEntry({ meal: MealNameEnum.DINNER })],
@@ -21,7 +21,7 @@ describe("DayLogController", () => {
   });
   const mockDayLogResponse: DayLogResponse = buildDayLogResponse({
     id: "123",
-    date: new Date("2026-02-22"),
+    date: "2026-02-22",
     breakfast: [buildFoodEntryResponse({ meal: MealNameEnum.BREAKFAST })],
     lunch: [buildFoodEntryResponse({ meal: MealNameEnum.LUNCH })],
     dinner: [buildFoodEntryResponse({ meal: MealNameEnum.DINNER })],

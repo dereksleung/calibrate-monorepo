@@ -58,7 +58,7 @@ export const coffeeFixture: FoodEntryResponse = {
 
 export const normalDayLogFixture: DayLogResponse = {
   id: "day-log-today",
-  date: new Date(`${selectedDateFixture}T00:00:00`),
+  date: selectedDateFixture,
   breakfast: [oatmealFixture, coffeeFixture],
   lunch: [],
   dinner: [],
