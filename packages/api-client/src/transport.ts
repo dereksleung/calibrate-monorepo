@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { ApiError } from "./errors.js";
+import { validateBySchema } from "./common/validate-by-schema.js";
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -11,20 +13,22 @@ export interface ApiTransportOptions {
   getHeaders?: () => ApiHeaders;
 }
 
-export interface ApiRequestOptions<TResponse> {
+export interface ApiRequestOptions<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   path: string;
   method?: string;
   query?: Record<string, string | number | boolean | null | undefined>;
   body?: unknown;
   headers?: HeadersInit;
-  parse?: (body: unknown) => TResponse;
+  responseBodySchema: TSchema;
 }
 
 export interface ApiTransport {
-  request<TResponse>(options: ApiRequestOptions<TResponse>): Promise<TResponse>;
+  request<TSchema extends z.ZodTypeAny>(
+    options: ApiRequestOptions<TSchema>
+  ): Promise<z.infer<TSchema>>;
 }
 
-function buildUrl(baseUrl: string, path: string, query?: ApiRequestOptions<unknown>["query"]): string {
+function buildUrl(baseUrl: string, path: string, query?: ApiRequestOptions["query"]): string {
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const searchParams = new URLSearchParams();
@@ -71,14 +75,14 @@ async function buildHeaders(options: ApiTransportOptions, requestHeaders?: Heade
 
 export function createApiTransport(options: ApiTransportOptions): ApiTransport {
   return {
-    async request<TResponse>({
+    async request<TSchema extends z.ZodTypeAny>({
       path,
       method = "GET",
       query,
       body,
       headers: requestHeaders,
-      parse,
-    }: ApiRequestOptions<TResponse>): Promise<TResponse> {
+      responseBodySchema,
+    }: ApiRequestOptions<TSchema>): Promise<z.infer<TSchema>> {
       const fetchImplementation = options.fetch ?? globalThis.fetch?.bind(globalThis);
 
       if (!fetchImplementation) {
@@ -100,7 +104,12 @@ export function createApiTransport(options: ApiTransportOptions): ApiTransport {
         });
       }
 
-      return parse ? parse(responseBody) : (responseBody as TResponse);
+      return validateBySchema({
+        data: responseBody,
+        schema: responseBodySchema,
+        url: path,
+        logMessage: `Response validation failed for ${path}`,
+      });
     },
   };
 }
