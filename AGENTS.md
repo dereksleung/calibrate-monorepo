@@ -28,7 +28,7 @@ Use the repo commit message convention in `docs/agents/commit-messages.md`.
 
 ## Skill Routing
 
-- Look in the .agents/skills/ folder. Some tests are specifically from Matt Pocock and will say so inside their respective SKILLS.md file, they have certain special conventions.
+- Look in the .agents/skills/ folder. Some skills are specifically from Matt Pocock and will say so inside their respective SKILLS.md file, they have certain special conventions.
 
 ## Project Commands
 
