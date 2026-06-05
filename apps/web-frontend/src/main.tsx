@@ -5,7 +5,7 @@ import { routeTree } from './routeTree.gen'
 import { createQueryClient } from '#/shared/api/query-client.ts'
 
 const router = createRouter({
-  basepath: '/calibrate-frontend', // For temp Github page deployment of mock UI, remove for production deployment
+  basepath: '/calibrate-monorepo', // For temp Github page deployment of mock UI, remove for production deployment
   routeTree,
   defaultPreload: 'intent',
   scrollRestoration: true,
