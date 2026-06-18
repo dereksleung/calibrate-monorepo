@@ -47,7 +47,9 @@ function MacroStat({
 }) {
   return (
     <div className="min-w-0 space-y-3">
-      <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">{label}</p>
+      <Typography variant="labelSpaced" color="onSurface">
+        {label}
+      </Typography>
       <p className="whitespace-nowrap text-[0.8125rem] font-light leading-6 text-on-surface sm:text-lg sm:leading-7 md:text-base md:leading-6">
         {Math.round(value)}g{" "}
         <span className="text-xs text-on-surface-variant/60 sm:text-lg md:text-base">/ {target}g</span>
@@ -70,42 +72,42 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
       </Typography>
 
       <div className="grid gap-8 md:gap-10">
-        <div className="grid grid-cols-[1fr_auto] gap-8">
-          <div>
-            <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">Eaten</p>
-            <div className="mt-3 flex flex-wrap items-end gap-x-2">
-              <span className="font-heading text-5xl font-light leading-none text-on-surface md:text-6xl">
-                {Math.round(totals.calories).toLocaleString()}
-              </span>
-              <span className="pb-1 text-2xl font-light text-on-surface-variant/65">
-                / {DAILY_TARGETS.calories.toLocaleString()}
-              </span>
-              <span className="basis-full text-2xl font-light text-on-surface md:basis-auto">kcal</span>
-            </div>
-            <ProgressBar
-              progress={progress.calories}
-              color={MACRO_PROGRESS_COLORS.calories}
-              className="mt-5 max-w-64"
-            />
-          </div>
-
-          <div className="text-right">
+        <div className="flex flex-col">
+          <div className="flex justify-between gap-2">
+            <Typography variant="labelSpaced" color="onSurface">Eaten</Typography>
             <div className="flex items-center justify-end gap-2 md:justify-start">
-              <p className="text-label-sm uppercase tracking-[0.24em] text-on-surface">Weight</p>
-              {weight ? <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} /> : null}
+              <Typography variant="labelSpaced" color="onSurface">Weight</Typography>
+              <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} />
             </div>
             {weight ? (
               <p className="mt-2 text-3xl font-light text-on-surface md:text-2xl">
                 {weight.toFixed(1)} <span className="text-base text-on-surface-variant/70">lb</span>
               </p>
             ) : (
-              <p className="mt-2 max-w-44 text-sm text-on-surface-variant/70 md:max-w-none">
-                Log today&apos;s weight to keep your trend grounded.
-              </p>
+              null
             )}
           </div>
-        </div>
+          <div className="mt-3 flex items-baseline gap-x-2">
+            <div className="flex flex-1 items-baseline">
+              <span className="font-heading text-5xl font-light leading-none text-on-surface md:text-6xl">
+                {Math.round(totals.calories).toLocaleString()}
+              </span>
 
+              <span className="text-2xl font-light leading-none text-on-surface-variant/65">
+                / {DAILY_TARGETS.calories.toLocaleString()}
+              </span>
+            </div>
+
+            <p className="ml-auto text-right text-sm leading-none text-on-surface-variant/70">
+              {caloriesRemaining.toLocaleString()} left
+            </p>
+          </div>
+          <ProgressBar
+            progress={progress.calories}
+            color={MACRO_PROGRESS_COLORS.calories}
+            className="mt-5"
+          />
+        </div>
         <div className="grid grid-cols-3 gap-4 sm:gap-5 md:gap-10">
           <MacroStat
             label="Protein"
@@ -130,10 +132,6 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
           />
         </div>
       </div>
-
-      <p className="mt-7 text-sm text-on-surface-variant/70">
-        {caloriesRemaining.toLocaleString()} calories remaining today.
-      </p>
     </section>
   );
 }

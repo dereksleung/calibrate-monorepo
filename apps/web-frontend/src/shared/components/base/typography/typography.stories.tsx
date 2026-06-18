@@ -4,7 +4,7 @@ import "../../../../styles.css"
 
 import { Typography } from "./Typography"
 
-const variants = ["display", "headline", "body", "bodyLg", "label"] as const
+const variants = ["display", "headline", "body", "bodyLg", "label", "labelSpaced", "capsCardTitle"] as const
 
 const colors = [
   "default",

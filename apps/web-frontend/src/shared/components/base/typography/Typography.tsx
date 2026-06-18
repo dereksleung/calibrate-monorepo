@@ -11,6 +11,7 @@ const typographyVariants = cva("", {
       body: "font-sans text-body-md",
       bodyLg: "font-sans text-body-lg",
       label: "font-sans text-label-sm uppercase",
+      labelSpaced: "font-sans text-label-sm uppercase tracking-[0.24em]",
       capsCardTitle: "text-sm font-medium uppercase tracking-[0.28em] md:text-base",
     },
     color: {

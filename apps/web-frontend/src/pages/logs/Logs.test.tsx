@@ -84,7 +84,7 @@ describe("Logs", () => {
     expect(await screen.findByRole("heading", { name: "Monday, May 18" })).toBeTruthy();
     expect(await screen.findByText("282")).toBeTruthy();
     expect(screen.getByText("/ 1,800")).toBeTruthy();
-    expect(screen.getByText("1,518 calories remaining today.")).toBeTruthy();
+    expect(screen.getByText("1,518 left")).toBeTruthy();
     expect(screen.getByText("184.2")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Breakfast" })).toBeTruthy();
     expect(screen.getByText("Oatmeal")).toBeTruthy();

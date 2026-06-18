@@ -16,7 +16,7 @@ export function DateStepper({ selectedDate, date }: DateStepperProps) {
   const today = isToday(selectedDate);
 
   return (
-    <section aria-label="Selected day" className="space-y-6">
+    <section aria-label="Selected day">
       <div className="flex items-center justify-center gap-4 md:hidden">
         <div className="flex items-center gap-2">
           <Button asChild variant="ghost" size="icon-sm" aria-label="Previous day">
@@ -40,9 +40,9 @@ export function DateStepper({ selectedDate, date }: DateStepperProps) {
           <Typography as="h1" variant="display" color="onSurface" className="text-[2.7rem] leading-tight">
             {formatDateHeading(date)}
           </Typography>
-          <p className="mt-2 text-label-sm uppercase tracking-[0.24em] text-on-surface-variant/60">
+          <Typography variant="labelSpaced" className="mt-2 text-on-surface-variant/60">
             {today ? "Today" : selectedDate}
-          </p>
+          </Typography>
         </div>
         <div className="flex items-center gap-4 text-on-surface-variant/60">
           <Button asChild variant="ghost" size="icon" aria-label="Previous day">
