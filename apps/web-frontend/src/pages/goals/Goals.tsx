@@ -156,9 +156,9 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
               <TrendingDown aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium uppercase tracking-[0.28em] text-on-surface md:text-base">
+              <Typography variant="capsCardTitle" color="onSurface">
                 Active Program
-              </p>
+              </Typography>
               <CardTitle className="mt-2 font-sans text-2xl font-light leading-tight text-foreground md:text-[1.75rem]">
                 Lose 1 lb per week
               </CardTitle>
@@ -172,7 +172,7 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
         <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
           <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
             <div className="flex flex-col items-center gap-3 text-center">
-              <Typography className="text-sm font-medium uppercase tracking-[0.28em] text-on-surface md:text-base">
+              <Typography variant="capsCardTitle" color="onSurface">
                 Weight
               </Typography>
               <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
