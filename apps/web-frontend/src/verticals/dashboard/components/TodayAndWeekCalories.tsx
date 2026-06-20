@@ -2,6 +2,8 @@ import { Card } from "#/shared/components/base/Card.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { EatenDonutChart } from "#/shared/components/charts/EatenDonutChart.tsx";
 import { WeeklyBarChart } from "#/shared/components/charts/WeeklyBarChart.tsx";
+import { TodayAndWeekChartTextAlternative } from "#/verticals/dashboard/components/TodayAndWeekChartTextAlternative.tsx";
+import { useId } from "react";
 
 /**
  * TODO: Implement actual data fetching and handling.
@@ -10,7 +12,7 @@ import { WeeklyBarChart } from "#/shared/components/charts/WeeklyBarChart.tsx";
  * trying to stay on track with new habits and weight loss for now.
  */
 
-const dailyCalories = {
+const todayCalories = {
   eaten: 1625,
   limit: 1650,
 };
@@ -26,10 +28,19 @@ const weeklyCaloriesData = [
 ];
 
 // TO-DO: Reuse DayAndWeekStat component, make it more generic to handle both calories and macros, and just pass in the appropriate data and labels for each case. For now, just duplicating the component for development speed, but will refactor soon.
-export const DayAndWeekCalories = () => {
+export const TodayAndWeekCalories = () => {
+  const headingId = useId();
+  const summaryId = useId();
+
   return (
-    <Card className="p-4 md:px-6 gap-4 flex-col lg:items-center">
+    <Card
+      aria-describedby={summaryId}
+      aria-labelledby={headingId}
+      className="p-4 md:px-6 gap-4 flex-col lg:items-center"
+      role="region"
+    >
       <Typography
+        id={headingId}
         as="h3"
         variant="capsCardTitle"
         color="primary"
@@ -37,11 +48,19 @@ export const DayAndWeekCalories = () => {
       >
         Calories
       </Typography>
+      <TodayAndWeekChartTextAlternative
+        describedById={summaryId}
+        today={todayCalories}
+        metricLabel="Calories"
+        unit="calorie"
+        weeklyData={weeklyCaloriesData}
+      />
       <div className="flex flex-1 self-stretch gap-4 md:gap-8">
         <div className="flex min-w-0 flex-1 justify-center">
           <EatenDonutChart
-            eaten={dailyCalories.eaten}
-            limit={dailyCalories.limit}
+            eaten={todayCalories.eaten}
+            limit={todayCalories.limit}
+            metricLabel="Calories"
           />
         </div>
 

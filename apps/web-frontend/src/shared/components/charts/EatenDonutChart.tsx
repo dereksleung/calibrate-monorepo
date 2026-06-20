@@ -1,16 +1,14 @@
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
 
-import {
-  ChartContainer,
-  type ChartConfig,
-} from "#/shared/components/base/chart.tsx";
+import { ChartContainer, type ChartConfig } from "#/shared/components/base/chart.tsx";
 import { cn } from "#/lib/utils.ts";
 
 type EatenDonutChartProps = {
   eaten: number;
   limit: number;
   className?: string;
+  metricLabel?: string;
 };
 
 const chartConfig = {
@@ -26,16 +24,19 @@ const chartConfig = {
 
 const formatEatenChartValue = (value: number) => value.toLocaleString();
 
-export const EatenDonutChart = ({ eaten, limit, className }: EatenDonutChartProps) => {
+export const EatenDonutChart = ({
+  eaten,
+  limit,
+  className,
+  metricLabel = "Calories",
+}: EatenDonutChartProps) => {
   const uniqueId = React.useId().replace(/:/g, "");
   const gradientId = `${uniqueId}-eaten-gradient`;
   const redGradientId = `${uniqueId}-eaten-over-limit-gradient`;
   const eatenLimitDelta = limit - eaten;
   const isUnderLimit = eatenLimitDelta >= 0;
   const eatenLimitComparisonLabel = isUnderLimit ? "Under" : "Over";
-  const eatenLimitComparisonTone = isUnderLimit
-    ? "fill-primary"
-    : "fill-destructive";
+  const eatenLimitComparisonTone = isUnderLimit ? "fill-primary" : "fill-destructive";
   const activeGradientId = isUnderLimit ? gradientId : redGradientId;
   const chartData = [
     {
@@ -52,10 +53,15 @@ export const EatenDonutChart = ({ eaten, limit, className }: EatenDonutChartProp
 
   return (
     <ChartContainer
+      aria-label={`${metricLabel} eaten today`}
       config={chartConfig}
       className="aspect-square max-h-full w-full max-w-[17rem]"
     >
-      <PieChart accessibilityLayer responsive className={cn("flex-1 min-h-[8rem] md:min-h-[13rem]", className)}>
+      <PieChart
+        accessibilityLayer
+        responsive
+        className={cn("flex-1 min-h-[8rem] md:min-h-[13rem]", className)}
+      >
         <defs>
           <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="var(--color-primary-fixed)" />
@@ -86,8 +92,7 @@ export const EatenDonutChart = ({ eaten, limit, className }: EatenDonutChartProp
 
               const centerY = viewBox.cy ?? 0;
               const outerRadius =
-                "outerRadius" in viewBox &&
-                typeof viewBox.outerRadius === "number"
+                "outerRadius" in viewBox && typeof viewBox.outerRadius === "number"
                   ? viewBox.outerRadius
                   : 118;
 
@@ -96,15 +101,10 @@ export const EatenDonutChart = ({ eaten, limit, className }: EatenDonutChartProp
               const labelYOffset = isCompact ? 18 : 28;
 
               return (
-                <text
-                  x={viewBox.cx}
-                  y={viewBox.cy}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                >
+                <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
                   <tspan
                     x={viewBox.cx}
-                    y={centerY + valueYOffset} 
+                    y={centerY + valueYOffset}
                     className={`${eatenLimitComparisonTone} font-heading text-[1.5rem] md:text-[2.5rem] font-light`}
                   >
                     {formatEatenChartValue(Math.abs(eatenLimitDelta))}

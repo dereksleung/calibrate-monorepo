@@ -1,9 +1,13 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "#/shared/components/base/tooltip/Tooltip.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "#/shared/components/base/tooltip/Tooltip.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { useIsLgAndAbove } from "#/shared/hooks/use-media-query.ts";
 import { ConsistencyScore } from "#/verticals/dashboard/components/ConsistencyScore.tsx";
-import { DayAndWeekCalories } from "#/verticals/dashboard/components/DayAndWeekCalories.tsx";
-import { DayAndWeekStat } from "#/verticals/dashboard/components/DayAndWeekStat.tsx";
+import { TodayAndWeekCalories } from "#/verticals/dashboard/components/TodayAndWeekCalories.tsx";
+import { TodayAndWeekStat } from "#/verticals/dashboard/components/TodayAndWeekStat.tsx";
 import { HighImpactSwap } from "#/verticals/dashboard/components/HighImpactSwap.tsx";
 import { YesterdayRecap } from "#/verticals/dashboard/components/YesterdayRecap.tsx";
 import { Link } from "@tanstack/react-router";
@@ -32,13 +36,17 @@ export const Dashboard = () => {
           </Typography>
           <section className="flex gap-8 mt-8">
             <div className="flex-1">
-              <DayAndWeekCalories />
+              <TodayAndWeekCalories />
             </div>
             <div className="flex-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link to="/goals" search={{ openFatsAnalytics: true }}>
-                    <DayAndWeekStat title="Fats" />
+                  <Link
+                    aria-label="Open fats analytics details"
+                    to="/goals"
+                    search={{ openFatsAnalytics: true }}
+                  >
+                    <TodayAndWeekStat title="Fats" />
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="top">{FATS_ANALYTICS_TOOLTIP}</TooltipContent>
@@ -47,10 +55,10 @@ export const Dashboard = () => {
           </section>
           <section className="flex gap-8 mt-8">
             <div className="flex-1">
-              <DayAndWeekStat title="Protein" />
+              <TodayAndWeekStat title="Protein" />
             </div>
             <div className="flex-1">
-              <DayAndWeekStat title="Carbs" />
+              <TodayAndWeekStat title="Carbs" />
             </div>
           </section>
         </>
@@ -61,23 +69,27 @@ export const Dashboard = () => {
               Daily & Weekly Stats
             </Typography>
             <div className="flex-1">
-              <DayAndWeekCalories />
+              <TodayAndWeekCalories />
             </div>
             <div className="flex-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link to="/goals" search={{ openFatsAnalytics: true }}>
-                    <DayAndWeekStat title="Fats" />
+                  <Link
+                    aria-label="Open fats analytics details"
+                    to="/goals"
+                    search={{ openFatsAnalytics: true }}
+                  >
+                    <TodayAndWeekStat title="Fats" />
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="top">{FATS_ANALYTICS_TOOLTIP}</TooltipContent>
               </Tooltip>
             </div>
             <div className="flex-1">
-              <DayAndWeekStat title="Protein" />
+              <TodayAndWeekStat title="Protein" />
             </div>
             <div className="flex-1">
-              <DayAndWeekStat title="Carbs" />
+              <TodayAndWeekStat title="Carbs" />
             </div>
           </section>
         </>

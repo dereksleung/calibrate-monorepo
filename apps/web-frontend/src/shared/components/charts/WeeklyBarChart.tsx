@@ -1,8 +1,5 @@
 import { cn } from "#/lib/utils.ts";
-import {
-  ChartContainer,
-  type ChartConfig,
-} from "#/shared/components/base/chart.tsx";
+import { ChartContainer, type ChartConfig } from "#/shared/components/base/chart.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 
@@ -50,20 +47,11 @@ const EatenLimitBarShape = ({
   const fullBarY = background?.y ?? y;
   const limitY = fullBarY + fullBarHeight * (1 - payload.limit / yAxisMax);
   const fill =
-    payload.eaten <= payload.limit
-      ? "var(--color-primary-fixed)"
-      : "var(--color-red-600)";
+    payload.eaten <= payload.limit ? "var(--color-primary-fixed)" : "var(--color-red-600)";
 
   return (
     <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        rx={width / 2}
-        fill={fill}
-      />
+      <rect x={x} y={y} width={width} height={height} rx={width / 2} fill={fill} />
       <line
         x1={x}
         x2={x + width}
@@ -96,7 +84,10 @@ export const WeeklyBarChart = ({
   const isMobile = useIsMobile();
 
   return (
-    <ChartContainer config={chartConfig}>
+    <ChartContainer
+      aria-label={`Weekly ${seriesLabel.toLowerCase()} eaten and limits`}
+      config={chartConfig}
+    >
       <BarChart
         accessibilityLayer
         data={weeklyData}
