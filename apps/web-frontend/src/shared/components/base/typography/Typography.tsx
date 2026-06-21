@@ -3,6 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "#/lib/utils"
 
+
+
 const typographyVariants = cva("", {
   variants: {
     variant: {
@@ -76,6 +78,19 @@ type TypographyProps<TElement extends React.ElementType> =
       keyof TypographyOwnProps<TElement> | "color"
     >
 
+/**
+ * This component is intended as a design-system primitive to make calling for specific repeated
+ * text styles more semantic, and deduplicated, rather than needing to remember class name recipes.
+ * 
+ * It should only own limited areas of text appearance, such as repeated semantic variants, colors, weights and sizes
+ * in the design system, and not margins, layout, or spacing. Adding margins/layouts/spacing makes it hard
+ * to compose with other components in parent views.
+ * 
+ * It should not own all possible CSS text styles, which would cause prop sprawl 
+ * and make the component a second styling language. Using Tailwind className overrides for one-offs and
+ * styling not represented in the current design system is simpler and easier to follow,
+ * such as for one-offs and responsive tweaks.
+ */
 const Typography = <TElement extends React.ElementType = "p">({
   as,
   variant,
