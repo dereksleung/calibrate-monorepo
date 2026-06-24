@@ -14,7 +14,7 @@
     "test:e2e": "vitest run --passWithNoTests \"src/**/*.e2e.test.{ts,tsx}\" \"e2e/**/*.test.{ts,tsx}\" \"test/e2e/**/*.test.{ts,tsx}\"",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "cd ../.. && oxlint --type-aware --type-check --tsconfig apps/web-frontend/tsconfig.json apps/web-frontend",
     "lint": "cd ../.. && oxlint --config .oxlintrc.json apps/web-frontend",
     "lint:fix": "cd ../.. && oxlint --fix --config .oxlintrc.json apps/web-frontend",
     "fmt": "cd ../.. && oxfmt --config .oxlintrc.json apps/web-frontend",
