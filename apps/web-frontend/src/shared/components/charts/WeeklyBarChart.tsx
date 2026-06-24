@@ -1,7 +1,7 @@
 import { cn } from "#/lib/utils.ts";
 import { ChartContainer, type ChartConfig } from "#/shared/components/base/chart.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, XAxis } from "recharts";
 
 const Y_AXIS_PADDING = 1.1;
 
@@ -51,15 +51,16 @@ const EatenLimitBarShape = ({
 
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} rx={width / 2} fill={fill} />
+      <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
       <line
         x1={x}
-        x2={x + width}
+        x2={x + width * 2}
         y1={limitY}
         y2={limitY}
         stroke="rgba(255, 255, 255, 0.92)"
         strokeLinecap="round"
         strokeWidth={2}
+        transform={`translate(${-width / 2}, 0)`}
       />
     </g>
   );
@@ -106,16 +107,6 @@ export const WeeklyBarChart = ({
             fontWeight: 500,
             letterSpacing: isMobile ? "0.02em" : "0.12em",
           }}
-        />
-        <YAxis
-          domain={[0, yAxisMax]}
-          tick={{
-            fontWeight: isMobile ? 300 : 500,
-            fill: "var(--color-muted-foreground)",
-            fontSize: isMobile ? 9 : 12,
-          }}
-          width="auto"
-          label={false}
         />
         <Bar
           dataKey="eaten"
