@@ -151,7 +151,7 @@ Everything is soft and approachable. Corner radii should never feel sharp. Main 
 - **Secondary:** Solid Secondary Grey (#1e1e1e) with white text, providing a heavy anchor point.
 - **Tertiary:** Ghost style. Transparent background with a 1.5px Primary Color border and Absolute Black text.
 ### Cards
-- **Container:** White background, 1px border (#e0e0e0) or Tertiary background (#F4FCE3), 8px corner radius.
+- **Container:** White background, 1px border (#e0e0e0) or Tertiary background (#F4FCE3). Content inside cards should be grouped with generous internal padding (24px), unless the card is small, such as taking up less than half a vertical mobile screen's width.
 - **Interactive:** Slight lift on hover (move -2px Y-axis) with a subtle primary color border.
 
 ### Inputs
