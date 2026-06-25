@@ -1,163 +1,151 @@
 ---
-name: Lush Kinetic
+name: Calorie Tracker System
 colors:
-  surface: '#fcf9f8'
-  surface-dim: '#dcd9d9'
-  surface-bright: '#fcf9f8'
+  surface: '#f9f9f9'
+  surface-dim: '#dadada'
+  surface-bright: '#f9f9f9'
   surface-container-lowest: '#ffffff'
-  surface-container-low: '#f6f3f2'
-  surface-container: '#f0eded'
-  surface-container-high: '#eae7e7'
-  surface-container-highest: '#e5e2e1'
-  on-surface: '#1c1b1b'
-  on-surface-variant: '#424936'
-  inverse-surface: '#313030'
-  inverse-on-surface: '#f3f0ef'
-  outline: '#727a64'
-  outline-variant: '#c2cab0'
-  surface-tint: '#446900'
-  primary: '#446900'
+  surface-container-low: '#f3f3f4'
+  surface-container: '#eeeeee'
+  surface-container-high: '#e8e8e8'
+  surface-container-highest: '#e2e2e2'
+  on-surface: '#1a1c1c'
+  on-surface-variant: '#434840'
+  inverse-surface: '#2f3131'
+  inverse-on-surface: '#f0f1f1'
+  outline: '#73796f'
+  outline-variant: '#c3c8bd'
+  surface-tint: '#496640'
+  primary: '#334f2b'
   on-primary: '#ffffff'
-  primary-container: '#a3e635'
-  on-primary-container: '#416400'
-  inverse-primary: '#98da27'
-  secondary: '#5e5e5e'
+  primary-container: '#4a6741'
+  on-primary-container: '#c2e4b4'
+  inverse-primary: '#afd0a1'
+  secondary: '#5c5f5f'
   on-secondary: '#ffffff'
-  secondary-container: '#e2e2e2'
-  on-secondary-container: '#646464'
-  tertiary: '#F4FCE3'
+  secondary-container: '#e1e3e3'
+  on-secondary-container: '#626565'
+  tertiary: '#434947'
   on-tertiary: '#ffffff'
-  tertiary-container: '#ced6be'
-  on-tertiary-container: '#555d4a'
+  tertiary-container: '#5b615e'
+  on-tertiary-container: '#d6dcd8'
   error: '#ba1a1a'
   on-error: '#ffffff'
   error-container: '#ffdad6'
   on-error-container: '#93000a'
-  primary-fixed: '#b2f746'
-  primary-fixed-dim: '#98da27'
-  on-primary-fixed: '#121f00'
-  on-primary-fixed-variant: '#334f00'
-  secondary-fixed: '#e2e2e2'
-  secondary-fixed-dim: '#c6c6c6'
-  on-secondary-fixed: '#1b1b1b'
-  on-secondary-fixed-variant: '#474747'
-  tertiary-fixed: '#dee6cd'
-  tertiary-fixed-dim: '#c2cab2'
-  on-tertiary-fixed: '#171e0f'
-  on-tertiary-fixed-variant: '#424937'
-  background: '#fcf9f8'
-  on-background: '#1c1b1b'
-  surface-variant: '#e5e2e1'
+  primary-fixed: '#caecbc'
+  primary-fixed-dim: '#afd0a1'
+  on-primary-fixed: '#062104'
+  on-primary-fixed-variant: '#324e2a'
+  secondary-fixed: '#e1e3e3'
+  secondary-fixed-dim: '#c5c7c7'
+  on-secondary-fixed: '#191c1c'
+  on-secondary-fixed-variant: '#454747'
+  tertiary-fixed: '#dee4e0'
+  tertiary-fixed-dim: '#c2c8c4'
+  on-tertiary-fixed: '#171d1b'
+  on-tertiary-fixed-variant: '#424845'
+  background: '#f9f9f9'
+  on-background: '#1a1c1c'
+  surface-variant: '#e2e2e2'
+  calories-stone: '#44403C'
+  carbs-vibrant-azure: '#4CC9F0'
+  protein-vibrant-rose: '#F72585'
+  fats-vibrant-violet: '#7209B7'
 typography:
-  headline-lg:
+  display-lg:
     fontFamily: Manrope
     fontSize: 40px
-    fontWeight: '500'
+    fontWeight: '300'
     lineHeight: 48px
-    letterSpacing: -0.02em
-  headline-lg-mobile:
-    fontFamily: Manrope
-    fontSize: 32px
-    fontWeight: '500'
-    lineHeight: 38px
     letterSpacing: -0.02em
   headline-md:
     fontFamily: Manrope
     fontSize: 24px
-    fontWeight: '600'
+    fontWeight: '400'
     lineHeight: 32px
     letterSpacing: -0.01em
   body-lg:
-    fontFamily: Manrope
+    fontFamily: Inter
     fontSize: 18px
-    fontWeight: '500'
+    fontWeight: '300'
     lineHeight: 28px
   body-md:
-    fontFamily: Manrope
+    fontFamily: Inter
     fontSize: 16px
-    fontWeight: '400'
+    fontWeight: '300'
     lineHeight: 24px
-  label-md:
-    fontFamily: Manrope
-    fontSize: 14px
-    fontWeight: '600'
-    lineHeight: 20px
+  label-sm:
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: '500'
+    lineHeight: 16px
+    letterSpacing: 0.05em
 rounded:
-  sm: 0.5rem
-  DEFAULT: 1rem
-  md: 1.5rem
-  lg: 2rem
-  xl: 3rem
+  sm: 0.25rem
+  DEFAULT: 0.5rem
+  md: 0.75rem
+  lg: 1rem
+  xl: 1.5rem
   full: 9999px
 spacing:
-  container-margin: 24px
-  gutter-md: 16px
-  section-gap: 40px
-  element-padding: 20px
+  xs: 0.25rem
+  sm: 0.5rem
+  md: 1rem
+  lg: 1.5rem
+  xl: 2.5rem
+  xxl: 4rem
+  gutter: 1.5rem
+  margin-safe: 2rem
 ---
 
 ## Brand & Style
 
-This design system is built on an "Electric Nature" aesthetic—fusing the organic freshness of a green apple with the high-octane energy of a digital-first interface. It is designed to feel vibrant, playful, and hyper-modern, targeting an audience that values health, speed, and expressive technology.
+The design system is centered on the concept of "Digital Zen." For a calorie tracker, the emotional objective is to reduce the anxiety often associated with data entry and dieting. By utilizing a **Minimalist** design style, the UI removes cognitive load, allowing the user to focus entirely on their nutritional goals without distraction. 
 
-The visual direction leans into **High-Contrast Boldness** with an infusion of **Minimalism**. It utilizes expansive whites and deep blacks to make the neon-leaning primary color vibrate on screen. The mood is optimistic and fresh, using generous negative space and oversized interactive elements to create a UI that feels physically satisfying to navigate.
+The aesthetic is characterized by high-key lighting, generous whitespace, and a reductionist approach to UI chrome. It avoids heavy lines or aggressive calls to action, instead favoring a soft, breathable interface that feels more like a wellness journal than a database. The brand personality is calm, encouraging, and clinical yet approachable.
 
 ## Colors
 
-The palette is dominated by **Apple Neon (#A3E635)**, a high-chroma green that serves as the primary driver for brand recognition and primary actions. 
-
-- **Primary:** Use for main action buttons, active states, and key brand accents.
-- **Secondary:** Solid Black is used for high-impact text and secondary containers to provide a structural anchor.
-- **Tertiary:** A soft, lime-tinted cream (#F4FCE3) used for subtle background fills and decorative surface layering.
-- **Neutral:** A range of deep grays for secondary text and borders, ensuring legibility against the vibrant primary.
+The palette is intentionally restrained to promote a sense of cleanliness and purity. 
+- **Primary (Forest Green):** A soft, desaturated green used exclusively for progress indicators, success states, and primary action accents. It represents growth and vitality.
+- **Secondary (Light Gray):** Used for subtle backgrounds and grouping elements to differentiate from the pure white canvas.
+- **Neutral/Background:** A foundation of pure white (#FFFFFF) to maximize the "airy" feel.
+- **Typography:** Deep charcoal is used instead of pure black to maintain a soft contrast that is easier on the eyes during frequent logging.
 
 ## Typography
 
-We use **Manrope** across all levels for its soft, geometric modernism that aligns with the "rounded" aesthetic. 
-
-- **Headlines:** Set with tight tracking and medium (500) weights. They should feel impactful and "tight," commanding attention immediately.
-- **Body:** Prioritize readability with slightly increased line heights. Use the Regular (400) weight for primary information to maintain a bold presence.
-- **Labels:** Use uppercase styling and medium (500) weights for small metadata or button labels to ensure they aren't lost against vibrant backgrounds.
+This design system utilizes a pairing of **Manrope** for headings and **Inter** for functional text. The hierarchy relies on size and negative space rather than heavy weights. 
+- **Light Weights:** Headlines should predominantly use Light (300) or Regular (400) weights to maintain the minimalist aesthetic.
+- **Clarity:** Tracking is slightly tightened on large displays and opened up on small labels to ensure legibility despite the light font weights.
+- **Case:** Labels should use sentence case or occasionally all-caps with increased letter-spacing for secondary metadata.
 
 ## Layout & Spacing
 
-The layout follows a **Fluid Grid** model with generous safe areas. 
-
-- **Mobile:** A 4-column grid with 24px side margins. Elements often span the full width to maximize touch targets.
-- **Desktop/Tablet:** A 12-column grid. Max-width for content is capped at 1280px to maintain the intimacy of the design.
-- **Spacing Rhythm:** Based on an 8px base unit. Large gaps (40px+) are encouraged between sections to allow the vibrant colors to "breathe" without feeling cluttered.
+The layout follows a **Fixed Grid** philosophy within a fluid container, prioritizing "generous breathing room."
+- **Rhythm:** An 8px linear scale is used, but the system leans toward the higher end of the scale (24px+) for container padding.
+- **Negative Space:** Content blocks are separated by significant vertical margins (40px-64px) to prevent the UI from feeling cluttered with data.
+- **Alignment:** Centralized layouts are preferred for dashboard views to maintain a focused, intentional user path.
 
 ## Elevation & Depth
 
-In this high-contrast light environment, depth is communicated through **Tonal Layers** and subtle color shifts rather than heavy shadows.
-
-- **Level 0 (Background):** Pure White (#ffffff) or Tertiary Lime-White (#F4FCE3).
-- **Level 1 (Cards/Navigation):** Clean white with a subtle 1px border in a light grey or the Tertiary color.
-- **Level 2 (Modals/Popovers):** White surface with "Ambient Shadows"—light, low-opacity (#000000 at 10%) with large diffusion to create a soft lift.
-
-Shadows are used sparingly. For primary action elements, a soft outer glow using the Primary Color at 15% opacity can be used to indicate focus or "kinetic" energy.
+To maintain a "flat-plus" appearance, depth is conveyed through **Ambient Shadows** and **Tonal Layers** rather than traditional elevation.
+- **Shadows:** Use extremely diffused, low-opacity shadows (Opacity: 4-6%) with a large blur radius (20px-40px) and a slight Y-axis offset. This makes cards appear to float gently above the surface.
+- **Layering:** Backgrounds should stay at the lowest tier, with cards on the first elevation. Overlays or modals use a slightly more pronounced shadow but maintain the same soft character.
+- **Zero Borders:** Avoid harsh borders; use subtle shifts in background color (White to Very Light Gray) to define boundaries.
 
 ## Shapes
 
-The shape language is defined by **hyper-roundedness**. 
-
-Everything is soft and approachable. Corner radii should never feel sharp. Main cards and containers should utilize the `rounded-xl` (24px-32px) standard to mimic the organic curve of an apple. Buttons should be fully pill-shaped to encourage interaction.
+The design system uses a **Rounded** shape language to evoke a friendly, organic feel. 
+- **Corner Radii:** Standard cards and containers use a 1rem (16px) radius. 
+- **Interactive Elements:** Buttons and input fields follow a 0.5rem (8px) radius to feel slightly more precise than the larger containers.
+- **Progress Bars:** These should utilize fully rounded caps (pill-shaped) to represent fluidity and flow.
 
 ## Components
 
-### Buttons
-- Buttons are pill-shaped for the playful energy.
-- **Primary:** Solid Primary Color (#a3e635) with Absolute Black (#0a0a0a) text. No border.
-- **Secondary:** Solid Secondary Grey (#1e1e1e) with white text, providing a heavy anchor point.
-- **Tertiary:** Ghost style. Transparent background with a 1.5px Primary Color border and Absolute Black text.
-### Cards
-- **Container:** White background, 1px border (#e0e0e0) or Tertiary background (#F4FCE3). Content inside cards should be grouped with generous internal padding (24px), unless the card is small, such as taking up less than half a vertical mobile screen's width.
-- **Interactive:** Slight lift on hover (move -2px Y-axis) with a subtle primary color border.
-
-### Inputs
-- **Field:** White or Tertiary background with a subtle bottom border (2px) in Neutral Grey that turns into the Primary Color (#a3e635) on focus.
-- **Labels:** Placed above the field in Label-SM style using the Secondary Color.
-
-
-- **Chips/Tags:** Small, pill-shaped elements used for categorization. Use high-contrast combinations (Black text on Green Apple) for active tags.
-- **Lists:** Separated by thin, low-opacity neutral borders. Highlight active items with a vertical primary-color bar on the left edge.
+- **Subtle Cards:** The primary container for daily summaries. Cards are white with no border and a soft, expansive shadow. Padding inside cards should be at least 24px.
+- **Icon Buttons:** Simple, monochrome glyphs. Use thin-stroke icons (1px or 1.5px weight) to match the light typography. Backgrounds for icon buttons should be transparent or a very pale gray wash.
+- **Progress Bars:** Sleek, thin tracks. The background of the track is a very light gray (#F3F4F6), while the fill is the Forest Green. For over-budget states, use a soft terracotta rather than a bright red to maintain the calm palette.
+- **Inputs:** Minimalist fields with only a bottom border or a very soft, filled background. Focus states are indicated by a gentle shift in the Forest Green accent.
+- **Chips:** Small, rounded-pill labels used for food categories or macro tags. These should have a low-contrast background and subtle text.
+- **Daily Logs:** List items with high vertical padding and light dividers (1px, #F0F0F0) to ensure the list feels airy even when populated with many entries.
