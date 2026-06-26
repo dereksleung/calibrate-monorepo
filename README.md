@@ -109,11 +109,11 @@ http://localhost:3000
 #### Dashboard page
 Initial page:
 <br></br>
-<img width="1820" height="932" alt="Screenshot 2026-05-03 at 6 17 09 PM" src="https://github.com/user-attachments/assets/97d5fe74-0583-4620-bf64-446ff2f40127" />
+<img width="1291" height="827" alt="Screenshot 2026-06-25 at 8 52 29 PM" src="https://github.com/user-attachments/assets/d2c1dd68-4c20-4f66-832d-b57d9ec203f7" />
 <br></br>
 On clicking the High Impact Swap card's Learn More link -> panel with actionable insights:
 <br></br>
-<img width="1829" height="930" alt="Screenshot 2026-05-03 at 6 17 44 PM" src="https://github.com/user-attachments/assets/ae5fc0c5-0525-4192-8d08-4e9c8576dc4c" />
+<img width="1307" height="939" alt="Screenshot 2026-06-25 at 8 54 35 PM" src="https://github.com/user-attachments/assets/24ca45ca-3fd2-4fc7-80ac-6a22f000e99c" />
 
 <br></br>
 Hovering over the Dashboard's Fats chart will show a tooltip saying you can click the chart to go to [a panel on the Goals page](#fats-analytics-panel), making that discoverable. Only the fats detail view mock UI is built right now.
@@ -123,13 +123,13 @@ Hovering over the Dashboard's Fats chart will show a tooltip saying you can clic
 #### Goals page
 Allows deeper drilling into stats and progress.
 
-Initial view:
+Initial view - can see encouragement about journey, scrolling down you can see charts (weight and fats consumption only for now):
 <br></br>
-<img width="1242" height="949" alt="Screenshot 2026-05-03 at 6 18 50 PM" src="https://github.com/user-attachments/assets/1427dd89-c3a7-4362-8860-d784edea9306" />
+<img width="1292" height="947" alt="Screenshot 2026-06-25 at 8 52 52 PM" src="https://github.com/user-attachments/assets/ea294d00-1b42-4647-b8a1-6f75875816d0" />
 <br></br>
-Scrolling down - can see encouragement about journey, as well as charts about macros (fats only for now):
+
 <br></br>
-<img width="1232" height="950" alt="Screenshot 2026-05-03 at 6 19 11 PM" src="https://github.com/user-attachments/assets/2bb2a236-c1fe-41c8-be1b-c3bbad402cd0" />
+<img width="1291" height="948" alt="Screenshot 2026-06-25 at 8 53 05 PM" src="https://github.com/user-attachments/assets/439466ec-fab1-47e7-b637-c1f2c7fd97e5" />
 <br></br>
 
 #### Fats Analytics panel
@@ -137,10 +137,11 @@ Clicking the Fats bar chart opens a panel with deeper data the user can find tre
 <br></br>
 Greatest sources of fat by food in the last month:
 <br></br>
-<img width="1228" height="940" alt="Screenshot 2026-05-03 at 7 31 07 PM" src="https://github.com/user-attachments/assets/bf3d56cb-9d9b-485e-958a-30bfc1c6c6d8" />
+<img width="1303" height="940" alt="Screenshot 2026-06-25 at 8 57 36 PM" src="https://github.com/user-attachments/assets/2148647b-d826-49d3-891b-5600af8c7994" />
+
 <br></br>
 Largest changes in fat contributions from food between last month to this month:
 <br></br>
-<img width="1264" height="959" alt="Screenshot 2026-05-24 at 2 17 08 PM" src="https://github.com/user-attachments/assets/6f09793e-acd6-49f2-a8d1-a18b118ee441" />
+<img width="1306" height="941" alt="Screenshot 2026-06-25 at 8 58 42 PM" src="https://github.com/user-attachments/assets/e116690e-ac1c-4ec5-9c89-f979cc4ef1fd" />
 
 
