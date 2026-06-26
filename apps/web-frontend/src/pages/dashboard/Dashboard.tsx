@@ -18,9 +18,9 @@ export const Dashboard = () => {
   const isLgAndAbove = useIsLgAndAbove();
 
   return (
-    <main className="px-4 md:px-10 pb-8 pt-14 bg-surface antialiased">
+    <main className="px-4 md:px-10 pb-8 pt-14 antialiased">
       <section className="space-y-6">
-        <Typography as="h2" variant="headline" color="onSurface">
+        <Typography as="h1" variant="headline" color="onSurface">
           Daily Insights
         </Typography>
         <div className="grid auto-cols-[75%] grid-flow-col items-stretch gap-4 overflow-x-auto pb-2 [scrollbar-width:none] hover:[scrollbar-width:thin] [&::-webkit-scrollbar]:h-0 hover:[&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-outline-variant [&::-webkit-scrollbar-track]:bg-transparent md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:gap-8 md:overflow-visible md:pb-0 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden">
@@ -31,7 +31,7 @@ export const Dashboard = () => {
       </section>
       {isLgAndAbove ? (
         <>
-          <Typography as="h2" variant="headline" color="onSurface" className="mt-10">
+          <Typography as="h1" variant="headline" color="onSurface" className="mt-10">
             Daily & Weekly Stats
           </Typography>
           <section className="flex gap-8 mt-8">

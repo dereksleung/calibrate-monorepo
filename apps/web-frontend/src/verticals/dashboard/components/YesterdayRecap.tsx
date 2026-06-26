@@ -7,7 +7,7 @@ export const YesterdayRecap = () => {
     <Card className="p-4 lg:p-8 gap-4">
       <div className="flex gap-3 text-primary">
         <History className="text-primary mt-1" />
-        <Typography as="h3" variant="capsCardTitle" color="primary">
+        <Typography as="h2" variant="cardTitle" color="primary">
           Yesterday Recap
         </Typography>
         {/* <h3 className="font-semibold text-lg">Yesterday Recap</h3> */}

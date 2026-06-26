@@ -18,6 +18,7 @@ const typographyVariants = cva("", {
       labelSpaced: "font-sans text-[0.75rem] leading-[1rem] tracking-[0.24em] font-[500] uppercase",
       labelMd: "font-sans text-[0.875rem] leading-[1.15rem] tracking-[0.05em] font-[500]",
       capsCardTitle: "text-sm font-medium uppercase tracking-[0.28em] md:text-base",
+      cardTitle: "font-heading font-semibold text-lg",
     },
     color: {
       default: "text-foreground",

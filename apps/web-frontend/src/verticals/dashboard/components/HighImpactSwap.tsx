@@ -107,9 +107,9 @@ export const HighImpactSwap = () => {
         <div className="relative z-10 flex gap-3 text-on-primary-container">
           <ArrowLeftRight className="mt-1" />
           <Typography
-            as="h3"
-            variant="capsCardTitle"
-            color="inherit"
+            as="h2"
+            variant="cardTitle"
+            color="onPrimaryContainer"
             className="self-start"
           >
             High-Impact Swap

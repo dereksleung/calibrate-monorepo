@@ -35,15 +35,15 @@ export const TodayAndWeekStat = ({ title }: { title: string }) => {
     <Card
       aria-describedby={summaryId}
       aria-labelledby={headingId}
-      className="p-4 md:px-6 gap-4 flex-col lg:items-center"
+      className="p-4 md:p-6 gap-4 flex-col lg:items-center"
       role="region"
     >
       <Typography
         id={headingId}
-        as="h3"
-        variant="capsCardTitle"
+        as="h2"
+        variant="cardTitle"
         color="primary"
-        className="self-start ml-3"
+        className="self-start ml-3 mt-3"
       >
         {title}
       </Typography>
@@ -54,7 +54,7 @@ export const TodayAndWeekStat = ({ title }: { title: string }) => {
         unit="gram"
         weeklyData={weeklyStatData}
       />
-      <div className="flex flex-1 self-stretch gap-4 md:gap-8">
+      <div className="flex flex-1 self-stretch gap-4">
         <div className="flex min-w-0 flex-1 justify-center">
           <EatenDonutChart eaten={todayStat.eaten} limit={todayStat.limit} metricLabel={title} />
         </div>
