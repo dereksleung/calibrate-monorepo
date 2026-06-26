@@ -35,7 +35,6 @@ export function FatBarChart({
   onClick,
   tooltipContent,
 }: FatBarChartProps) {
-  const dailyLimitGrams = data[0]?.limit ?? 0;
   const chartData: StatBarChartDatum[] = data.map(({ eaten, label, limit }) => ({
     label,
     limit,
@@ -61,16 +60,17 @@ export function FatBarChart({
       tooltipContent={tooltipContent}
       valueUnit="g"
     >
-      <div className="flex flex-col items-center gap-3 text-center">
-        <Typography className="text-sm font-medium uppercase tracking-[0.28em] text-on-surface md:text-base">
+      <div className="flex space-between gap-3">
+        <div>
+        <Typography variant="capsCardTitle" color="onSurface">
           Fat
         </Typography>
-        <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
-          {averageFatLimitPercent}% of {dailyLimitGrams}g
-        </p>
-        <p className="mt-3 text-base font-medium text-on-surface md:text-lg">
-          Avg eaten daily over selected time versus limit
-        </p>
+        </div>
+        <div className="flex-1 justify-end text-right">
+          <Typography variant="capsCardTitle" color="primary">
+            Avg {averageFatLimitPercent}% of daily limit
+          </Typography>
+        </div>
       </div>
     </StatBarChart>
   );

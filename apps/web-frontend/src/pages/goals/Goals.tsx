@@ -135,9 +135,13 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
       <div className="mx-auto flex w-full max-w-[64rem] flex-col gap-8 pt-8 md:pt-10">
         <header className="flex self-stretch flex-col gap-5">
           <div className="flex self-stretch justify-between">
-            <h1 className="font-heading text-[2.5rem] font-light leading-none text-primary md:text-[3rem]">
+            <Typography
+              variant="headlineLg"
+              as="h1"
+              // className="font-heading text-[2.5rem] font-light leading-none text-primary md:text-[3rem]"
+            >
               Goals
-            </h1>
+            </Typography>
             <Button
               variant="outline"
               className="h-12 w-fit border-white/70 bg-white/80 px-8 text-base font-medium text-primary shadow-[0_16px_36px_-22px_rgba(0,0,0,0.45)] hover:bg-white"
@@ -169,87 +173,6 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
           </CardContent>
         </Card>
 
-        <Card className="rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
-          <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Typography variant="capsCardTitle" color="onSurface">
-                Weight
-              </Typography>
-              <p className="font-heading text-[2.75rem] font-light leading-none text-primary md:text-[3rem]">
-                -7.4 lbs
-              </p>
-              <p className="mt-3 text-base font-medium text-on-surface md:text-lg">
-                Since Jan 12, 2024
-              </p>
-            </div>
-
-            <ChartContainer
-              config={weightChartConfig}
-              className="mt-16 h-[20rem] w-full aspect-auto md:mt-24 md:h-[26rem]"
-            >
-              <LineChart
-                accessibilityLayer
-                data={weeklyWeightData}
-                margin={{ top: 16, right: 8, bottom: 10, left: 8 }}
-                responsive
-                className="min-h-[20rem] flex-1 md:min-h-[26rem]"
-              >
-                <YAxis
-                  dataKey="weight"
-                  padding={{ top: 8, bottom: 18 }}
-                  width="auto"
-                />
-                <XAxis
-                  dataKey="label"
-                  axisLine={{ stroke: "var(--color-border)" }}
-                  tickLine={false}
-                  tickMargin={16}
-                  tick={{
-                    fill: "var(--color-on-surface)",
-                    fontSize: 16,
-                    fontWeight: 400,
-                  }}
-                  height={48}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={
-                    <ChartTooltipContent
-                      hideIndicator
-                      labelFormatter={(_, payload) =>
-                        payload[0]?.payload?.label ?? ""
-                      }
-                      formatter={(value) => (
-                        <span className="font-medium text-foreground">
-                          {Number(value).toFixed(1)} lbs lost
-                        </span>
-                      )}
-                    />
-                  }
-                />
-                <Line
-                  type="monotone"
-                  dataKey="weight"
-                  stroke="var(--color-weight)"
-                  strokeWidth={2}
-                  dot={{
-                    r: 4,
-                    fill: "var(--color-primary)",
-                    stroke: "var(--color-primary)",
-                    strokeWidth: 1,
-                  }}
-                  activeDot={{
-                    r: 5,
-                    fill: "var(--color-primary)",
-                    stroke: "var(--color-primary)",
-                  }}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
         <section
           className="min-h-52 overflow-hidden rounded-[24px] bg-cover bg-center text-white shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)] md:min-h-58"
           style={{
@@ -269,13 +192,97 @@ export function Goals({ openFatsAnalytics = false }: GoalsProps) {
           </div>
         </section>
 
-        <div ref={fatsChartRef}>
-          <FatBarChart
-            ariaLabel="Open fats analytics"
-            data={weeklyFatData}
-            onClick={() => setActiveDrawerContent("fats")}
-            tooltipContent="Click to open a more detailed fats view."
-          />
+        <div className="flex flex-col gap-8 md:flex-row">
+          <Card className="flex-1 rounded-[14px] border-white/70 bg-white/60 py-0 shadow-[0_28px_70px_-44px_rgba(0,0,0,0.65)]">
+            <CardContent className="p-4 md:p-8">
+              <div className="flex space-between gap-3">
+                <div className="flex-1">
+                  <Typography variant="capsCardTitle" color="onSurface">
+                    Weight
+                  </Typography>
+                </div>
+                <div className="flex-1 justify-end text-right">
+                  <Typography variant="capsCardTitle" color="primary" as="p">
+                    -7.4 lbs
+                  </Typography>
+                </div>
+              </div>
+
+              <ChartContainer
+                config={weightChartConfig}
+                className="mt-4 w-full"
+              >
+                <LineChart
+                  accessibilityLayer
+                  data={weeklyWeightData}
+                  margin={{ top: 16, right: 8, left: 8 }}
+                  responsive
+                  className="flex-1"
+                >
+                  <YAxis
+                    dataKey="weight"
+                    padding={{ top: 8 }}
+                    width="auto"
+                  />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={{ stroke: "var(--color-border)" }}
+                    tickLine={false}
+                    tickMargin={16}
+                    tick={{
+                      fill: "var(--color-on-surface)",
+                      fontSize: 12,
+                      fontWeight: 400,
+                    }}
+                    height={48}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={
+                      <ChartTooltipContent
+                        hideIndicator
+                        labelFormatter={(_, payload) =>
+                          payload[0]?.payload?.label ?? ""
+                        }
+                        formatter={(value) => (
+                          <span className="font-medium text-foreground">
+                            {Number(value).toFixed(1)} lbs lost
+                          </span>
+                        )}
+                      />
+                    }
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="weight"
+                    stroke="var(--color-weight)"
+                    strokeWidth={2}
+                    dot={{
+                      r: 4,
+                      fill: "var(--color-primary)",
+                      stroke: "var(--color-primary)",
+                      strokeWidth: 1,
+                    }}
+                    activeDot={{
+                      r: 5,
+                      fill: "var(--color-primary)",
+                      stroke: "var(--color-primary)",
+                    }}
+                    isAnimationActive={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          <div ref={fatsChartRef} className="flex-1">
+            <FatBarChart
+              ariaLabel="Open fats analytics"
+              data={weeklyFatData}
+              onClick={() => setActiveDrawerContent("fats")}
+              tooltipContent="Click to open a more detailed fats view."
+            />
+          </div>
         </div>
       </div>
       </main>

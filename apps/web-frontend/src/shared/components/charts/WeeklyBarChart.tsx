@@ -30,7 +30,7 @@ type EatenLimitBarShapeProps = {
   yAxisMax: number;
 };
 
-const EatenLimitBarShape = ({
+export const EatenLimitBarShape = ({
   background,
   height = 0,
   payload,
@@ -42,26 +42,34 @@ const EatenLimitBarShape = ({
   if (!payload) {
     return null;
   }
-
   const fullBarHeight = background?.height ?? height;
   const fullBarY = background?.y ?? y;
   const limitY = fullBarY + fullBarHeight * (1 - payload.limit / yAxisMax);
-  const fill =
-    payload.eaten <= payload.limit ? "var(--color-primary-fixed)" : "var(--color-red-600)";
+  const isOverLimit = payload.eaten > payload.limit;
+  const fill = isOverLimit ? "var(--color-red-600)" : "var(--color-primary-fixed)";
 
   return (
     <g>
-      <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
-      <line
-        x1={x}
-        x2={x + width * 2}
-        y1={limitY}
-        y2={limitY}
-        stroke="rgba(255, 255, 255, 0.92)"
-        strokeLinecap="round"
-        strokeWidth={2}
-        transform={`translate(${-width / 2}, 0)`}
-      />
+      {isOverLimit ? (
+        <>
+          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
+          <line
+            x1={x}
+            x2={x + width * 2}
+            y1={limitY}
+            y2={limitY}
+            stroke="rgba(255, 255, 255, 0.92)"
+            strokeLinecap="round"
+            strokeWidth={2}
+            transform={`translate(${-width / 2}, 0)`}
+          />
+        </>
+      ) : (
+        <>
+          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={'gray'} />
+          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
+        </>
+      )}
     </g>
   );
 };

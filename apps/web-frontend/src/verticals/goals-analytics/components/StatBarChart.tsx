@@ -68,33 +68,29 @@ export function StatBarChart({
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      <CardContent className="px-4 pb-7 pt-12 md:px-8 md:pb-9 md:pt-14">
+      <CardContent className="p-4 md:p-8">
         {children}
 
-        <div className="mt-12 min-w-0 md:mt-16">
+        <div className="mt-4 min-w-0">
           <ChartContainer
             config={chartConfig}
             className={cn(
-              "h-[18rem] w-full aspect-auto md:h-[22rem]",
+              "w-full",
               onClick && "cursor-pointer",
             )}
           >
             <BarChart
               accessibilityLayer
               data={data}
-              margin={{ top: 16, right: 8, bottom: 10, left: 8 }}
+              margin={{ top: 16, right: 8, left: 8 }}
               responsive
               barCategoryGap="35%"
-              className="min-h-[18rem] flex-1 md:min-h-[22rem]"
+              className="flex-1"
             >
               <YAxis
                 domain={[0, yAxisMax]}
+                padding={{ top: 8 }}
                 width="auto"
-                tick={{
-                  fill: "var(--color-on-surface)",
-                  fontSize: 14,
-                  fontWeight: 400,
-                }}
               />
               <XAxis
                 dataKey="label"
@@ -103,7 +99,7 @@ export function StatBarChart({
                 tickMargin={16}
                 tick={{
                   fill: "var(--color-on-surface)",
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: 400,
                 }}
                 height={48}
@@ -148,8 +144,8 @@ export function StatBarChart({
               <Bar
                 dataKey="value"
                 fill="var(--color-value)"
-                radius={[8, 8, 8, 8]}
-                maxBarSize={48}
+                radius={[16, 16, 16, 16]}
+                barSize={30}
                 isAnimationActive={false}
               />
             </BarChart>
