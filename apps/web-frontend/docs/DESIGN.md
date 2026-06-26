@@ -75,6 +75,11 @@ typography:
     fontSize: 16px
     fontWeight: '300'
     lineHeight: 24px
+  label-md:
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: '500'
+    lineHeight: 20px
   label-sm:
     fontFamily: Inter
     fontSize: 12px
