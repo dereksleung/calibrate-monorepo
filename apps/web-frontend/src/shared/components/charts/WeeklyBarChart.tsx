@@ -47,12 +47,12 @@ export const EatenLimitBarShape = ({
   const limitY = fullBarY + fullBarHeight * (1 - payload.limit / yAxisMax);
   const isOverLimit = payload.eaten > payload.limit;
   const fill = isOverLimit ? "var(--color-red-600)" : "var(--color-primary-fixed)";
-
+  
   return (
     <g>
+      <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
       {isOverLimit ? (
         <>
-          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
           <line
             x1={x}
             x2={x + width * 2}
@@ -64,12 +64,7 @@ export const EatenLimitBarShape = ({
             transform={`translate(${-width / 2}, 0)`}
           />
         </>
-      ) : (
-        <>
-          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={'gray'} />
-          <rect x={x - width / 2} y={y} width={width * 2} height={height} rx={width} fill={fill} />
-        </>
-      )}
+      ) : null}
     </g>
   );
 };
