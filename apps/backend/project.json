@@ -17,14 +17,15 @@
       "outputs": ["{projectRoot}/dist"],
       "cache": true,
       "options": {
-        "command": "tsc -p apps/backend/tsconfig.json"
+        "command": "tsdown",
+        "cwd": "apps/backend"
       }
     },
     "start": {
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "node apps/backend/dist/src/app.js"
+        "command": "node apps/backend/dist/src/app.mjs"
       }
     },
     "kysely": {
@@ -107,6 +108,31 @@
       "options": {
         "command": "oxfmt --check apps/backend"
       }
+    },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/apps/backend/dist/package.json",
+        "{workspaceRoot}/apps/backend/dist/package-lock.json"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/apps/backend/dist/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
     }
   }
 }

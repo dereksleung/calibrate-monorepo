@@ -4,10 +4,12 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     }
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "nx": {
     "targets": {
       "test": {
@@ -32,6 +34,14 @@
         "options": {
           "cwd": "packages/api-contracts",
           "command": "vitest run --passWithNoTests \"src/**/*.e2e.test.ts\" \"e2e/**/*.test.ts\" \"test/e2e/**/*.test.ts\""
+        }
+      },
+      "build": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "cwd": "packages/api-contracts",
+          "command": "tsc -b tsconfig.json"
         }
       }
     }
