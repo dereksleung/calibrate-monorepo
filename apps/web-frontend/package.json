@@ -21,8 +21,8 @@
     "fmt:check": "cd ../.. && oxfmt --check --config .oxlintrc.json apps/web-frontend"
   },
   "dependencies": {
-    "@calibrate/api-client": "1.0.0",
-    "@calibrate/api-contracts": "1.0.0",
+    "@calibrate/api-client": "*",
+    "@calibrate/api-contracts": "*",
     "@fontsource-variable/inter": "5.2.8",
     "@fontsource-variable/manrope": "5.2.8",
     "@tailwindcss/vite": "4.2.2",
