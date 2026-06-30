@@ -2,9 +2,8 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "targetDefaults": {
     "build": {
-      "outputs": [
-        "{projectRoot}/dist"
-      ],
+      "dependsOn": ["^build"],
+      "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
     "fmt": {
@@ -14,15 +13,19 @@
       "cache": true
     },
     "test": {
+      "dependsOn": ["^build"],
       "cache": true
     },
     "test:integration": {
+      "dependsOn": ["^build"],
       "cache": true
     },
     "test:e2e": {
+      "dependsOn": ["^build"],
       "cache": true
     },
     "typecheck": {
+      "dependsOn": ["^build"],
       "cache": true
     },
     "lint": {
