@@ -11,5 +11,8 @@
     "outDir": "dist"
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.integration.test.ts", "src/**/*.e2e.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.integration.test.ts", "src/**/*.e2e.test.ts"],
+  "references": [
+    { "path": "../api-contracts"}
+  ]
 }

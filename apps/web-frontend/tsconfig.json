@@ -4,7 +4,10 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "outDir": "./dist",
   "rootDir": ".",
-  "references": [],
+  "references": [
+    { "path": "../../packages/api-contracts" },
+    { "path": "../../packages/api-client" }
+  ],
   "compilerOptions": {
     "composite": false,
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
