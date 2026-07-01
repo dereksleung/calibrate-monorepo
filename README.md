@@ -46,6 +46,24 @@ In short, Nx was chosen because it provides:
 1. Run `npm ci` in the project root.
 
 ## Backend
+### Run locally with Docker
+1. Run `npm ci` if you haven't yet. 
+2. Start Postgres first:
+```bash
+npx dotenvx run -- docker compose up -d postgres
+```
+
+3. Run database migrations.
+```bash
+npx dotenvx run --overload --env DB_HOST=127.0.0.1 DB_PORT=5433 -- npx nx run backend:kysely migrate:latest
+```
+
+4. Start the backend.
+```bash
+npx dotenvx run -- docker compose up backend
+```
+
+### From Scratch
 1. Install PostgreSQL if needed.
    [Official installers here](https://www.postgresql.org/download/), [instructions on how to use them here](https://www.enterprisedb.com/docs/supported-open-source/postgresql/installing/).
    If you are installing PostgreSQL for the first time with an installer, it likely will ask you
@@ -81,6 +99,23 @@ API_BASE_URL="http://localhost:3001/"
 
 10. Other commands can be run like `npx nx run (project_name):(command_name) (args)`. Project names are found in `apps/app-folder/package.json`'s `name` field, the available command names comes from the `scripts` field.
 Nx documentation [here](https://nx.dev/docs/getting-started/tutorials/running-tasks#running-a-single-task)
+
+### Building the backend Docker image
+The backend Dockerfile is in `apps/backend`, but it must be built with the repository root as the Docker build context because it copies root workspace files and the shared `packages/api-contracts` package.
+
+Run this from the repository root:
+
+```bash
+npx nx run backend:docker-build
+```
+
+Equivalent raw Docker command:
+
+```bash
+docker build -f apps/backend/Dockerfile -t dereksleung407/calibrate:latest .
+```
+
+Do not use `apps/backend` as the build context. Docker cannot copy files outside the context, so `docker build -f apps/backend/Dockerfile apps/backend` will fail when the Dockerfile tries to copy root files such as `package.json` or sibling workspace files such as `packages/api-contracts/package.json`.
 
 ## Frontend
 
@@ -142,5 +177,4 @@ Greatest sources of fat by food in the last month:
 Largest changes in fat contributions from food between last month to this month:
 <br></br>
 <img width="1264" height="959" alt="Screenshot 2026-05-24 at 2 17 08 PM" src="https://github.com/user-attachments/assets/6f09793e-acd6-49f2-a8d1-a18b118ee441" />
-
 
