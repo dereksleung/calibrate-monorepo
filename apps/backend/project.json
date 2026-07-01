@@ -21,11 +21,18 @@
         "cwd": "apps/backend"
       }
     },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "docker build -f apps/backend/Dockerfile -t calibrate-backend:local ."
+      }
+    },
     "start": {
       "executor": "nx:run-commands",
       "dependsOn": ["build"],
       "options": {
-        "command": "node apps/backend/dist/src/app.mjs"
+        "command": "node apps/backend/dist/app.mjs"
       }
     },
     "kysely": {
