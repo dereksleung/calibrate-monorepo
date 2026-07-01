@@ -20,7 +20,6 @@ RUN --mount=type=bind,source=.env.keys,target=/tmp/.env.keys,readonly \
 RUN npm ci
 
 # Use Nx to build both the api-contracts and the backend
-RUN npx nx run backend:build-deps
 RUN npx nx run backend:build
 
 # === Stage 2: Production runtime ===
@@ -49,4 +48,4 @@ COPY --from=builder /app/packages/api-contracts/package.json ./packages/api-cont
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
 EXPOSE 3001
-CMD ["node", "apps/backend/dist/src/app.mjs"]
+CMD ["node", "apps/backend/dist/app.mjs"]
