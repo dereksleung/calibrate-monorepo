@@ -13,14 +13,12 @@ export class UserServiceImpl implements IUserService {
 
   async createUser(props: CreateUserRequestDto): Promise<User> {
     const existingUser = await this.userRepository.findByEmail(props.email);
-    console.log("existingUser", existingUser);
     if (existingUser) {
       throw new BusinessLogicError("User already exists");
     }
     const passwordHash = await this.passwordHasher.hash(props.password);
     const user = User.create({ email: props.email, passwordHash });
     const persistedUser = await this.userRepository.save(user);
-    console.log("persistedUser", persistedUser);
     return persistedUser;
   }
 }
