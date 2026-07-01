@@ -1,9 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
-      target: runner
+    image: dereksleung407/calibrate:latest
     ports:
       - "127.0.0.1:3001:3001"
     environment:
@@ -15,8 +12,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
   postgres:
     image: postgres:18
@@ -33,23 +28,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
-  migrate:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile
-      target: builder
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: ["npx", "nx", "run", "backend:kysely", "migrate:latest"]
-    restart: "no"
 
 volumes:
   postgres_data:
