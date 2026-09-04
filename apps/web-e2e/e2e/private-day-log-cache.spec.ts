@@ -193,7 +193,7 @@ test("opens private storage only after session confirmation and falls back when 
   });
   const deniedPage = await deniedContext.newPage();
   await startLocalTestSession(deniedPage);
-  await expect(deniedPage.getByRole("heading", { name: "Nutrition" })).toBeVisible();
+  await expect(deniedPage.getByRole("heading", { name: "Nutrition", exact: true })).toBeVisible();
   await deniedContext.close();
 });
 
@@ -286,12 +286,8 @@ test("restores only the confirmed account's allow-listed slots before background
     expect.anything(),
     expect.anything(),
   ]);
-  expect(
-    await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId),
-  ).toBe(1);
-  expect(
-    await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId),
-  ).toBeUndefined();
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(1);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeUndefined();
 });
 
 test("revokes durable and in-memory state only after successful server logout", async ({ page }) => {
