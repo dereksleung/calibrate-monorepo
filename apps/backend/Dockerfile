@@ -10,6 +10,7 @@ COPY package.json package-lock.json tsconfig.base.json tsconfig.json nx.json ./
 # Copy application and library source files required by the backend build
 COPY apps/backend ./apps/backend
 COPY packages/api-contracts ./packages/api-contracts
+COPY packages/local-runtime-config ./packages/local-runtime-config
 COPY .env ./.env
 
 # Keep the requested local dotenvx file in the image without the production private key.
@@ -31,6 +32,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 COPY apps/backend/package.json ./apps/backend/package.json
 COPY packages/api-contracts/package.json ./packages/api-contracts/package.json
+COPY packages/local-runtime-config/package.json ./packages/local-runtime-config/package.json
 
 # Copy only production dependencies to save space
 RUN npm pkg delete scripts.prepare
