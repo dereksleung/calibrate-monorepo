@@ -12,6 +12,14 @@
         "command": "nodemon --exec \"tsx --tsconfig apps/backend/tsconfig.json\" apps/backend/src/app.ts"
       }
     },
+    "demo": {
+      "executor": "nx:run-commands",
+      "continuous": true,
+      "cache": false,
+      "options": {
+        "command": "CALIBRATE_DEMO=1 nodemon --exec \"tsx --tsconfig apps/backend/tsconfig.json\" apps/backend/src/demo-app.ts"
+      }
+    },
     "e2e-dev": {
       "executor": "nx:run-commands",
       "continuous": true,

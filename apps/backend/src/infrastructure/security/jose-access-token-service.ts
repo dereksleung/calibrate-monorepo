@@ -5,7 +5,7 @@ import { importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
 import { createPrivateKey, createPublicKey, type KeyObject } from "node:crypto";
 import path from "node:path";
 
-import { getRuntimeEnvironmentValue, isE2eRuntime } from "../runtime-environment.js";
+import { getRuntimeEnvironmentValue, usesProcessEnvironmentRuntime } from "../runtime-environment.js";
 
 interface JoseAccessTokenServiceConfig {
   issuer: string;
@@ -130,7 +130,7 @@ export class JoseAccessTokenService implements IAccessTokenService {
         envKeysFile: this.config.envKeysFilePath ?? path.resolve(process.cwd(), ".env.keys"),
         strict: true,
       } as Parameters<typeof dotenvx.get>[1];
-      const privateKeyPem = isE2eRuntime()
+      const privateKeyPem = usesProcessEnvironmentRuntime()
         ? process.env.JWT_PRIVATE_KEY_PEM
         : dotenvx.get("JWT_PRIVATE_KEY_PEM", getOptions);
 

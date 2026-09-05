@@ -71,6 +71,59 @@ describe("AuthController", () => {
     vi.unstubAllEnvs();
   });
 
+  it("keeps the loopback local test-session path available in demo mode", async () => {
+    vi.stubEnv("CALIBRATE_DEMO", "1");
+    mockLocalDevelopmentTestSessionService.create.mockResolvedValue({
+      user,
+      accessToken: "raw-local-access-token",
+      refreshToken: "raw-local-refresh-token",
+      rememberDevice: true,
+      accessInactivityExpiresAt: new Date(Date.now() + 30 * 60_000),
+      accessAbsoluteExpiresAt: new Date(Date.now() + 8 * 60 * 60_000),
+      familyInactivityExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60_000),
+      familyAbsoluteExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60_000),
+    });
+    const req = {
+      get: vi.fn((name: string) => (name === "Origin" ? "http://localhost:3000" : undefined)),
+      socket: { remoteAddress: "127.0.0.1" },
+    } as unknown as Request;
+    const res = {
+      set: vi.fn(),
+      cookie: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+      end: vi.fn(),
+    } as any;
+
+    await authController.createLocalDevelopmentTestSession(req, res);
+
+    expect(mockLocalDevelopmentTestSessionService.create).toHaveBeenCalledOnce();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.cookie).toHaveBeenCalled();
+  });
+
+  it("still returns 404 for a non-loopback peer in demo mode", async () => {
+    vi.stubEnv("CALIBRATE_DEMO", "1");
+    const req = {
+      get: vi.fn((name: string) => (name === "Origin" ? "http://localhost:3000" : undefined)),
+      socket: { remoteAddress: "192.168.1.20" },
+    } as unknown as Request;
+    const res = {
+      set: vi.fn(),
+      cookie: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+      end: vi.fn(),
+    } as any;
+
+    await authController.createLocalDevelopmentTestSession(req, res);
+
+    expect(mockLocalDevelopmentTestSessionService.create).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.end).toHaveBeenCalledWith();
+    expect(res.cookie).not.toHaveBeenCalled();
+  });
+
   it("sets normal access and refresh cookies for a local session without returning raw credentials", async () => {
     mockLocalDevelopmentTestSessionService.create.mockResolvedValue({
       user,
