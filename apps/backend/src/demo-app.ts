@@ -8,7 +8,7 @@ const { Container } = await import("@infrastructure/container.js");
 const { createHttpApp } = await import("./create-http-app.js");
 
 const PORT = Number(process.env.PORT || 3001);
-const listenHost = getBackendListenHost() ?? "127.0.0.1";
+const listenHost = getBackendListenHost();
 const app = createHttpApp(new Container({}));
 
 app.listen(PORT, listenHost, () => {
