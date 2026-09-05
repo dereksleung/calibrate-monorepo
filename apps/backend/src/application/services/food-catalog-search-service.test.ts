@@ -48,6 +48,19 @@ describe("FoodCatalogSearchService", () => {
     expect(response.nextCursor).toBeNull();
   });
 
+  it("returns an ordinary empty result when local sources miss and the importer has no foods", async () => {
+    const catalogSearch = { search: vi.fn().mockResolvedValue([]) };
+    const recentSearch = { search: vi.fn().mockResolvedValue([]) };
+    const importer = { searchAndImport: vi.fn().mockResolvedValue([]) };
+    const service = new FoodCatalogSearchService(catalogSearch, recentSearch, importer);
+
+    const response = await service.search({ userId: "user-1", query: "unknown branded soda", limit: 20 });
+
+    expect(importer.searchAndImport).toHaveBeenCalledWith("unknown branded soda", 20);
+    expect(response.results).toEqual([]);
+    expect(response.nextCursor).toBeNull();
+  });
+
   it("imports provider results only after both local sources miss", async () => {
     const catalogSearch = { search: vi.fn().mockResolvedValue([]) };
     const recentSearch = { search: vi.fn().mockResolvedValue([]) };

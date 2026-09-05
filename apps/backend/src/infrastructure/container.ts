@@ -47,9 +47,7 @@ import { FoodSearchController } from "@controllers/food-search-controller.js";
 import { UserController } from "@controllers/user-controller.js";
 import { createSecretKey } from "crypto";
 
-import { BrevoEmailSender } from "./email/brevo-email-sender.js";
 import { NoopEmailSender } from "./email/noop-email-sender.js";
-import { FoodDataCentralCatalogImporter } from "./food-data-central/food-data-central-catalog-importer.js";
 import { databaseClient } from "./persistence/database.js";
 import { PostgresAccessSessionRepository } from "./persistence/repositories/postgres-access-session-repository.js";
 import { PostgresDayLogRepository } from "./persistence/repositories/postgres-day-log-repository.js";
@@ -62,7 +60,8 @@ import { PostgresRecentFoodQuery } from "./persistence/repositories/postgres-rec
 import { PostgresSignupEnrollmentAuthorizationRepository } from "./persistence/repositories/postgres-signup-enrollment-authorization-repository.js";
 import { PostgresSignupPasskeyRegistrationRepository } from "./persistence/repositories/postgres-signup-passkey-registration-repository.js";
 import { PostgresUserRepository } from "./persistence/repositories/postgres-user-repository.js";
-import { getRuntimeEnvironmentValue, isE2eRuntime } from "./runtime-environment.js";
+import { createFoodCatalogImporter, resolveEmailSender } from "./runtime-adapters.js";
+import { getRuntimeEnvironmentValue } from "./runtime-environment.js";
 import { Argon2PasswordHasher } from "./security/argon2-password-hasher.js";
 import { JoseAccessTokenService } from "./security/jose-access-token-service.js";
 import { NodeEmailOtpCodeService } from "./security/node-email-otp-code-service.js";
@@ -195,13 +194,10 @@ export class Container {
       new DayLogServiceImpl(this.dayLogRepository, this.userRepository, this.dayLogSyncQuery);
     this.dayLogController = dayLogController ?? new DayLogController(this.dayLogService);
     const catalogWriter = new PostgresFoodCatalogWriter(databaseClient);
-    const importer: IFoodCatalogImporter = foodDataCentralApiKey
-      ? new FoodDataCentralCatalogImporter({ apiKey: foodDataCentralApiKey, writer: catalogWriter })
-      : {
-          searchAndImport: async () => {
-            throw new Error("Food catalog provider is unavailable");
-          },
-        };
+    const importer: IFoodCatalogImporter = createFoodCatalogImporter({
+      apiKey: foodDataCentralApiKey,
+      writer: catalogWriter,
+    });
     this.foodSearchController =
       foodSearchController ??
       new FoodSearchController(
@@ -219,13 +215,7 @@ export class Container {
 
     this.emailOtpCodeService =
       emailOtpCodeService ?? new NodeEmailOtpCodeService({ key: otpHmacKey, keyVersion });
-    const configuredEmailSender =
-      emailSender ??
-      (isE2eRuntime()
-        ? new NoopEmailSender()
-        : emailServiceCredential
-          ? new BrevoEmailSender(emailServiceCredential)
-          : null);
+    const configuredEmailSender = emailSender ?? resolveEmailSender({ credential: emailServiceCredential });
     const passkeyEmailSender = configuredEmailSender ?? new NoopEmailSender();
     this.accountEmailVerificationService =
       accountEmailVerificationService ??

@@ -8,7 +8,7 @@ vi.mock("@dotenvx/dotenvx", () => ({
   },
 }));
 
-import { getRuntimeEnvironmentValue } from "../runtime-environment.js";
+import { getRuntimeEnvironmentValue, isDemoRuntime } from "../runtime-environment.js";
 
 const originalEnvironment = { ...process.env };
 
@@ -38,9 +38,29 @@ describe("getRuntimeEnvironmentValue", () => {
 
   it("uses dotenvx outside E2E mode", () => {
     delete process.env.CALIBRATE_E2E;
+    delete process.env.CALIBRATE_DEMO;
     dotenvGet.mockReturnValue("dotenv-value");
 
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("dotenv-value");
     expect(dotenvGet).toHaveBeenCalledWith("WEBAUTHN_ORIGIN");
+  });
+
+  it("uses the process environment without consulting dotenvx in demo mode", () => {
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.JWT_ISSUER = "calibrate-local";
+    dotenvGet.mockReturnValue("dotenv-issuer");
+
+    expect(isDemoRuntime()).toBe(true);
+    expect(getRuntimeEnvironmentValue("JWT_ISSUER")).toBe("calibrate-local");
+    expect(dotenvGet).not.toHaveBeenCalled();
+  });
+
+  it("fails closed when a demo-controlled value is absent", () => {
+    process.env.CALIBRATE_DEMO = "1";
+    delete process.env.OTP_HMAC_KEY;
+    dotenvGet.mockReturnValue("dotenv-secret");
+
+    expect(getRuntimeEnvironmentValue("OTP_HMAC_KEY")).toBeUndefined();
+    expect(dotenvGet).not.toHaveBeenCalled();
   });
 });

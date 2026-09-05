@@ -34,6 +34,8 @@ describe("JoseAccessTokenService", () => {
   afterEach(() => {
     vi.useRealTimers();
     delete process.env.JWT_PRIVATE_KEY_PEM;
+    delete process.env.CALIBRATE_DEMO;
+    delete process.env.CALIBRATE_E2E;
   });
 
   it("should issue and verify tokens using dotenvx.get for the private key", async () => {
@@ -60,6 +62,25 @@ describe("JoseAccessTokenService", () => {
         strict: true,
       }),
     );
+  });
+
+  it("issues tokens from process environment in demo mode without dotenvx or .env.keys", async () => {
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.JWT_PRIVATE_KEY_PEM = privateKeyPem;
+
+    const tokenService = new JoseAccessTokenService({
+      issuer: "calibrate-local",
+      audience: "calibrate-local",
+      expiresInSeconds: 900,
+      envFilePath: "/tmp/must-not-read.env",
+      envKeysFilePath: "/tmp/must-not-read.env.keys",
+    });
+
+    const issuedToken = await tokenService.issue({ userId: "demo-user" });
+    const verifiedToken = await tokenService.verify(issuedToken.token);
+
+    expect(verifiedToken).toEqual({ userId: "demo-user" });
+    expect(mockedGet).not.toHaveBeenCalled();
   });
 
   it("should reject expired tokens", async () => {

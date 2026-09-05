@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@calibrate/api-contracts": "1.0.0",
+    "@calibrate/local-runtime-config": "1.0.0",
     "@dotenvx/dotenvx": "1.54.1",
     "@simplewebauthn/server": "13.3.2",
     "argon2": "0.44.0",
