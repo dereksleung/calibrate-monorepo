@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import { expect, test, type BrowserContext, type Page, type Route } from "@playwright/test";
 
 import {
   DAY_LOG_CACHE_DATABASE_NAME,
@@ -92,6 +92,174 @@ async function waitForSnapshot(page: Page, accountId: string): Promise<StoredSna
     .poll(() => readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId))
     .toBeTruthy();
   return (await readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId))!;
+}
+
+async function createCorruptDayLogCacheDatabase(page: Page): Promise<void> {
+  await page.evaluate(
+    ({ databaseName, snapshotStore }) =>
+      new Promise<void>((resolve, reject) => {
+        const deletion = indexedDB.deleteDatabase(databaseName);
+        deletion.onerror = () => reject(deletion.error ?? new Error("IndexedDB delete failed"));
+        deletion.onblocked = () => reject(new Error("IndexedDB delete was blocked"));
+        deletion.onsuccess = () => {
+          const open = indexedDB.open(databaseName, 1);
+          open.onerror = () => reject(open.error ?? new Error("IndexedDB open failed"));
+          open.onupgradeneeded = () => {
+            open.result.createObjectStore(snapshotStore);
+          };
+          open.onsuccess = () => {
+            open.result.close();
+            resolve();
+          };
+        };
+      }),
+    { databaseName: DAY_LOG_CACHE_DATABASE_NAME, snapshotStore: DAY_LOG_CACHE_SNAPSHOT_STORE },
+  );
+}
+
+async function writeLifecycleGeneration(page: Page, accountId: string, generation: number): Promise<void> {
+  await page.evaluate(
+    ({ accountId, databaseName, generation, lifecycleStore }) =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open(databaseName);
+        open.onerror = () => reject(open.error ?? new Error("IndexedDB open failed"));
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction(lifecycleStore, "readwrite");
+          transaction.objectStore(lifecycleStore).put(generation, accountId);
+          transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+        };
+      }),
+    {
+      accountId,
+      databaseName: DAY_LOG_CACHE_DATABASE_NAME,
+      generation,
+      lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE,
+    },
+  );
+}
+
+async function prepareRevokedStalePage(
+  context: BrowserContext,
+  page: Page,
+): Promise<{ accountId: string; stalePage: Page }> {
+  await context.addInitScript(() => {
+    class NoDeliveryBroadcastChannel {
+      addEventListener() {}
+      close() {}
+      postMessage() {}
+      removeEventListener() {}
+    }
+    Object.defineProperty(window, "BroadcastChannel", { value: NoDeliveryBroadcastChannel });
+  });
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  const stalePage = await context.newPage();
+  await stalePage.goto("");
+  await expect(stalePage.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/signup-login/);
+
+  return { accountId, stalePage };
+}
+
+async function setValidStaleSlot(page: Page, accountId: string, marker: string): Promise<void> {
+  await page.evaluate(
+    ({ accountId, marker }) => {
+      const queryClient = window.__TANSTACK_QUERY_CLIENT__;
+      const slotQuery = queryClient
+        .getQueryCache()
+        .getAll()
+        .find(
+          ({ queryKey }) => {
+            if (queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || queryKey[2] !== "slot") {
+              return false;
+            }
+            const data = queryClient.getQueryData(queryKey) as { status?: string } | undefined;
+            return data?.status === "present";
+          },
+        );
+      if (!slotQuery) throw new Error("Expected a restored Day Log slot");
+
+      const current = queryClient.getQueryData(slotQuery.queryKey) as
+        | {
+            status?: string;
+            lastValidatedAt?: number;
+            dayLog?: {
+              breakfast?: Array<Record<string, unknown>>;
+              [key: string]: unknown;
+            };
+            [key: string]: unknown;
+          }
+        | undefined;
+      const breakfastEntry = current?.dayLog?.breakfast?.[0];
+      if (current?.status !== "present" || !current.dayLog || !breakfastEntry) {
+        throw new Error("Expected a present restored Day Log slot");
+      }
+
+      queryClient.setQueryData(slotQuery.queryKey, {
+        ...current,
+        lastValidatedAt: Date.now(),
+        dayLog: {
+          ...current.dayLog,
+          breakfast: [
+            { ...breakfastEntry, calories: 987654, name: marker },
+            ...current.dayLog.breakfast!.slice(1),
+          ],
+        },
+      });
+    },
+    { accountId, marker },
+  );
+}
+
+async function setStalePrivateQuery(page: Page, accountId: string, marker: string): Promise<void> {
+  await page.evaluate(
+    ({ accountId, marker }) => {
+      const queryClient = window.__TANSTACK_QUERY_CLIENT__;
+      const slotQuery = queryClient
+        .getQueryCache()
+        .getAll()
+        .find(
+          ({ queryKey }) => queryKey[0] === "dayLogs" && queryKey[1] === accountId && queryKey[2] === "slot",
+        );
+      if (!slotQuery) throw new Error("Expected a restored Day Log slot");
+      queryClient.setQueryData(slotQuery.queryKey, { revivedByStaleTab: marker });
+    },
+    { accountId, marker },
+  );
+}
+
+async function dispatchVisibilityResume(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    let state: DocumentVisibilityState = "hidden";
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      get: () => state,
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+    state = "visible";
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+}
+
+function persistedBreakfastNames(snapshot: StoredSnapshot): string[] {
+  return snapshot.persistedClient.clientState.queries.flatMap(({ queryKey, state }) => {
+    if (queryKey[0] !== "dayLogs" || queryKey[2] !== "slot") return [];
+    const data = state.data as
+      | { status?: string; dayLog?: { breakfast?: Array<{ name?: string }> } }
+      | undefined;
+    return data?.status === "present"
+      ? (data.dayLog?.breakfast?.flatMap(({ name }) => (name ? [name] : [])) ?? [])
+      : [];
+  });
 }
 
 function setDistinctiveTodaySlot(snapshot: StoredSnapshot, calories: number): string {
@@ -195,6 +363,141 @@ test("opens private storage only after session confirmation and falls back when 
   await startLocalTestSession(deniedPage);
   await expect(deniedPage.getByRole("heading", { name: "Nutrition", exact: true })).toBeVisible();
   await deniedContext.close();
+});
+
+test("falls back to online queries when IndexedDB storage is corrupt", async ({ page }) => {
+  await page.goto("signup-login");
+  await createCorruptDayLogCacheDatabase(page);
+
+  const dayLogResponse = page.waitForResponse("**/api/v1/daylogs?**");
+  await page.getByRole("button", { name: "Start local test session" }).click();
+
+  expect((await dayLogResponse).ok()).toBe(true);
+  await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
+});
+
+test("purges a stale tab when pageshow detects a missed revocation", async ({ context, page }) => {
+  const { accountId, stalePage } = await prepareRevokedStalePage(context, page);
+  await setStalePrivateQuery(stalePage, accountId, "pageshow stale cache");
+  await stalePage.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+
+  await expect(stalePage).toHaveURL(/signup-login/);
+  expect(await readStoreValue(stalePage, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeUndefined();
+  expect(
+    await stalePage.evaluate(() =>
+      window.__TANSTACK_QUERY_CLIENT__
+        .getQueryCache()
+        .getAll()
+        .filter(({ queryKey }) => queryKey[0] === "dayLogs")
+        .map(({ queryKey }) => queryKey),
+    ),
+  ).toEqual([]);
+});
+
+test("purges a stale tab when visibility returns to visible after a missed revocation", async ({
+  context,
+  page,
+}) => {
+  const { accountId, stalePage } = await prepareRevokedStalePage(context, page);
+  await setStalePrivateQuery(stalePage, accountId, "visibility stale cache");
+  await dispatchVisibilityResume(stalePage);
+
+  await expect(stalePage).toHaveURL(/signup-login/);
+  expect(await readStoreValue(stalePage, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeUndefined();
+  expect(
+    await stalePage.evaluate(() =>
+      window.__TANSTACK_QUERY_CLIENT__
+        .getQueryCache()
+        .getAll()
+        .filter(({ queryKey }) => queryKey[0] === "dayLogs")
+        .map(({ queryKey }) => queryKey),
+    ),
+  ).toEqual([]);
+});
+
+test("rejects stale restore and persistence after a durable generation mismatch", async ({ context, page }) => {
+  await context.addInitScript(() => {
+    const originalOpen = indexedDB.open.bind(indexedDB);
+    let openCount = 0;
+    Object.defineProperty(window, "__dayLogCacheOpenCount", { get: () => openCount });
+    Object.defineProperty(window, "__resetDayLogCacheOpenCount", {
+      value: () => {
+        openCount = 0;
+      },
+    });
+    indexedDB.open = ((...args: Parameters<IDBFactory["open"]>) => {
+      openCount += 1;
+      return originalOpen(...args);
+    }) as IDBFactory["open"];
+  });
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  const generation = await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId);
+
+  await writeSnapshot(page, accountId, (snapshot) => {
+    setDistinctiveTodaySlot(snapshot, 888);
+  });
+  const persistedBeforeFence = await readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId);
+  expect(persistedBeforeFence?.generation).toBe(generation);
+
+  await context.route("**/api/v1/daylogs?**", (route) => route.abort());
+  const stalePage = await context.newPage();
+  await stalePage.goto("");
+  await expect(stalePage.getByRole("region", { name: "Calories" })).toContainText("888");
+
+  const staleWriteMarker = "durably fenced stale write";
+  await writeLifecycleGeneration(page, accountId, (generation ?? 0) + 1);
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(
+    (generation ?? 0) + 1,
+  );
+  await stalePage.evaluate(() => {
+    (window as unknown as { __resetDayLogCacheOpenCount: () => void }).__resetDayLogCacheOpenCount();
+  });
+  await setValidStaleSlot(stalePage, accountId, staleWriteMarker);
+  await expect
+    .poll(() =>
+      stalePage.evaluate(
+        () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
+      ),
+    )
+    .toBeGreaterThan(0);
+
+  const persistedAfterFence = await readStoreValue<StoredSnapshot>(
+    stalePage,
+    DAY_LOG_CACHE_SNAPSHOT_STORE,
+    accountId,
+  );
+  expect(persistedAfterFence).toBeTruthy();
+  expect(persistedAfterFence?.generation).toBe(generation);
+  expect(persistedBreakfastNames(persistedAfterFence!)).not.toContain(staleWriteMarker);
+
+  await stalePage.evaluate(() => window.dispatchEvent(new Event("pageshow")));
+  await expect(stalePage).toHaveURL(/signup-login/);
+  expect(
+    await stalePage.evaluate(() =>
+      window.__TANSTACK_QUERY_CLIENT__
+        .getQueryCache()
+        .getAll()
+        .filter(({ queryKey }) => queryKey[0] === "dayLogs")
+        .map(({ queryKey }) => queryKey),
+    ),
+  ).toEqual([]);
+
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
+  expect(
+    await page.evaluate(() =>
+      window.__TANSTACK_QUERY_CLIENT__
+        .getQueryCache()
+        .getAll()
+        .filter(
+          ({ queryKey, state }) =>
+            queryKey[0] === "dayLogs" && queryKey[2] === "slot" && state.data !== undefined,
+        )
+        .map(({ queryKey }) => queryKey),
+    ),
+  ).toEqual([]);
 });
 
 test("restores only the confirmed account's allow-listed slots before background validation", async ({
