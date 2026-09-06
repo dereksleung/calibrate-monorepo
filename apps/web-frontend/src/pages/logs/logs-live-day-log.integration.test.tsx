@@ -3,11 +3,18 @@
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "../../routeTree.gen.ts";
 import { coffeeFixture, oatmealFixture } from "./log-page-fixtures.ts";
+
+const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
+
+vi.mock("sonner", () => ({
+  Toaster: () => null,
+  toast: { error: toastError },
+}));
 
 vi.mock("@tanstack/react-devtools", () => ({
   TanStackDevtools: () => null,
@@ -33,6 +40,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  toastError.mockReset();
   vi.restoreAllMocks();
 });
 
@@ -140,33 +148,11 @@ describe("logs live day log", () => {
     expect(screen.getAllByRole("button", { name: "+ Add Item" }).length).toBe(4);
   });
 
-  it("shows an error state with retry and refetches successfully", async () => {
-    const dayLog = {
-      id: "cf9cefe5-45af-43e7-99df-5ab87993aa75",
-      date: "2026-06-12",
-      breakfast: [coffeeFixture],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-      weight: null,
-    };
-
-    let hasFailed = false;
+  it("reports selected-day errors through the existing toast", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
       const url = getFetchUrl(input);
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
-      if (!hasFailed) {
-        hasFailed = true;
-        return Promise.resolve(
-          new Response("server error", { status: 500, statusText: "Internal Server Error" }),
-        );
-      }
-      return Promise.resolve(
-        new Response(JSON.stringify(dayLog), {
-          status: 200,
-          headers: { "content-type": "application/json" },
-        }),
-      );
+      return Promise.resolve(new Response("server error", { status: 500, statusText: "Internal Server Error" }));
     });
 
     const queryClient = new QueryClient({
@@ -180,12 +166,11 @@ describe("logs live day log", () => {
 
     renderLogsRoute("/logs?date=2026-06-12", queryClient);
 
-    expect(await screen.findByRole("alert")).toBeTruthy();
-    expect(screen.getByText(/Could not load this day/)).toBeTruthy();
-
-    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-
-    expect(await screen.findByText("Black coffee")).toBeTruthy();
+    await waitFor(() => {
+      expect(toastError).toHaveBeenCalledWith("Internal Server Error", { closeButton: true });
+    });
+    expect(screen.queryByText("Could not load this day")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 
   it("updates eaten calories when the selected date changes", async () => {

@@ -1,11 +1,11 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
-import { Button } from "#/shared/components/base/Button.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { useSelectedDayLog } from "@calibrate/api-client";
 import { useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { toast } from "sonner";
 
 import {
   MEAL_SECTIONS,
@@ -70,24 +70,20 @@ function LogsOverviewSkeleton() {
   );
 }
 
-function LogsLoadError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <section className="glass-card rounded-xl p-4" role="alert">
-      <p className="font-heading text-lg font-semibold text-on-primary-fixed">Could not load this day</p>
-      <p className="mt-1 text-sm text-on-surface-variant">Check your connection and try again.</p>
-      <Button className="mt-3" onClick={onRetry} type="button" variant="outline">
-        Try again
-      </Button>
-    </section>
-  );
-}
-
 export function Logs({ selectedDate }: LogsProps) {
   const headingDate = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate]);
   const navigate = useNavigate();
 
   const session = useAuthenticatedSession();
-  const { data, isPending, error, refetch } = useSelectedDayLog(apiTransport, session!.user.id, selectedDate);
+  const { data, isPending, error } = useSelectedDayLog(apiTransport, session!.user.id, selectedDate);
+
+  useEffect(() => {
+    if (!isPending && error) {
+      toast.error(error.message, {
+        closeButton: true,
+      });
+    }
+  }, [isPending, error]);
 
   const dayLog = useMemo(() => normalizeDayLogForRender(data ?? null, selectedDate), [data, selectedDate]);
   const totals = getDailyTotals(dayLog);
@@ -100,9 +96,7 @@ export function Logs({ selectedDate }: LogsProps) {
 
         {isPending ? <LogsOverviewSkeleton /> : null}
 
-        {!isPending && error ? <LogsLoadError onRetry={() => void refetch()} /> : null}
-
-        {!isPending && !error ? (
+        {!isPending ? (
           <>
             <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
 
