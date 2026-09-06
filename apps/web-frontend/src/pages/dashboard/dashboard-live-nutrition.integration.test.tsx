@@ -10,7 +10,8 @@ import {
   dayLogSlotsFromRangeResponse,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { dayLogRangeQueryKey, dayLogRangeQueryKeyPrefix } from "@calibrate/api-client";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -54,6 +55,30 @@ function renderDashboard(queryClient = createDashboardQueryClient()) {
     <QueryClientProvider client={queryClient}>
       <DashboardV2Container />
     </QueryClientProvider>,
+  );
+
+  return queryClient;
+}
+
+function renderPersistedDashboard(queryClient: QueryClient, storedQueryClient: QueryClient) {
+  setAuthenticatedSession(queryClient, authenticatedSession);
+  const persister = {
+    persistClient: vi.fn().mockResolvedValue(undefined),
+    removeClient: vi.fn().mockResolvedValue(undefined),
+    restoreClient: vi.fn().mockResolvedValue({
+      buster: "dashboard-test",
+      timestamp: Date.now(),
+      clientState: dehydrate(storedQueryClient),
+    }),
+  };
+
+  render(
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ buster: "dashboard-test", persister }}
+    >
+      <DashboardV2Container />
+    </PersistQueryClientProvider>,
   );
 
   return queryClient;
@@ -235,6 +260,18 @@ describe("dashboard live nutrition", () => {
 
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("315")).toBeTruthy();
     await Promise.resolve();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("waits for persistence restoration before creating the range observer", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("must not fetch"));
+    const storedQueryClient = createDashboardQueryClient();
+    seedDashboardCache(storedQueryClient, 315, Date.now());
+
+    renderPersistedDashboard(createDashboardQueryClient(), storedQueryClient);
+
+    expect(await screen.findByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Calories" })).getByText("315")).toBeTruthy();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
