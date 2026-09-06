@@ -12,6 +12,7 @@ import {
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { setAuthenticatedSession } from "./authenticated-session.ts";
 import { SessionRestorationGate } from "./session-restoration-gate.tsx";
 
 const {
@@ -19,13 +20,13 @@ const {
   broadcastDayLogCacheRevocation,
   getCurrentSession,
   refreshSession,
-  revokeLastConfirmedDayLogCache,
+  revokeDayLogCache,
 } = vi.hoisted(() => ({
   acquireDayLogCacheLease: vi.fn(),
   broadcastDayLogCacheRevocation: vi.fn(),
   getCurrentSession: vi.fn(),
   refreshSession: vi.fn(),
-  revokeLastConfirmedDayLogCache: vi.fn(),
+  revokeDayLogCache: vi.fn(),
 }));
 
 vi.mock("@calibrate/api-client", async (importOriginal) => ({
@@ -38,7 +39,7 @@ vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOr
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
   acquireDayLogCacheLease,
   broadcastDayLogCacheRevocation,
-  revokeLastConfirmedDayLogCache,
+  revokeDayLogCache,
 }));
 
 const session = {
@@ -56,7 +57,7 @@ function unauthorized() {
   return new ApiError({ status: 401, statusText: "Unauthorized", body: null });
 }
 
-function renderGate() {
+function renderGate(options?: { authenticated?: boolean }) {
   const rootRoute = createRootRoute({ component: () => null });
   const indexRoute = createRoute({ getParentRoute: () => rootRoute, path: "/", component: () => null });
   const loginRoute = createRoute({
@@ -69,6 +70,7 @@ function renderGate() {
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  if (options?.authenticated) setAuthenticatedSession(queryClient, session);
   render(
     <QueryClientProvider client={queryClient}>
       <RouterContextProvider router={router}>
@@ -85,13 +87,12 @@ beforeEach(() => {
   acquireDayLogCacheLease.mockResolvedValue({
     accountId: session.user.id,
     generation: 0,
-    storageAvailable: false,
     isCurrent: vi.fn().mockResolvedValue(true),
     persistClient: vi.fn().mockResolvedValue(undefined),
     removeClient: vi.fn().mockResolvedValue(undefined),
     restoreClient: vi.fn().mockResolvedValue(undefined),
   });
-  revokeLastConfirmedDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
+  revokeDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
   vi.stubGlobal("BroadcastChannel", undefined);
 });
 
@@ -123,16 +124,38 @@ describe("SessionRestorationGate", () => {
   it("revokes the last confirmed cache only after session loss is conclusively confirmed", async () => {
     getCurrentSession.mockRejectedValue(unauthorized());
     refreshSession.mockRejectedValue(unauthorized());
-    const { queryClient, router } = renderGate();
+    const { queryClient, router } = renderGate({ authenticated: true });
     queryClient.setQueryData(["dayLogs", session.user.id, "slot", "2026-09-03"], { private: true });
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/signup-login"));
-    expect(revokeLastConfirmedDayLogCache).toHaveBeenCalledTimes(1);
+    expect(revokeDayLogCache).toHaveBeenCalledWith(session.user.id);
     expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({
       accountId: session.user.id,
       generation: 2,
     });
     expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toEqual([]);
+  });
+
+  it("revokes the session account captured before another account replaces shared state", async () => {
+    let rejectRefresh!: (reason: unknown) => void;
+    getCurrentSession.mockRejectedValue(unauthorized());
+    refreshSession.mockReturnValue(
+      new Promise<never>((_, reject) => {
+        rejectRefresh = reject;
+      }),
+    );
+    const { queryClient, router } = renderGate({ authenticated: true });
+    await waitFor(() => expect(refreshSession).toHaveBeenCalled());
+
+    setAuthenticatedSession(queryClient, {
+      ...session,
+      user: { ...session.user, id: "95434f9a-da1f-47dd-8175-a26ff42ee11e" },
+    });
+    rejectRefresh(unauthorized());
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/signup-login"));
+    expect(revokeDayLogCache).toHaveBeenCalledWith(session.user.id);
+    expect(revokeDayLogCache).not.toHaveBeenCalledWith("95434f9a-da1f-47dd-8175-a26ff42ee11e");
   });
 
   it("preserves the cache during a transient session check failure", async () => {
@@ -141,7 +164,7 @@ describe("SessionRestorationGate", () => {
     queryClient.setQueryData(["dayLogs", session.user.id, "slot", "2026-09-03"], { private: true });
 
     expect(await screen.findByText("Calibrate is temporarily unavailable.")).toBeTruthy();
-    expect(revokeLastConfirmedDayLogCache).not.toHaveBeenCalled();
+    expect(revokeDayLogCache).not.toHaveBeenCalled();
     expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toHaveLength(1);
   });
 });

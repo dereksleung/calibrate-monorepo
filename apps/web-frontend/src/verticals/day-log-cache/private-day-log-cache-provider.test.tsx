@@ -36,7 +36,6 @@ function createLease(overrides: Partial<DayLogCacheLease> = {}): DayLogCacheLeas
   return {
     accountId,
     generation: 4,
-    storageAvailable: true,
     isCurrent: vi.fn().mockResolvedValue(true),
     persistClient: vi.fn().mockResolvedValue(undefined),
     removeClient: vi.fn().mockResolvedValue(undefined),
@@ -127,7 +126,7 @@ describe("PrivateDayLogCacheProvider", () => {
 
   it("falls back to online queries when IndexedDB is unavailable", async () => {
     acquireDayLogCacheLease.mockResolvedValue(
-      createLease({ storageAvailable: false, restoreClient: vi.fn().mockResolvedValue(undefined) }),
+      createLease({ restoreClient: vi.fn().mockResolvedValue(undefined) }),
     );
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 

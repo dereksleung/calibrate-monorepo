@@ -17,7 +17,6 @@ type SnapshotRecord = {
 export type DayLogCacheLease = {
   accountId: string;
   generation: number;
-  storageAvailable: boolean;
   isCurrent: () => Promise<boolean>;
   persistClient: (client: PersistedDayLogClient) => Promise<void>;
   removeClient: () => Promise<void>;
@@ -118,12 +117,18 @@ async function acquireDurableLease(accountId: string): Promise<{
     );
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const [storedGeneration, lastConfirmedAccount] = await Promise.all([
+    const [storedGeneration, lastConfirmedAccount, snapshot] = await Promise.all([
       requestResult(lifecycle.get(accountId)),
       requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+      requestResult(transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).get(accountId)),
     ]);
     const generation = isGeneration(storedGeneration) ? storedGeneration : 0;
-    if (!isGeneration(storedGeneration)) lifecycle.put(generation, accountId);
+    if (!isGeneration(storedGeneration)) {
+      if (storedGeneration !== undefined || snapshot !== undefined) {
+        throw new Error("IndexedDB cache lifecycle is corrupt");
+      }
+      lifecycle.put(generation, accountId);
+    }
 
     let revokedAccount: DayLogCacheRevocation | undefined;
     if (typeof lastConfirmedAccount === "string" && lastConfirmedAccount !== accountId) {
@@ -146,7 +151,6 @@ function createNoOpLease(accountId: string): DayLogCacheLease {
   return {
     accountId,
     generation: 0,
-    storageAvailable: false,
     isCurrent: async () => true,
     persistClient: async () => undefined,
     removeClient: async () => undefined,
@@ -167,7 +171,6 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
   return {
     accountId,
     generation,
-    storageAvailable: true,
     isCurrent: async () => {
       try {
         return await withDatabase(async (database) => {
@@ -210,9 +213,17 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
     removeClient: async () => {
       try {
         await withDatabase(async (database) => {
-          const transaction = database.transaction(DAY_LOG_CACHE_SNAPSHOT_STORE, "readwrite");
+          const transaction = database.transaction(
+            [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
+            "readwrite",
+          );
           const completed = transactionComplete(transaction);
-          transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
+          const storedGeneration = await requestResult(
+            transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(accountId),
+          );
+          if (storedGeneration === generation) {
+            transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
+          }
           await completed;
         });
       } catch {
@@ -273,23 +284,6 @@ async function revokeAccount(accountId: string): Promise<DayLogCacheRevocation> 
 export async function revokeDayLogCache(accountId: string): Promise<DayLogCacheRevocation | undefined> {
   try {
     return await revokeAccount(accountId);
-  } catch {
-    return undefined;
-  }
-}
-
-export async function revokeLastConfirmedDayLogCache(): Promise<DayLogCacheRevocation | undefined> {
-  try {
-    const accountId = await withDatabase(async (database) => {
-      const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
-      const completed = transactionComplete(transaction);
-      const value = await requestResult(
-        transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(LAST_CONFIRMED_ACCOUNT_KEY),
-      );
-      await completed;
-      return typeof value === "string" ? value : undefined;
-    });
-    return accountId ? await revokeAccount(accountId) : undefined;
   } catch {
     return undefined;
   }

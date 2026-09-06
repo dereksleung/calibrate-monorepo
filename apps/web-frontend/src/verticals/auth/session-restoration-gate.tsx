@@ -10,13 +10,17 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   broadcastDayLogCacheRevocation,
-  revokeLastConfirmedDayLogCache,
+  revokeDayLogCache,
 } from "../day-log-cache/indexed-db-day-log-cache.ts";
 import {
   PrivateDayLogCacheProvider,
   clearPrivateDayLogMemory,
 } from "../day-log-cache/private-day-log-cache-provider.tsx";
-import { clearAuthenticatedSession, setAuthenticatedSession } from "./authenticated-session.ts";
+import {
+  clearAuthenticatedSession,
+  getAuthenticatedSession,
+  setAuthenticatedSession,
+} from "./authenticated-session.ts";
 
 type State = "checking" | "refreshing" | "available" | "unavailable";
 
@@ -26,6 +30,7 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const restore = useCallback(async () => {
+    const sessionAccountId = getAuthenticatedSession(queryClient)?.user.id;
     setState("checking");
     try {
       const confirmedSession = await getCurrentSession(apiTransport);
@@ -48,7 +53,7 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
       setState("available");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        const revocation = await revokeLastConfirmedDayLogCache();
+        const revocation = sessionAccountId ? await revokeDayLogCache(sessionAccountId) : undefined;
         broadcastDayLogCacheRevocation(revocation);
         await clearPrivateDayLogMemory(queryClient);
         clearAuthenticatedSession(queryClient);
