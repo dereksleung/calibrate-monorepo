@@ -11,12 +11,22 @@ import {
   type DayLogSlot,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { getDayLogRange, getDayLogRangeQueryOptions } from "@calibrate/api-client";
-import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { skipToken, useIsRestoring, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
 
 export function DashboardV2Container() {
+  const isRestoring = useIsRestoring();
+
+  if (isRestoring) {
+    return <DashboardV2Page isPending={isRestoring} />;
+  }
+
+  return <DashboardV2Content isRestoring={isRestoring} />;
+}
+
+function DashboardV2Content({ isRestoring }: { isRestoring: boolean }) {
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
@@ -30,6 +40,7 @@ export function DashboardV2Container() {
     queries: dates.map((date) => ({
       queryKey: dayLogSlotQueryKey(accountId, date),
       queryFn: skipToken,
+      enabled: !isRestoring,
       gcTime: Infinity,
       staleTime: Infinity,
     })),
@@ -46,6 +57,7 @@ export function DashboardV2Container() {
     queryKey,
     initialData: cached.loadedDateCount > 0 ? cached.response : undefined,
     initialDataUpdatedAt: oldestValidation,
+    enabled: !isRestoring,
     staleTime: needsValidation ? 0 : DAY_LOG_VALIDATION_FRESHNESS_MS,
   });
 
