@@ -413,6 +413,29 @@ test("falls back to online queries when an existing snapshot has no lifecycle fe
   await expect(page.getByRole("region", { name: "Calories" })).not.toContainText("777");
 });
 
+test("skips malformed persisted clients and replaces them after an online fetch", async ({ page }) => {
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  await writeSnapshot(page, accountId, (snapshot) => {
+    setDistinctiveTodaySlot(snapshot, 987654);
+    snapshot.persistedClient.clientState.mutations = "corrupt" as unknown as unknown[];
+  });
+
+  const dayLogResponse = page.waitForResponse("**/api/v1/daylogs?**");
+  await page.reload();
+
+  expect((await dayLogResponse).ok()).toBe(true);
+  await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Calories" })).not.toContainText("987654");
+  await expect
+    .poll(async () => {
+      const snapshot = await readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId);
+      return Array.isArray(snapshot?.persistedClient.clientState.mutations);
+    })
+    .toBe(true);
+});
+
 test("purges a stale tab when pageshow detects a missed revocation", async ({ context, page }) => {
   const { accountId, stalePage } = await prepareRevokedStalePage(context, page);
   await setStalePrivateQuery(stalePage, accountId, "pageshow stale cache");
@@ -453,20 +476,39 @@ test("purges a stale tab when visibility returns to visible after a missed revoc
 });
 
 test("rejects stale restore and persistence after a durable generation mismatch", async ({ context, page }) => {
-  await context.addInitScript(() => {
-    const originalOpen = indexedDB.open.bind(indexedDB);
-    let openCount = 0;
-    Object.defineProperty(window, "__dayLogCacheOpenCount", { get: () => openCount });
-    Object.defineProperty(window, "__resetDayLogCacheOpenCount", {
-      value: () => {
-        openCount = 0;
-      },
-    });
-    indexedDB.open = ((...args: Parameters<IDBFactory["open"]>) => {
-      openCount += 1;
-      return originalOpen(...args);
-    }) as IDBFactory["open"];
-  });
+  await context.addInitScript(
+    ({ lifecycleStore, snapshotStore }) => {
+      const originalTransaction = IDBDatabase.prototype.transaction;
+      let completedWriteCount = 0;
+      Object.defineProperty(window, "__dayLogCacheWriteCompletionCount", {
+        get: () => completedWriteCount,
+      });
+      Object.defineProperty(window, "__resetDayLogCacheWriteCompletionCount", {
+        value: () => {
+          completedWriteCount = 0;
+        },
+      });
+      IDBDatabase.prototype.transaction = function (
+        storeNames: string | string[] | DOMStringList,
+        mode?: IDBTransactionMode,
+        options?: IDBTransactionOptions,
+      ) {
+        const transaction = originalTransaction.call(this, storeNames, mode, options);
+        const names = typeof storeNames === "string" ? [storeNames] : Array.from(storeNames);
+        if (mode === "readwrite" && names.includes(lifecycleStore) && names.includes(snapshotStore)) {
+          transaction.addEventListener(
+            "complete",
+            () => {
+              completedWriteCount += 1;
+            },
+            { once: true },
+          );
+        }
+        return transaction;
+      } as IDBDatabase["transaction"];
+    },
+    { lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE, snapshotStore: DAY_LOG_CACHE_SNAPSHOT_STORE },
+  );
   await startLocalTestSession(page);
   const accountId = await getConfirmedAccountId(page);
   await waitForSnapshot(page, accountId);
@@ -489,13 +531,17 @@ test("rejects stale restore and persistence after a durable generation mismatch"
     (generation ?? 0) + 1,
   );
   await stalePage.evaluate(() => {
-    (window as unknown as { __resetDayLogCacheOpenCount: () => void }).__resetDayLogCacheOpenCount();
+    (
+      window as unknown as { __resetDayLogCacheWriteCompletionCount: () => void }
+    ).__resetDayLogCacheWriteCompletionCount();
   });
   await setValidStaleSlot(stalePage, accountId, staleWriteMarker);
   await expect
     .poll(() =>
       stalePage.evaluate(
-        () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
+        () =>
+          (window as unknown as { __dayLogCacheWriteCompletionCount: number })
+            .__dayLogCacheWriteCompletionCount,
       ),
     )
     .toBeGreaterThan(0);

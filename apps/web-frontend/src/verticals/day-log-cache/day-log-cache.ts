@@ -29,6 +29,23 @@ export type PersistedDayLogClient = {
   clientState: DehydratedState;
 };
 
+function isDehydratedState(value: unknown): value is DehydratedState {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<DehydratedState>;
+  return Array.isArray(candidate.mutations) && Array.isArray(candidate.queries);
+}
+
+export function isPersistedDayLogClient(value: unknown): value is PersistedDayLogClient {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<PersistedDayLogClient>;
+  return (
+    typeof candidate.buster === "string" &&
+    typeof candidate.timestamp === "number" &&
+    Number.isFinite(candidate.timestamp) &&
+    isDehydratedState(candidate.clientState)
+  );
+}
+
 export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accountId, "slot"] as const;
 
 export const dayLogSlotQueryKey = (accountId: string, date: string) =>
@@ -156,7 +173,12 @@ export function isPersistableDayLogQuery(
   accountId: string,
   now = Date.now(),
 ): boolean {
-  return isPersistableDayLogQueryData(query.queryKey, query.state.data, accountId, now);
+  if (!query || typeof query !== "object") return false;
+  const candidate = query as { queryKey?: unknown; state?: { data?: unknown } };
+  if (!Array.isArray(candidate.queryKey) || !candidate.state || typeof candidate.state !== "object") {
+    return false;
+  }
+  return isPersistableDayLogQueryData(candidate.queryKey, candidate.state.data, accountId, now);
 }
 
 export function prunePersistedDayLogClient(
@@ -164,15 +186,7 @@ export function prunePersistedDayLogClient(
   accountId: string,
   now = Date.now(),
 ): PersistedDayLogClient | undefined {
-  if (
-    !persistedClient ||
-    typeof persistedClient.timestamp !== "number" ||
-    typeof persistedClient.buster !== "string" ||
-    !persistedClient.clientState ||
-    !Array.isArray(persistedClient.clientState.queries)
-  ) {
-    return undefined;
-  }
+  if (!isPersistedDayLogClient(persistedClient)) return undefined;
 
   return {
     ...persistedClient,

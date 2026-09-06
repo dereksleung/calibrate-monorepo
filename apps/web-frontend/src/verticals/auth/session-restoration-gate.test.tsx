@@ -21,12 +21,14 @@ const {
   getCurrentSession,
   refreshSession,
   revokeDayLogCache,
+  revokeLastConfirmedDayLogCache,
 } = vi.hoisted(() => ({
   acquireDayLogCacheLease: vi.fn(),
   broadcastDayLogCacheRevocation: vi.fn(),
   getCurrentSession: vi.fn(),
   refreshSession: vi.fn(),
   revokeDayLogCache: vi.fn(),
+  revokeLastConfirmedDayLogCache: vi.fn(),
 }));
 
 vi.mock("@calibrate/api-client", async (importOriginal) => ({
@@ -40,6 +42,7 @@ vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOr
   acquireDayLogCacheLease,
   broadcastDayLogCacheRevocation,
   revokeDayLogCache,
+  revokeLastConfirmedDayLogCache,
 }));
 
 const session = {
@@ -93,6 +96,7 @@ beforeEach(() => {
     restoreClient: vi.fn().mockResolvedValue(undefined),
   });
   revokeDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
+  revokeLastConfirmedDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
   vi.stubGlobal("BroadcastChannel", undefined);
 });
 
@@ -129,6 +133,22 @@ describe("SessionRestorationGate", () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe("/signup-login"));
     expect(revokeDayLogCache).toHaveBeenCalledWith(session.user.id);
+    expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({
+      accountId: session.user.id,
+      generation: 2,
+    });
+    expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toEqual([]);
+  });
+
+  it("revokes the durable account after a cold-start session loss", async () => {
+    getCurrentSession.mockRejectedValue(unauthorized());
+    refreshSession.mockRejectedValue(unauthorized());
+    const { queryClient, router } = renderGate();
+    queryClient.setQueryData(["dayLogs", session.user.id, "slot", "2026-09-03"], { private: true });
+
+    await waitFor(() => expect(router.state.location.pathname).toBe("/signup-login"));
+    expect(revokeLastConfirmedDayLogCache).toHaveBeenCalledTimes(1);
+    expect(revokeDayLogCache).not.toHaveBeenCalled();
     expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({
       accountId: session.user.id,
       generation: 2,
