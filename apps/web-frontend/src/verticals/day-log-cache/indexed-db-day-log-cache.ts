@@ -1,4 +1,8 @@
-import { prunePersistedDayLogClient, type PersistedDayLogClient } from "./day-log-cache.ts";
+import {
+  isPersistedDayLogClient,
+  prunePersistedDayLogClient,
+  type PersistedDayLogClient,
+} from "./day-log-cache.ts";
 
 export const DAY_LOG_CACHE_DATABASE_NAME = "calibrate-private-day-log-cache";
 export const DAY_LOG_CACHE_SNAPSHOT_STORE = "persistedClients";
@@ -102,7 +106,7 @@ function isSnapshotRecord(value: unknown): value is SnapshotRecord {
   return (
     typeof candidate.accountId === "string" &&
     isGeneration(candidate.generation) &&
-    Boolean(candidate.persistedClient)
+    isPersistedDayLogClient(candidate.persistedClient)
   );
 }
 
@@ -281,9 +285,41 @@ async function revokeAccount(accountId: string): Promise<DayLogCacheRevocation> 
   });
 }
 
+async function revokeLastConfirmedAccount(): Promise<DayLogCacheRevocation | undefined> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(
+      [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
+      "readwrite",
+    );
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const accountId = await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY));
+    if (typeof accountId !== "string") {
+      await completed;
+      return undefined;
+    }
+
+    const storedGeneration = await requestResult(lifecycle.get(accountId));
+    const generation = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
+    lifecycle.put(generation, accountId);
+    lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
+    transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
+    await completed;
+    return { accountId, generation };
+  });
+}
+
 export async function revokeDayLogCache(accountId: string): Promise<DayLogCacheRevocation | undefined> {
   try {
     return await revokeAccount(accountId);
+  } catch {
+    return undefined;
+  }
+}
+
+export async function revokeLastConfirmedDayLogCache(): Promise<DayLogCacheRevocation | undefined> {
+  try {
+    return await revokeLastConfirmedAccount();
   } catch {
     return undefined;
   }

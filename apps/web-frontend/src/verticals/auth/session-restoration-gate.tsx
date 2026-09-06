@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   broadcastDayLogCacheRevocation,
   revokeDayLogCache,
+  revokeLastConfirmedDayLogCache,
 } from "../day-log-cache/indexed-db-day-log-cache.ts";
 import {
   PrivateDayLogCacheProvider,
@@ -53,7 +54,9 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
       setState("available");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        const revocation = sessionAccountId ? await revokeDayLogCache(sessionAccountId) : undefined;
+        const revocation = sessionAccountId
+          ? await revokeDayLogCache(sessionAccountId)
+          : await revokeLastConfirmedDayLogCache();
         broadcastDayLogCacheRevocation(revocation);
         await clearPrivateDayLogMemory(queryClient);
         clearAuthenticatedSession(queryClient);
