@@ -1,4 +1,5 @@
 import { expect, test, type BrowserContext, type Page, type Route } from "@playwright/test";
+import { hashKey } from "@tanstack/query-core";
 
 import {
   DAY_LOG_CACHE_DATABASE_NAME,
@@ -596,14 +597,14 @@ test("restores only the confirmed account's allow-listed slots before background
     snapshot.persistedClient.clientState.queries.push(
       {
         ...template,
-        queryHash: JSON.stringify(["unrelatedPrivateQuery"]),
+        queryHash: hashKey(["unrelatedPrivateQuery"]),
         queryKey: ["unrelatedPrivateQuery"],
         state: { ...template.state, data: { secret: "must-not-hydrate" } },
       },
       {
         ...template,
-        queryHash: JSON.stringify(["authenticatedSession"]),
-        queryKey: ["authenticatedSession"],
+        queryHash: hashKey(["authenticatedSession", "persisted-marker"]),
+        queryKey: ["authenticatedSession", "persisted-marker"],
         state: { ...template.state, data: { accessToken: "must-not-hydrate" } },
       },
     );
@@ -655,6 +656,7 @@ test("restores only the confirmed account's allow-listed slots before background
     const queryClient = window.__TANSTACK_QUERY_CLIENT__;
     return {
       session: queryClient.getQueryData(["authenticatedSession"]),
+      authMarker: queryClient.getQueryData(["authenticatedSession", "persisted-marker"]),
       unrelated: queryClient.getQueryData(["unrelatedPrivateQuery"]),
       mutationCount: queryClient.getMutationCache().getAll().length,
       keys: queryClient
@@ -664,6 +666,7 @@ test("restores only the confirmed account's allow-listed slots before background
     };
   });
   expect(restoredState.session).not.toHaveProperty("accessToken");
+  expect(restoredState.authMarker).toBeUndefined();
   expect(restoredState.unrelated).toBeUndefined();
   expect(restoredState.mutationCount).toBe(0);
   expect(restoredState.keys).not.toContainEqual([
@@ -672,8 +675,16 @@ test("restores only the confirmed account's allow-listed slots before background
     expect.anything(),
     expect.anything(),
   ]);
-  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(1);
-  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeUndefined();
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(0);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeTruthy();
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/signup-login/);
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(1);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeUndefined();
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(0);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeTruthy();
 });
 
 test("revokes durable and in-memory state only after successful server logout", async ({ page }) => {
