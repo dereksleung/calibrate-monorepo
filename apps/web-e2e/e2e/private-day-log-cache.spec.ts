@@ -143,6 +143,27 @@ async function writeLifecycleGeneration(page: Page, accountId: string, generatio
   );
 }
 
+async function deleteLifecycleGeneration(page: Page, accountId: string): Promise<void> {
+  await page.evaluate(
+    ({ accountId, databaseName, lifecycleStore }) =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open(databaseName);
+        open.onerror = () => reject(open.error ?? new Error("IndexedDB open failed"));
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction(lifecycleStore, "readwrite");
+          transaction.objectStore(lifecycleStore).delete(accountId);
+          transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+        };
+      }),
+    { accountId, databaseName: DAY_LOG_CACHE_DATABASE_NAME, lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE },
+  );
+}
+
 async function prepareRevokedStalePage(
   context: BrowserContext,
   page: Page,
@@ -376,6 +397,22 @@ test("falls back to online queries when IndexedDB storage is corrupt", async ({ 
   await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
 });
 
+test("falls back to online queries when an existing snapshot has no lifecycle fence", async ({ page }) => {
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  await writeSnapshot(page, accountId, (snapshot) => {
+    setDistinctiveTodaySlot(snapshot, 777);
+  });
+  await deleteLifecycleGeneration(page, accountId);
+
+  await page.route("**/api/v1/daylogs?**", (route) => route.abort());
+  await page.reload();
+
+  await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Calories" })).not.toContainText("777");
+});
+
 test("purges a stale tab when pageshow detects a missed revocation", async ({ context, page }) => {
   const { accountId, stalePage } = await prepareRevokedStalePage(context, page);
   await setStalePrivateQuery(stalePage, accountId, "pageshow stale cache");
@@ -513,13 +550,13 @@ test("restores only the confirmed account's allow-listed slots before background
     snapshot.persistedClient.clientState.queries.push(
       {
         ...template,
-        queryHash: "unrelated-private-query",
+        queryHash: JSON.stringify(["unrelatedPrivateQuery"]),
         queryKey: ["unrelatedPrivateQuery"],
         state: { ...template.state, data: { secret: "must-not-hydrate" } },
       },
       {
         ...template,
-        queryHash: "authenticated-session-injection",
+        queryHash: JSON.stringify(["authenticatedSession"]),
         queryKey: ["authenticatedSession"],
         state: { ...template.state, data: { accessToken: "must-not-hydrate" } },
       },
