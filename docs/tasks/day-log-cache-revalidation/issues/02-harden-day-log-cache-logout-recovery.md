@@ -119,3 +119,4 @@ Do not add timer- or sleep-based race tests. Prove the durable invariant determi
 
 - 2026-09-05: Split from ticket 01 so durable logout-state tracking, retry/idempotency, cleanup-pending recovery, and their failure coverage can be reviewed independently from the baseline cache fence.
 - 2026-09-06: Ticket 01's cold-start session-loss catch block performs one best-effort revocation; this ticket must move that path to the durable `logout-pending` marker with bounded retries before starting the recovery flow.
+- 2026-09-07: Account-changing login must retain a durable pending transition until the previous account fence commits; a failed fence keeps private routes gated and offers retry, and a newer cross-tab account confirmation must not be overwritten by a stale login response. Physical deletion may follow the committed fence.

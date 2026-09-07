@@ -19,8 +19,8 @@ import {
 } from "../day-log-cache/private-day-log-cache-provider.tsx";
 import {
   clearAuthenticatedSession,
+  establishAuthenticatedSession,
   getAuthenticatedSession,
-  setAuthenticatedSession,
 } from "./authenticated-session.ts";
 
 type State = "checking" | "refreshing" | "available" | "unavailable";
@@ -35,17 +35,17 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
     const establishConfirmedSession = async (
       confirmedSession: AuthenticatedSessionResponse,
     ): Promise<boolean> => {
-      if (sessionAccountId && sessionAccountId !== confirmedSession.user.id) {
-        const revocation = await revokeDayLogCache(sessionAccountId);
-        if (!revocation) {
+      const transition = await establishAuthenticatedSession(queryClient, confirmedSession);
+      if (!transition) {
+        if (sessionAccountId && sessionAccountId !== confirmedSession.user.id) {
           await clearPrivateDayLogMemory(queryClient);
-          setState("unavailable");
-          return false;
         }
-        broadcastDayLogCacheRevocation(revocation);
-        await clearPrivateDayLogMemory(queryClient);
+        setState("unavailable");
+        return false;
       }
-      setAuthenticatedSession(queryClient, confirmedSession);
+      if (transition.previousAccountId) {
+        await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
+      }
       setSession(confirmedSession);
       setState("available");
       return true;

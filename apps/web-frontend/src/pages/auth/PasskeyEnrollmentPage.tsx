@@ -3,7 +3,8 @@ import type { PasskeyEnrollmentHandoff } from "#/verticals/auth/account-email-ve
 import { apiTransport } from "#/shared/api/api-client";
 import { Button } from "#/shared/components/base/Button";
 import { WarningBanner } from "#/shared/components/base/WarningBanner";
-import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session";
+import { establishAuthenticatedSession } from "#/verticals/auth/authenticated-session";
+import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider";
 import {
   createBrowserPasskeyRegistrationAdapter,
   isBrowserPasskeyRegistrationSupported,
@@ -118,7 +119,14 @@ export function PasskeyEnrollmentPage({
         credential,
         rememberDevice,
       });
-      setAuthenticatedSession(queryClient, session);
+      const transition = await establishAuthenticatedSession(queryClient, session, {
+        allowCurrentAccountTransition: true,
+      });
+      if (!transition) {
+        setUiState({ kind: "ambiguous" });
+        return;
+      }
+      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
       await navigate({ to: "/" });
     } catch (error) {
       if (isPasskeyRegistrationCancellation(error)) {
