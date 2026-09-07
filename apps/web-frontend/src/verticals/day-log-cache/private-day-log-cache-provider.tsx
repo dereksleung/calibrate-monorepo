@@ -1,7 +1,7 @@
-import { useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useIsRestoring, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { clearAuthenticatedSession } from "../auth/authenticated-session.ts";
 import {
@@ -36,6 +36,39 @@ function isRevocation(value: unknown): value is DayLogCacheRevocation & { type: 
   );
 }
 
+function HydratedLeaseBoundary({
+  children,
+  lease,
+  onFenceFailure,
+}: {
+  children: React.ReactNode;
+  lease: DayLogCacheLease;
+  onFenceFailure: () => Promise<void>;
+}) {
+  const isRestoring = useIsRestoring();
+  const [isCurrent, setIsCurrent] = useState(false);
+
+  useEffect(() => {
+    if (isRestoring) return;
+    let active = true;
+    setIsCurrent(false);
+    void lease.isCurrent().catch(() => false).then((current) => {
+      if (!active) return;
+      if (!current) {
+        void onFenceFailure();
+        return;
+      }
+      setIsCurrent(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [isRestoring, lease, onFenceFailure]);
+
+  if (!isCurrent) return null;
+  return <>{children}</>;
+}
+
 function LeasePersistenceBoundary({
   accountId,
   children,
@@ -48,6 +81,11 @@ function LeasePersistenceBoundary({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [revoked, setRevoked] = useState(false);
+  const [leaseReady, setLeaseReady] = useState(false);
+  const activeRef = useRef(false);
+  const hydrationStartedRef = useRef(false);
+  const revocationStartedRef = useRef(false);
+  const stopLifecycleChecksRef = useRef<(() => void) | undefined>(undefined);
   const [restoreCompletion] = useState(() => {
     let complete!: () => void;
     const promise = new Promise<void>((resolve) => {
@@ -55,28 +93,24 @@ function LeasePersistenceBoundary({
     });
     return { complete, promise };
   });
+  const purgeRevokedSession = useCallback(async () => {
+    if (revocationStartedRef.current || !activeRef.current) return;
+    revocationStartedRef.current = true;
+    const stopLifecycleChecks = stopLifecycleChecksRef.current;
+    stopLifecycleChecksRef.current = undefined;
+    stopLifecycleChecks?.();
+    setRevoked(true);
+    if (hydrationStartedRef.current) await restoreCompletion.promise;
+    await clearPrivateDayLogMemory(queryClient);
+    clearAuthenticatedSession(queryClient);
+    if (activeRef.current) await navigate({ to: "/signup-login" });
+  }, [navigate, queryClient, restoreCompletion]);
 
   useEffect(() => {
-    let active = true;
-    let revocationStarted = false;
-    let stopLifecycleChecks: (() => void) | undefined;
-
-    const purgeRevokedSession = async () => {
-      if (revocationStarted || !active) return;
-      revocationStarted = true;
-      stopLifecycleChecks?.();
-      setRevoked(true);
-      // PersistQueryClientProvider may already be completing a restore that
-      // serialized before revocation. Let its hydrate callback finish before
-      // clearing memory so that late hydration cannot revive private queries.
-      await restoreCompletion.promise;
-      await clearPrivateDayLogMemory(queryClient);
-      clearAuthenticatedSession(queryClient);
-      if (active) await navigate({ to: "/signup-login" });
-    };
+    activeRef.current = true;
 
     const checkFence = async () => {
-      if (!(await lease.isCurrent())) await purgeRevokedSession();
+      if (!(await lease.isCurrent().catch(() => false))) await purgeRevokedSession();
     };
 
     const startLifecycleChecks = () => {
@@ -111,7 +145,7 @@ function LeasePersistenceBoundary({
         }
       }
 
-      stopLifecycleChecks = () => {
+      stopLifecycleChecksRef.current = () => {
         window.clearInterval(interval);
         window.removeEventListener("pageshow", onPageShow);
         window.removeEventListener("focus", onFocus);
@@ -121,15 +155,25 @@ function LeasePersistenceBoundary({
     };
 
     startLifecycleChecks();
-    void checkFence();
+    void lease.isCurrent().catch(() => false).then(async (current) => {
+      if (!activeRef.current || revocationStartedRef.current) return;
+      if (!current) {
+        await purgeRevokedSession();
+        return;
+      }
+      hydrationStartedRef.current = true;
+      setLeaseReady(true);
+    });
 
     return () => {
-      active = false;
+      activeRef.current = false;
+      const stopLifecycleChecks = stopLifecycleChecksRef.current;
+      stopLifecycleChecksRef.current = undefined;
       stopLifecycleChecks?.();
     };
-  }, [accountId, lease, navigate, queryClient, restoreCompletion]);
+  }, [accountId, lease, purgeRevokedSession]);
 
-  if (revoked) return null;
+  if (revoked || !leaseReady) return null;
 
   return (
     <PersistQueryClientProvider
@@ -147,7 +191,9 @@ function LeasePersistenceBoundary({
         persister: lease,
       }}
     >
-      {children}
+      <HydratedLeaseBoundary lease={lease} onFenceFailure={purgeRevokedSession}>
+        {children}
+      </HydratedLeaseBoundary>
     </PersistQueryClientProvider>
   );
 }
