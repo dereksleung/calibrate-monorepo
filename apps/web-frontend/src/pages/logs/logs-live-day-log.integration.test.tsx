@@ -152,7 +152,9 @@ describe("logs live day log", () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
       const url = getFetchUrl(input);
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
-      return Promise.resolve(new Response("server error", { status: 500, statusText: "Internal Server Error" }));
+      return Promise.resolve(
+        new Response("server error", { status: 500, statusText: "Internal Server Error" }),
+      );
     });
 
     const queryClient = new QueryClient({

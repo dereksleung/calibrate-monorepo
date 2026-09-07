@@ -73,10 +73,7 @@ function renderPersistedDashboard(queryClient: QueryClient, storedQueryClient: Q
   };
 
   render(
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ buster: "dashboard-test", persister }}
-    >
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ buster: "dashboard-test", persister }}>
       <DashboardV2Container />
     </PersistQueryClientProvider>,
   );

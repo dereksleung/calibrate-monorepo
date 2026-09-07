@@ -290,7 +290,10 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
             requestResult(lifecycle.get(accountId)),
             requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
           ]);
-          if (storedGeneration === generation && readCurrentConfirmedAccount(storedCurrentAccount) === accountId) {
+          if (
+            storedGeneration === generation &&
+            readCurrentConfirmedAccount(storedCurrentAccount) === accountId
+          ) {
             const record: SnapshotRecord = { accountId, generation, persistedClient: prunedClient };
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).put(record, accountId);
           }
@@ -313,7 +316,10 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
             requestResult(lifecycle.get(accountId)),
             requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
           ]);
-          if (storedGeneration === generation && readCurrentConfirmedAccount(storedCurrentAccount) === accountId) {
+          if (
+            storedGeneration === generation &&
+            readCurrentConfirmedAccount(storedCurrentAccount) === accountId
+          ) {
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
           }
           await completed;

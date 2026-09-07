@@ -53,14 +53,17 @@ function HydratedLeaseBoundary({
     if (isRestoring) return;
     let active = true;
     setIsCurrent(false);
-    void lease.isCurrent().catch(() => false).then((current) => {
-      if (!active) return;
-      if (!current) {
-        void onFenceFailure();
-        return;
-      }
-      setIsCurrent(true);
-    });
+    void lease
+      .isCurrent()
+      .catch(() => false)
+      .then((current) => {
+        if (!active) return;
+        if (!current) {
+          void onFenceFailure();
+          return;
+        }
+        setIsCurrent(true);
+      });
     return () => {
       active = false;
     };
@@ -162,15 +165,18 @@ function LeasePersistenceBoundary({
     };
 
     startLifecycleChecks();
-    void lease.isCurrent().catch(() => false).then(async (current) => {
-      if (!activeRef.current || revocationStartedRef.current) return;
-      if (!current) {
-        await purgeRevokedSession();
-        return;
-      }
-      hydrationStartedRef.current = true;
-      setLeaseReady(true);
-    });
+    void lease
+      .isCurrent()
+      .catch(() => false)
+      .then(async (current) => {
+        if (!activeRef.current || revocationStartedRef.current) return;
+        if (!current) {
+          await purgeRevokedSession();
+          return;
+        }
+        hydrationStartedRef.current = true;
+        setLeaseReady(true);
+      });
 
     return () => {
       activeRef.current = false;
