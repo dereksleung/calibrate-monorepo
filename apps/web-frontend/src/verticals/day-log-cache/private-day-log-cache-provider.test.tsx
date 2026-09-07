@@ -106,6 +106,32 @@ describe("PrivateDayLogCacheProvider", () => {
     expect(await screen.findByText("unavailable")).toBeTruthy();
   });
 
+  it("keeps private descendants gated until the lease is current", async () => {
+    let resolveCurrent!: (value: boolean) => void;
+    const isCurrent = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveCurrent = resolve;
+        }),
+    );
+    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    const router = renderProvider(queryClient);
+
+    await waitFor(() => expect(isCurrent).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText("waiting")).toBeNull();
+
+    resolveCurrent(false);
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slot.date))).toBeUndefined();
+      expect(router.state.location.pathname).toBe("/signup-login");
+    });
+  });
+
   it("restores the fenced cache before descendant queries may fetch", async () => {
     const storedClient = new QueryClient();
     storedClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);

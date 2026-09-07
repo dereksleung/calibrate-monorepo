@@ -12,7 +12,7 @@ import {
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { setAuthenticatedSession } from "./authenticated-session.ts";
+import { authenticatedSessionQueryKey, setAuthenticatedSession } from "./authenticated-session.ts";
 import { SessionRestorationGate } from "./session-restoration-gate.tsx";
 
 const {
@@ -123,6 +123,33 @@ describe("SessionRestorationGate", () => {
 
     expect(await screen.findByText("private dashboard")).toBeTruthy();
     await waitFor(() => expect(acquireDayLogCacheLease).toHaveBeenCalledWith(session.user.id));
+  });
+
+  it("fences the previous account before exposing a newly confirmed account", async () => {
+    const nextSession = {
+      ...session,
+      user: { ...session.user, id: "95434f9a-da1f-47dd-8175-a26ff42ee11e" },
+    };
+    let completeRevocation!: (value: { accountId: string; generation: number }) => void;
+    getCurrentSession.mockResolvedValue(nextSession);
+    revokeDayLogCache.mockReturnValue(
+      new Promise((resolve) => {
+        completeRevocation = resolve;
+      }),
+    );
+    const { queryClient } = renderGate({ authenticated: true });
+    queryClient.setQueryData(["dayLogs", session.user.id, "slot", "2026-09-03"], { private: true });
+
+    await waitFor(() => expect(revokeDayLogCache).toHaveBeenCalledWith(session.user.id));
+    expect(screen.queryByText("private dashboard")).toBeNull();
+    expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(session);
+
+    completeRevocation({ accountId: session.user.id, generation: 2 });
+
+    expect(await screen.findByText("private dashboard")).toBeTruthy();
+    expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(nextSession);
+    expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toEqual([]);
+    expect(acquireDayLogCacheLease).toHaveBeenCalledWith(nextSession.user.id);
   });
 
   it("revokes the last confirmed cache only after session loss is conclusively confirmed", async () => {

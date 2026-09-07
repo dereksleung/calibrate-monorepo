@@ -161,12 +161,21 @@ export function PrivateDayLogCacheProvider({
 }) {
   const [lease, setLease] = useState<DayLogCacheLease>();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
     setLease(undefined);
-    void acquireDayLogCacheLease(accountId).then((acquiredLease) => {
+    void acquireDayLogCacheLease(accountId).then(async (acquiredLease) => {
       if (!active) return;
+      const isCurrent = await acquiredLease.isCurrent().catch(() => false);
+      if (!active) return;
+      if (!isCurrent) {
+        await clearPrivateDayLogMemory(queryClient);
+        clearAuthenticatedSession(queryClient);
+        if (active) await navigate({ to: "/signup-login" });
+        return;
+      }
       // Native timers cannot represent the 30-day retention window reliably;
       // explicit pruning owns retention for this narrowly scoped query family.
       queryClient.setQueryDefaults(dayLogSlotQueryKeyPrefix(accountId), { gcTime: Infinity });
@@ -175,7 +184,7 @@ export function PrivateDayLogCacheProvider({
     return () => {
       active = false;
     };
-  }, [accountId, queryClient]);
+  }, [accountId, navigate, queryClient]);
 
   // Do not mount private descendants before a fenced lease exists. Mounting them
   // here and again inside the lease boundary would discard route-local state and

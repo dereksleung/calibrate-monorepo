@@ -113,6 +113,11 @@ function readConfirmedAccounts(value: unknown): string[] {
   return [...new Set(value)];
 }
 
+function hasConfirmedAccount(value: unknown, accountId: string): boolean {
+  if (isAccountId(value)) return value === accountId;
+  return Array.isArray(value) && value.every(isAccountId) && value.includes(accountId);
+}
+
 function isSnapshotRecord(value: unknown): value is SnapshotRecord {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<SnapshotRecord>;
@@ -186,11 +191,13 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
         return await withDatabase(async (database) => {
           const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
           const completed = transactionComplete(transaction);
-          const storedGeneration = await requestResult(
-            transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(accountId),
-          );
+          const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+          const [storedGeneration, storedConfirmedAccounts] = await Promise.all([
+            requestResult(lifecycle.get(accountId)),
+            requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNTS_KEY)),
+          ]);
           await completed;
-          return storedGeneration === generation;
+          return storedGeneration === generation && hasConfirmedAccount(storedConfirmedAccounts, accountId);
         });
       } catch {
         // Losing optional storage does not prove revocation. Persist remains

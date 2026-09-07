@@ -32,12 +32,28 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
   const navigate = useNavigate();
   const restore = useCallback(async () => {
     const sessionAccountId = getAuthenticatedSession(queryClient)?.user.id;
-    setState("checking");
-    try {
-      const confirmedSession = await getCurrentSession(apiTransport);
+    const establishConfirmedSession = async (
+      confirmedSession: AuthenticatedSessionResponse,
+    ): Promise<boolean> => {
+      if (sessionAccountId && sessionAccountId !== confirmedSession.user.id) {
+        const revocation = await revokeDayLogCache(sessionAccountId);
+        if (!revocation) {
+          await clearPrivateDayLogMemory(queryClient);
+          setState("unavailable");
+          return false;
+        }
+        broadcastDayLogCacheRevocation(revocation);
+        await clearPrivateDayLogMemory(queryClient);
+      }
       setAuthenticatedSession(queryClient, confirmedSession);
       setSession(confirmedSession);
       setState("available");
+      return true;
+    };
+    setState("checking");
+    try {
+      const confirmedSession = await getCurrentSession(apiTransport);
+      await establishConfirmedSession(confirmedSession);
       return;
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 401) {
@@ -49,9 +65,7 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
     try {
       await refreshSession(apiTransport);
       const confirmedSession = await getCurrentSession(apiTransport);
-      setAuthenticatedSession(queryClient, confirmedSession);
-      setSession(confirmedSession);
-      setState("available");
+      await establishConfirmedSession(confirmedSession);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         const revocation = sessionAccountId
