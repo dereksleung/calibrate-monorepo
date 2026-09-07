@@ -1,6 +1,7 @@
 import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
 import { DayLogResponseSchema, type DayLogRangeResponse } from "@calibrate/api-contracts";
+import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/api-client";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
@@ -48,8 +49,7 @@ export function isPersistedDayLogClient(value: unknown): value is PersistedDayLo
 
 export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accountId, "slot"] as const;
 
-export const dayLogSlotQueryKey = (accountId: string, date: string) =>
-  [...dayLogSlotQueryKeyPrefix(accountId), date] as const;
+export const dayLogSlotQueryKey = createDayLogSlotQueryKey;
 
 export function dateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];

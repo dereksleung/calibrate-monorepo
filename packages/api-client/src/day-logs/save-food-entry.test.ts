@@ -1,9 +1,10 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ApiTransport } from "../transport.js";
 
-import { dayLogRangeQueryKeyPrefix } from "./get-day-log-range.js";
-import { dayLogQueryKey } from "./get-day-log.js";
+import { dayLogRangeQueryKey } from "./get-day-log-range.js";
+import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
 import { invalidateDayLogQueries, saveFoodEntry } from "./save-food-entry.js";
 
 describe("saveFoodEntry", () => {
@@ -69,17 +70,24 @@ describe("saveFoodEntry", () => {
 });
 
 describe("invalidateDayLogQueries", () => {
-  it("invalidates only the confirmed account's selected day and cached day-log ranges", async () => {
-    const invalidateQueries = vi.fn().mockResolvedValue(undefined);
+  it("removes the confirmed account's cached slot so Dashboard revalidates it", async () => {
+    const queryClient = new QueryClient();
     const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
+    const otherAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";
+    const date = "2026-05-18";
+    const range = { startDate: "2026-05-12", endDate: date };
+    queryClient.setQueryData(dayLogQueryKey(accountId, date), { private: "selected-day" });
+    queryClient.setQueryData(dayLogRangeQueryKey(accountId, range), { private: "range" });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), { private: "cached-slot" });
+    queryClient.setQueryData(dayLogSlotQueryKey(otherAccountId, date), { private: "other-account-slot" });
 
-    await invalidateDayLogQueries({ invalidateQueries } as never, accountId, "2026-05-18");
+    await invalidateDayLogQueries(queryClient, accountId, date);
 
-    expect(invalidateQueries).toHaveBeenNthCalledWith(1, {
-      queryKey: dayLogQueryKey(accountId, "2026-05-18"),
-    });
-    expect(invalidateQueries).toHaveBeenNthCalledWith(2, {
-      queryKey: dayLogRangeQueryKeyPrefix(accountId),
+    expect(queryClient.getQueryState(dayLogQueryKey(accountId, date))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(dayLogRangeQueryKey(accountId, range))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, date))).toBeUndefined();
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(otherAccountId, date))).toEqual({
+      private: "other-account-slot",
     });
   });
 });
