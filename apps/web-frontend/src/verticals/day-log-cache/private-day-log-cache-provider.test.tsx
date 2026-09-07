@@ -207,4 +207,48 @@ describe("PrivateDayLogCacheProvider", () => {
       expect(router.state.location.pathname).toBe("/signup-login");
     });
   });
+
+  it("does not clear replacement-account state after revocation loses ownership", async () => {
+    let markCancellationStarted!: () => void;
+    const cancellationStarted = new Promise<void>((resolve) => {
+      markCancellationStarted = resolve;
+    });
+    let resolveCancellation!: () => void;
+    const cancellation = new Promise<void>((resolve) => {
+      resolveCancellation = resolve;
+    });
+    const isCurrent = vi
+      .fn<() => Promise<boolean>>()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockResolvedValue(false);
+    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
+    renderProvider(queryClient);
+
+    expect(await screen.findByText("unavailable")).toBeTruthy();
+    vi.spyOn(queryClient, "cancelQueries").mockImplementation(() => {
+      markCancellationStarted();
+      return cancellation;
+    });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+
+    window.dispatchEvent(new Event("focus"));
+    await cancellationStarted;
+    cleanup();
+
+    const replacementAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";
+    queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: replacementAccountId } });
+    queryClient.setQueryData(dayLogSlotQueryKey(replacementAccountId, slot.date), slot);
+    resolveCancellation();
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual({
+        user: { id: replacementAccountId },
+      });
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(replacementAccountId, slot.date))).toEqual(slot);
+    });
+  });
 });
