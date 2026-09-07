@@ -134,7 +134,10 @@ describe("SessionRestorationGate", () => {
       ...session,
       user: { ...session.user, id: "95434f9a-da1f-47dd-8175-a26ff42ee11e" },
     };
-    let completeConfirmation!: (value: { accepted: boolean; revocations: Array<{ accountId: string; generation: number }> }) => void;
+    let completeConfirmation!: (value: {
+      accepted: boolean;
+      revocations: Array<{ accountId: string; generation: number }>;
+    }) => void;
     getCurrentSession.mockResolvedValue(nextSession);
     confirmDayLogCacheAccount.mockReturnValue(
       new Promise((resolve) => {
@@ -158,7 +161,10 @@ describe("SessionRestorationGate", () => {
     expect(await screen.findByText("private dashboard")).toBeTruthy();
     expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(nextSession);
     expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toEqual([]);
-    expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({ accountId: session.user.id, generation: 2 });
+    expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({
+      accountId: session.user.id,
+      generation: 2,
+    });
     expect(acquireDayLogCacheLease).toHaveBeenCalledWith(nextSession.user.id);
   });
 

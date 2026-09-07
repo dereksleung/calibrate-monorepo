@@ -1,7 +1,7 @@
 import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
-import { DayLogResponseSchema, type DayLogRangeResponse } from "@calibrate/api-contracts";
 import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/api-client";
+import { DayLogResponseSchema, type DayLogRangeResponse } from "@calibrate/api-contracts";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;

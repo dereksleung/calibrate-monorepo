@@ -23,7 +23,7 @@ This ticket intentionally replaces ticket 01's simple post-server one-transactio
 
 Keep the lifecycle record in the same IndexedDB `cacheLifecycle` store as the account fence. It is account-scoped and contains at least:
 
-~~~ts
+```ts
 type LogoutPhase =
   | "logout-pending"
   | "server-logout-confirmed"
@@ -37,7 +37,7 @@ type LogoutRecord = {
   phase: LogoutPhase;
   targetGeneration?: number;
 };
-~~~
+```
 
 The `operationId` prevents a stale retry from clearing a newer logout record. `targetGeneration` makes fence advancement idempotent: a retry treats any stored generation greater than or equal to the target as success, rather than incrementing again. A committed `resolved` phase is the terminal logical state; after all cleanup succeeds, the record may be removed.
 
@@ -54,7 +54,7 @@ The preferred path completes fence and snapshot cleanup before navigation. If se
 
 ### State machine
 
-~~~mermaid
+```mermaid
 stateDiagram-v2
     direction LR
 
@@ -75,20 +75,20 @@ stateDiagram-v2
     CleanupPending --> Resolved: local Retry cleanup succeeds
 
     Resolved --> Active: new session acquires a new lease
-~~~
+```
 
 `FenceCommitted` is the earliest state in which login navigation is allowed. `CleanupPending` and `Resolved` are not allowed to restore the old account snapshot.
 
 ### App behavior by state
 
-| State | What the app does | What the user sees |
-| --- | --- | --- |
-| Active | After server session confirmation, restore only the account/generation lease and allow normal private queries and persistence. A logout click first attempts the durable marker write. | Normal authenticated UI. |
-| LogoutPending | Keep the current page and session/cache while the server request is in flight. Block new private persistence/mutations where practical. On definitive failure, clear the marker and return to Active; on ambiguity, remain fail-closed and offer retry of the logout operation. | Progress/error status; never claim that logout completed. |
-| ServerLogoutConfirmed | Stop treating the old cache as usable, commit the fence with bounded retries, and cancel/remove private in-memory queries. Do not navigate before the fence commits. | Signed-out recovery state while the durable fence is committed. |
-| FenceCommitted | Treat every old lease and snapshot as stale. Attempt physical snapshot deletion and matching marker resolution. Never restore the old snapshot, even if deletion is temporarily unavailable. | Login is allowed; cleanup may continue before or after navigation. |
-| CleanupPending | Keep the persistent marker and gate private cache hydration/persistence. Retry is local cleanup only; it must not call server logout again. A successful login alone does not clear this state or authorize old-cache use. | Login page plus a persistent banner and Toast: “You're signed out, but we couldn't finish clearing your private Day Log data. Retry clearing data before continuing.” Button: Retry. |
-| Resolved | Clear the pending record, ensure the old snapshot is removed or invalidated, then allow a new authenticated lease. A later successful login starts from a fresh/online cache and never restores the old snapshot. | Normal login and account initialization. |
+| State                 | What the app does                                                                                                                                                                                                                                                               | What the user sees                                                                                                                                                                   |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Active                | After server session confirmation, restore only the account/generation lease and allow normal private queries and persistence. A logout click first attempts the durable marker write.                                                                                          | Normal authenticated UI.                                                                                                                                                             |
+| LogoutPending         | Keep the current page and session/cache while the server request is in flight. Block new private persistence/mutations where practical. On definitive failure, clear the marker and return to Active; on ambiguity, remain fail-closed and offer retry of the logout operation. | Progress/error status; never claim that logout completed.                                                                                                                            |
+| ServerLogoutConfirmed | Stop treating the old cache as usable, commit the fence with bounded retries, and cancel/remove private in-memory queries. Do not navigate before the fence commits.                                                                                                            | Signed-out recovery state while the durable fence is committed.                                                                                                                      |
+| FenceCommitted        | Treat every old lease and snapshot as stale. Attempt physical snapshot deletion and matching marker resolution. Never restore the old snapshot, even if deletion is temporarily unavailable.                                                                                    | Login is allowed; cleanup may continue before or after navigation.                                                                                                                   |
+| CleanupPending        | Keep the persistent marker and gate private cache hydration/persistence. Retry is local cleanup only; it must not call server logout again. A successful login alone does not clear this state or authorize old-cache use.                                                      | Login page plus a persistent banner and Toast: “You're signed out, but we couldn't finish clearing your private Day Log data. Retry clearing data before continuing.” Button: Retry. |
+| Resolved              | Clear the pending record, ensure the old snapshot is removed or invalidated, then allow a new authenticated lease. A later successful login starts from a fresh/online cache and never restores the old snapshot.                                                               | Normal login and account initialization.                                                                                                                                             |
 
 If the user leaves the login-page Toast untouched, the marker remains durable across reloads. The app may authenticate the user, but the private provider stays gated until Retry completes. A different account must not inherit or use the prior account's lease.
 
