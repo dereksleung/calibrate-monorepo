@@ -132,6 +132,33 @@ describe("PrivateDayLogCacheProvider", () => {
     });
   });
 
+  it("keeps private descendants gated through the final post-hydration fence check", async () => {
+    let resolveFinalCheck!: (value: boolean) => void;
+    const isCurrent = vi
+      .fn<() => Promise<boolean>>()
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(true)
+      .mockReturnValueOnce(
+        new Promise<boolean>((resolve) => {
+          resolveFinalCheck = resolve;
+        }),
+      );
+    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
+    const router = renderProvider(queryClient);
+
+    await waitFor(() => expect(isCurrent).toHaveBeenCalledTimes(3));
+    expect(screen.queryByText("waiting")).toBeNull();
+
+    resolveFinalCheck(false);
+
+    await waitFor(() => {
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
+      expect(router.state.location.pathname).toBe("/signup-login");
+    });
+  });
+
   it("restores the fenced cache before descendant queries may fetch", async () => {
     const storedClient = new QueryClient();
     storedClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
