@@ -3,7 +3,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { clearAuthenticatedSession } from "../auth/authenticated-session.ts";
+import { clearAuthenticatedSession, getAuthenticatedSession } from "../auth/authenticated-session.ts";
 import {
   DAY_LOG_CACHE_BUSTER,
   DAY_LOG_CACHE_RETENTION_MS,
@@ -19,9 +19,10 @@ import {
 
 const LIFECYCLE_CHECK_INTERVAL_MS = 15_000;
 
-export async function clearPrivateDayLogMemory(queryClient: QueryClient): Promise<void> {
-  await queryClient.cancelQueries({ queryKey: ["dayLogs"] });
-  queryClient.removeQueries({ queryKey: ["dayLogs"] });
+export async function clearPrivateDayLogMemory(queryClient: QueryClient, accountId?: string): Promise<void> {
+  const queryKey = accountId ? dayLogSlotQueryKeyPrefix(accountId) : ["dayLogs"];
+  await queryClient.cancelQueries({ queryKey });
+  queryClient.removeQueries({ queryKey });
 }
 
 function isRevocation(value: unknown): value is DayLogCacheRevocation & { type: "revoked" } {
@@ -93,18 +94,24 @@ function LeasePersistenceBoundary({
     });
     return { complete, promise };
   });
+  const ownsActiveAccount = useCallback(
+    () => activeRef.current && getAuthenticatedSession(queryClient)?.user.id === accountId,
+    [accountId, queryClient],
+  );
   const purgeRevokedSession = useCallback(async () => {
-    if (revocationStartedRef.current || !activeRef.current) return;
+    if (revocationStartedRef.current || !ownsActiveAccount()) return;
     revocationStartedRef.current = true;
     const stopLifecycleChecks = stopLifecycleChecksRef.current;
     stopLifecycleChecksRef.current = undefined;
     stopLifecycleChecks?.();
     setRevoked(true);
     if (hydrationStartedRef.current) await restoreCompletion.promise;
-    await clearPrivateDayLogMemory(queryClient);
+    if (!ownsActiveAccount()) return;
+    await clearPrivateDayLogMemory(queryClient, accountId);
+    if (!ownsActiveAccount()) return;
     clearAuthenticatedSession(queryClient);
     if (activeRef.current) await navigate({ to: "/signup-login" });
-  }, [navigate, queryClient, restoreCompletion]);
+  }, [accountId, navigate, ownsActiveAccount, queryClient, restoreCompletion]);
 
   useEffect(() => {
     activeRef.current = true;
