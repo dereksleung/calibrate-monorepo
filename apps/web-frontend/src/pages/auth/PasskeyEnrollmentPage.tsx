@@ -3,8 +3,6 @@ import type { PasskeyEnrollmentHandoff } from "#/verticals/auth/account-email-ve
 import { apiTransport } from "#/shared/api/api-client";
 import { Button } from "#/shared/components/base/Button";
 import { WarningBanner } from "#/shared/components/base/WarningBanner";
-import { establishAuthenticatedSession } from "#/verticals/auth/authenticated-session";
-import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider";
 import {
   createBrowserPasskeyRegistrationAdapter,
   isBrowserPasskeyRegistrationSupported,
@@ -18,7 +16,7 @@ import {
   requestPasskeyRegistrationOptions,
   verifyPasskeyRegistration,
 } from "@calibrate/api-client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -47,7 +45,6 @@ export function PasskeyEnrollmentPage({
   initialUiState?: EnrollmentUiState;
 }) {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isClientPasskeyFailedToRegisterOnServer, setIsClientPasskeyFailedToRegisterOnServer] =
     useState(false);
@@ -115,18 +112,10 @@ export function PasskeyEnrollmentPage({
         credentialId: credential.id,
         rpId: options.rp?.id ?? window.location.hostname,
       };
-      const session = await verifyRegistration({
+      await verifyRegistration({
         credential,
         rememberDevice,
       });
-      const transition = await establishAuthenticatedSession(queryClient, session, {
-        allowCurrentAccountTransition: true,
-      });
-      if (!transition) {
-        setUiState({ kind: "ambiguous" });
-        return;
-      }
-      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
       await navigate({ to: "/" });
     } catch (error) {
       if (isPasskeyRegistrationCancellation(error)) {
