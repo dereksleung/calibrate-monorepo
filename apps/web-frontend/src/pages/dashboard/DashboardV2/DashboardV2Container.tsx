@@ -5,6 +5,7 @@ import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-mo
 import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   composeDayLogRangeFromCache,
+  dateRange,
   dayLogSlotQueryKey,
   dayLogSlotsFromRangeResponse,
   doesDashboardRangeNeedValidation,
@@ -23,24 +24,19 @@ export function DashboardV2Container() {
     return <DashboardV2Page isPending={isRestoring} />;
   }
 
-  return <DashboardV2Content isRestoring={isRestoring} />;
+  return <DashboardV2Content />;
 }
 
-function DashboardV2Content({ isRestoring }: { isRestoring: boolean }) {
+function DashboardV2Content() {
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
   const dayLogRange = getRollingSevenDayDateRange();
-  const dates = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(`${dayLogRange.startDate}T00:00:00.000Z`);
-    date.setUTCDate(date.getUTCDate() + index);
-    return date.toISOString().slice(0, 10);
-  });
+  const dates = dateRange(dayLogRange.startDate, dayLogRange.endDate);
   const slotQueries = useQueries({
     queries: dates.map((date) => ({
       queryKey: dayLogSlotQueryKey(accountId, date),
       queryFn: skipToken,
-      enabled: !isRestoring,
       gcTime: Infinity,
       staleTime: Infinity,
     })),
@@ -57,7 +53,6 @@ function DashboardV2Content({ isRestoring }: { isRestoring: boolean }) {
     queryKey,
     initialData: cached.loadedDateCount > 0 ? cached.response : undefined,
     initialDataUpdatedAt: oldestValidation,
-    enabled: !isRestoring,
     staleTime: needsValidation ? 0 : DAY_LOG_VALIDATION_FRESHNESS_MS,
   });
 

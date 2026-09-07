@@ -51,7 +51,7 @@ export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accou
 export const dayLogSlotQueryKey = (accountId: string, date: string) =>
   [...dayLogSlotQueryKeyPrefix(accountId), date] as const;
 
-function dateRange(startDate: string, endDate: string): string[] {
+export function dateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
   const cursor = new Date(`${startDate}T00:00:00.000Z`);
 
