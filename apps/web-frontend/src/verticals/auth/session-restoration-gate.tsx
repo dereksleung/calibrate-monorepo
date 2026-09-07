@@ -40,7 +40,8 @@ export function SessionRestorationGate({ children }: { children: React.ReactNode
         if (sessionAccountId && sessionAccountId !== confirmedSession.user.id) {
           await clearPrivateDayLogMemory(queryClient);
         }
-        setState("unavailable");
+        clearAuthenticatedSession(queryClient);
+        await navigate({ to: "/signup-login" });
         return false;
       }
       if (transition.previousAccountId) {

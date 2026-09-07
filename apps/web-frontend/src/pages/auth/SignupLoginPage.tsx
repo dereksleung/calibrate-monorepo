@@ -15,10 +15,6 @@ import {
   createPasskeyEnrollmentHandoff,
 } from "#/verticals/auth/account-email-verification-handoff";
 import {
-  establishAuthenticatedSession,
-} from "#/verticals/auth/authenticated-session";
-import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider";
-import {
   cancelPasskeyAuthentication,
   isBrowserPasskeyAuthenticationSupported,
   isConditionalPasskeyAuthenticationSupported,
@@ -40,7 +36,6 @@ import {
   type RequestAccountEmailVerificationRequestBody,
 } from "@calibrate/api-contracts";
 import { useForm } from "@tanstack/react-form";
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -175,7 +170,6 @@ function isLocalDevelopmentUi(): boolean {
 
 function LocalDevelopmentTestSession() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string>();
 
@@ -187,15 +181,7 @@ function LocalDevelopmentTestSession() {
     cancelPasskeyAuthentication();
 
     try {
-      const session = await startLocalDevelopmentTestSession(apiTransport);
-      const transition = await establishAuthenticatedSession(queryClient, session, {
-        allowCurrentAccountTransition: true,
-      });
-      if (!transition) {
-        setError("We couldn't safely switch accounts. Please try again.");
-        return;
-      }
-      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
+      await startLocalDevelopmentTestSession(apiTransport);
       await navigate({ to: "/" });
     } catch {
       setError("We couldn't start a local test session. Please try again.");
@@ -297,7 +283,6 @@ function LocalDevelopmentPasskeyEnrollment() {
 
 function PasskeyLogin() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const startedConditional = useRef(false);
 
   // Keep the requests for passkey authentication options obviously outside the react-query lifecycle
@@ -334,19 +319,10 @@ function PasskeyLogin() {
     setError(undefined);
     try {
       const credential = await startPasskeyAuthentication(options.options, mode);
-      const session = await verifyPasskeyAuthentication(apiTransport, {
+      await verifyPasskeyAuthentication(apiTransport, {
         credential,
         rememberDevice: rememberDeviceRef.current,
       });
-      const transition = await establishAuthenticatedSession(queryClient, session, {
-        allowCurrentAccountTransition: true,
-      });
-      if (!transition) {
-        setError("We couldn't safely switch accounts. Please try again.");
-        setState("failed");
-        return;
-      }
-      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
       await navigate({ to: "/" });
     } catch (caught) {
       if (isPasskeyAuthenticationCancellation(caught)) {
