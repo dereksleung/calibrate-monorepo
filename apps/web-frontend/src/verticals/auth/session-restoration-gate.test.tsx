@@ -18,6 +18,7 @@ import { SessionRestorationGate } from "./session-restoration-gate.tsx";
 const {
   acquireDayLogCacheLease,
   broadcastDayLogCacheRevocation,
+  confirmDayLogCacheAccount,
   getCurrentSession,
   refreshSession,
   revokeDayLogCache,
@@ -25,6 +26,7 @@ const {
 } = vi.hoisted(() => ({
   acquireDayLogCacheLease: vi.fn(),
   broadcastDayLogCacheRevocation: vi.fn(),
+  confirmDayLogCacheAccount: vi.fn(),
   getCurrentSession: vi.fn(),
   refreshSession: vi.fn(),
   revokeDayLogCache: vi.fn(),
@@ -41,6 +43,7 @@ vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOr
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
   acquireDayLogCacheLease,
   broadcastDayLogCacheRevocation,
+  confirmDayLogCacheAccount,
   revokeDayLogCache,
   revokeLastConfirmedDayLogCache,
 }));
@@ -97,6 +100,7 @@ beforeEach(() => {
   });
   revokeDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
   revokeLastConfirmedDayLogCache.mockResolvedValue({ accountId: session.user.id, generation: 2 });
+  confirmDayLogCacheAccount.mockResolvedValue({ accepted: true, revocations: [] });
   vi.stubGlobal("BroadcastChannel", undefined);
 });
 
@@ -130,25 +134,31 @@ describe("SessionRestorationGate", () => {
       ...session,
       user: { ...session.user, id: "95434f9a-da1f-47dd-8175-a26ff42ee11e" },
     };
-    let completeRevocation!: (value: { accountId: string; generation: number }) => void;
+    let completeConfirmation!: (value: { accepted: boolean; revocations: Array<{ accountId: string; generation: number }> }) => void;
     getCurrentSession.mockResolvedValue(nextSession);
-    revokeDayLogCache.mockReturnValue(
+    confirmDayLogCacheAccount.mockReturnValue(
       new Promise((resolve) => {
-        completeRevocation = resolve;
+        completeConfirmation = resolve;
       }),
     );
     const { queryClient } = renderGate({ authenticated: true });
     queryClient.setQueryData(["dayLogs", session.user.id, "slot", "2026-09-03"], { private: true });
 
-    await waitFor(() => expect(revokeDayLogCache).toHaveBeenCalledWith(session.user.id));
+    await waitFor(() =>
+      expect(confirmDayLogCacheAccount).toHaveBeenCalledWith(nextSession.user.id, session.user.id, undefined),
+    );
     expect(screen.queryByText("private dashboard")).toBeNull();
     expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(session);
 
-    completeRevocation({ accountId: session.user.id, generation: 2 });
+    completeConfirmation({
+      accepted: true,
+      revocations: [{ accountId: session.user.id, generation: 2 }],
+    });
 
     expect(await screen.findByText("private dashboard")).toBeTruthy();
     expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(nextSession);
     expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toEqual([]);
+    expect(broadcastDayLogCacheRevocation).toHaveBeenCalledWith({ accountId: session.user.id, generation: 2 });
     expect(acquireDayLogCacheLease).toHaveBeenCalledWith(nextSession.user.id);
   });
 

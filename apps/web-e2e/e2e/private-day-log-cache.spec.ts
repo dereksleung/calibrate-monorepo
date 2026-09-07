@@ -631,7 +631,6 @@ test("restores only the confirmed account's allow-listed slots before background
           );
           const lifecycle = transaction.objectStore(stores[0]);
           lifecycle.put(0, otherAccountId);
-          lifecycle.put(otherAccountId, "__last-confirmed-account__");
           transaction.objectStore(stores[1]).put(other, otherAccountId);
           transaction.onerror = () => reject(transaction.error);
           transaction.oncomplete = () => {
@@ -675,16 +674,16 @@ test("restores only the confirmed account's allow-listed slots before background
     expect.anything(),
     expect.anything(),
   ]);
-  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(0);
-  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeTruthy();
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(1);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeUndefined();
 
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("button", { name: "Log out" }).click();
   await expect(page).toHaveURL(/signup-login/);
   expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(1);
   expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeUndefined();
-  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(0);
-  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeTruthy();
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, otherAccountId)).toBe(1);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, otherAccountId)).toBeUndefined();
 });
 
 test("revokes durable and in-memory state only after successful server logout", async ({ page }) => {

@@ -10,7 +10,7 @@ export const DAY_LOG_CACHE_LIFECYCLE_STORE = "cacheLifecycle";
 export const DAY_LOG_CACHE_BROADCAST_CHANNEL = "calibrate-private-day-log-cache-lifecycle";
 
 const DATABASE_VERSION = 1;
-const LAST_CONFIRMED_ACCOUNTS_KEY = "__last-confirmed-account__";
+const LAST_CONFIRMED_ACCOUNT_KEY = "__last-confirmed-account__";
 
 type SnapshotRecord = {
   accountId: string;
@@ -30,6 +30,11 @@ export type DayLogCacheLease = {
 export type DayLogCacheRevocation = {
   accountId: string;
   generation: number;
+};
+
+export type DayLogCacheAccountConfirmation = {
+  accepted: boolean;
+  revocations: DayLogCacheRevocation[];
 };
 
 function requestResult<T>(request: IDBRequest<T>): Promise<T> {
@@ -104,18 +109,13 @@ function isAccountId(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function readConfirmedAccounts(value: unknown): string[] {
-  if (value === undefined) return [];
-  if (isAccountId(value)) return [value];
+function readCurrentConfirmedAccount(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (isAccountId(value)) return value;
   if (!Array.isArray(value) || value.some((accountId) => !isAccountId(accountId))) {
     throw new Error("IndexedDB cache account state is corrupt");
   }
-  return [...new Set(value)];
-}
-
-function hasConfirmedAccount(value: unknown, accountId: string): boolean {
-  if (isAccountId(value)) return value === accountId;
-  return Array.isArray(value) && value.every(isAccountId) && value.includes(accountId);
+  return value.at(-1);
 }
 
 function isSnapshotRecord(value: unknown): value is SnapshotRecord {
@@ -138,9 +138,9 @@ async function acquireDurableLease(accountId: string): Promise<{
     );
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const [storedGeneration, storedConfirmedAccounts, snapshot] = await Promise.all([
+    const [storedGeneration, storedConfirmedAccount, snapshot] = await Promise.all([
       requestResult(lifecycle.get(accountId)),
-      requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNTS_KEY)),
+      requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
       requestResult(transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).get(accountId)),
     ]);
     const generation = isGeneration(storedGeneration) ? storedGeneration : 0;
@@ -151,16 +151,83 @@ async function acquireDurableLease(accountId: string): Promise<{
       lifecycle.put(generation, accountId);
     }
 
-    const confirmedAccounts = readConfirmedAccounts(storedConfirmedAccounts);
-    if (!confirmedAccounts.includes(accountId)) {
-      lifecycle.put([...confirmedAccounts, accountId], LAST_CONFIRMED_ACCOUNTS_KEY);
-    } else if (typeof storedConfirmedAccounts === "string") {
-      lifecycle.put(confirmedAccounts, LAST_CONFIRMED_ACCOUNTS_KEY);
+    const currentAccountId = readCurrentConfirmedAccount(storedConfirmedAccount);
+    if (currentAccountId === undefined) {
+      lifecycle.put(accountId, LAST_CONFIRMED_ACCOUNT_KEY);
+    } else if (Array.isArray(storedConfirmedAccount)) {
+      lifecycle.put(currentAccountId, LAST_CONFIRMED_ACCOUNT_KEY);
     }
 
     await completed;
     return { generation };
   });
+}
+
+async function confirmDurableAccount(
+  accountId: string,
+  previousAccountId: string | undefined,
+  allowCurrentAccountTransition: boolean,
+): Promise<DayLogCacheAccountConfirmation> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(
+      [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
+      "readwrite",
+    );
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const storedCurrentAccount = await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY));
+    const currentAccountId = readCurrentConfirmedAccount(storedCurrentAccount);
+    if (
+      currentAccountId !== undefined &&
+      currentAccountId !== accountId &&
+      currentAccountId !== previousAccountId &&
+      !allowCurrentAccountTransition
+    ) {
+      await completed;
+      return { accepted: false, revocations: [] };
+    }
+
+    const lifecycleKeys = await requestResult(lifecycle.getAllKeys());
+    const accountIds = lifecycleKeys.filter(
+      (key): key is string => key !== LAST_CONFIRMED_ACCOUNT_KEY && isAccountId(key),
+    );
+    const storedGenerations = await Promise.all(
+      accountIds.map(async (storedAccountId) => ({
+        accountId: storedAccountId,
+        generation: await requestResult(lifecycle.get(storedAccountId)),
+      })),
+    );
+    const snapshots = transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE);
+    const revocations: DayLogCacheRevocation[] = [];
+    for (const { accountId: storedAccountId, generation: storedGeneration } of storedGenerations) {
+      if (storedAccountId === accountId) continue;
+      if (!isGeneration(storedGeneration)) {
+        throw new Error("IndexedDB cache lifecycle is corrupt");
+      }
+      const generation = storedGeneration + 1;
+      lifecycle.put(generation, storedAccountId);
+      snapshots.delete(storedAccountId);
+      revocations.push({ accountId: storedAccountId, generation });
+    }
+    lifecycle.put(accountId, LAST_CONFIRMED_ACCOUNT_KEY);
+    await completed;
+    return { accepted: true, revocations };
+  });
+}
+
+export async function confirmDayLogCacheAccount(
+  accountId: string,
+  previousAccountId: string | undefined,
+  allowCurrentAccountTransition = false,
+): Promise<DayLogCacheAccountConfirmation> {
+  try {
+    return await confirmDurableAccount(accountId, previousAccountId, allowCurrentAccountTransition);
+  } catch {
+    return {
+      accepted: previousAccountId === undefined || previousAccountId === accountId,
+      revocations: [],
+    };
+  }
 }
 
 function createNoOpLease(accountId: string): DayLogCacheLease {
@@ -192,12 +259,15 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
           const completed = transactionComplete(transaction);
           const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-          const [storedGeneration, storedConfirmedAccounts] = await Promise.all([
+          const [storedGeneration, storedConfirmedAccount] = await Promise.all([
             requestResult(lifecycle.get(accountId)),
-            requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNTS_KEY)),
+            requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
           ]);
           await completed;
-          return storedGeneration === generation && hasConfirmedAccount(storedConfirmedAccounts, accountId);
+          return (
+            storedGeneration === generation &&
+            readCurrentConfirmedAccount(storedConfirmedAccount) === accountId
+          );
         });
       } catch {
         // Losing optional storage does not prove revocation. Persist remains
@@ -216,8 +286,11 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           );
           const completed = transactionComplete(transaction);
           const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-          const storedGeneration = await requestResult(lifecycle.get(accountId));
-          if (storedGeneration === generation) {
+          const [storedGeneration, storedCurrentAccount] = await Promise.all([
+            requestResult(lifecycle.get(accountId)),
+            requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+          ]);
+          if (storedGeneration === generation && readCurrentConfirmedAccount(storedCurrentAccount) === accountId) {
             const record: SnapshotRecord = { accountId, generation, persistedClient: prunedClient };
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).put(record, accountId);
           }
@@ -235,10 +308,12 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
             "readwrite",
           );
           const completed = transactionComplete(transaction);
-          const storedGeneration = await requestResult(
-            transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(accountId),
-          );
-          if (storedGeneration === generation) {
+          const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+          const [storedGeneration, storedCurrentAccount] = await Promise.all([
+            requestResult(lifecycle.get(accountId)),
+            requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+          ]);
+          if (storedGeneration === generation && readCurrentConfirmedAccount(storedCurrentAccount) === accountId) {
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
           }
           await completed;
@@ -255,15 +330,19 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
             "readonly",
           );
           const completed = transactionComplete(transaction);
-          const lifecycleRequest = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(accountId);
+          const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+          const lifecycleRequest = lifecycle.get(accountId);
+          const currentAccountRequest = lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY);
           const snapshotRequest = transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).get(accountId);
-          const [storedGeneration, snapshot] = await Promise.all([
+          const [storedGeneration, storedCurrentAccount, snapshot] = await Promise.all([
             requestResult(lifecycleRequest),
+            requestResult(currentAccountRequest),
             requestResult(snapshotRequest),
           ]);
           await completed;
           if (
             storedGeneration !== generation ||
+            readCurrentConfirmedAccount(storedCurrentAccount) !== accountId ||
             !isSnapshotRecord(snapshot) ||
             snapshot.accountId !== accountId ||
             snapshot.generation !== generation
@@ -290,14 +369,11 @@ async function revokeAccount(accountId: string): Promise<DayLogCacheRevocation> 
     const storedGeneration = await requestResult(lifecycle.get(accountId));
     const generation = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
     lifecycle.put(generation, accountId);
-    const confirmedAccounts = readConfirmedAccounts(
-      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNTS_KEY)),
+    const currentAccountId = readCurrentConfirmedAccount(
+      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
     );
-    const remainingAccounts = confirmedAccounts.filter((confirmedAccountId) => confirmedAccountId !== accountId);
-    if (remainingAccounts.length === 0) {
-      lifecycle.delete(LAST_CONFIRMED_ACCOUNTS_KEY);
-    } else {
-      lifecycle.put(remainingAccounts, LAST_CONFIRMED_ACCOUNTS_KEY);
+    if (currentAccountId === accountId) {
+      lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
     }
     transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
     await completed;
@@ -313,19 +389,18 @@ async function revokeOnlyConfirmedAccount(): Promise<DayLogCacheRevocation | und
     );
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const confirmedAccounts = readConfirmedAccounts(
-      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNTS_KEY)),
+    const accountId = readCurrentConfirmedAccount(
+      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
     );
-    if (confirmedAccounts.length !== 1) {
+    if (!accountId) {
       await completed;
       return undefined;
     }
-    const accountId = confirmedAccounts[0];
 
     const storedGeneration = await requestResult(lifecycle.get(accountId));
     const generation = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
     lifecycle.put(generation, accountId);
-    lifecycle.delete(LAST_CONFIRMED_ACCOUNTS_KEY);
+    lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
     transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
     await completed;
     return { accountId, generation };

@@ -14,7 +14,10 @@ import {
   createAccountEmailVerificationHandoff,
   createPasskeyEnrollmentHandoff,
 } from "#/verticals/auth/account-email-verification-handoff";
-import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session";
+import {
+  establishAuthenticatedSession,
+} from "#/verticals/auth/authenticated-session";
+import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider";
 import {
   cancelPasskeyAuthentication,
   isBrowserPasskeyAuthenticationSupported,
@@ -185,7 +188,14 @@ function LocalDevelopmentTestSession() {
 
     try {
       const session = await startLocalDevelopmentTestSession(apiTransport);
-      setAuthenticatedSession(queryClient, session);
+      const transition = await establishAuthenticatedSession(queryClient, session, {
+        allowCurrentAccountTransition: true,
+      });
+      if (!transition) {
+        setError("We couldn't safely switch accounts. Please try again.");
+        return;
+      }
+      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
       await navigate({ to: "/" });
     } catch {
       setError("We couldn't start a local test session. Please try again.");
@@ -328,7 +338,15 @@ function PasskeyLogin() {
         credential,
         rememberDevice: rememberDeviceRef.current,
       });
-      setAuthenticatedSession(queryClient, session);
+      const transition = await establishAuthenticatedSession(queryClient, session, {
+        allowCurrentAccountTransition: true,
+      });
+      if (!transition) {
+        setError("We couldn't safely switch accounts. Please try again.");
+        setState("failed");
+        return;
+      }
+      if (transition.previousAccountId) await clearPrivateDayLogMemory(queryClient, transition.previousAccountId);
       await navigate({ to: "/" });
     } catch (caught) {
       if (isPasskeyAuthenticationCancellation(caught)) {
