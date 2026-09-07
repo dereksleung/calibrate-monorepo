@@ -20,8 +20,6 @@ export type DayLogSlot =
       dayLog: NonNullable<DayLogRangeResponse["days"][number]["dayLog"]>;
       lastValidatedAt: number;
       unverified: boolean;
-      /** Populated by the bounded-sync protocol in issue 02. */
-      versionNumber: number | null;
     };
 
 export type PersistedDayLogClient = {
@@ -76,7 +74,6 @@ export function dayLogSlotsFromRangeResponse(
           dayLog,
           lastValidatedAt,
           unverified: false,
-          versionNumber: null,
         },
   );
 }
@@ -133,14 +130,11 @@ function isDayLogSlot(value: unknown): value is DayLogSlot {
   if (candidate.status === "known-empty") return true;
   if (candidate.status !== "present") return false;
 
-  const versionNumber = candidate.versionNumber;
   return (
     DayLogResponseSchema.safeParse(candidate.dayLog).success &&
     candidate.dayLog !== null &&
     candidate.dayLog !== undefined &&
-    candidate.dayLog.date === candidate.date &&
-    (versionNumber === null ||
-      (typeof versionNumber === "number" && Number.isInteger(versionNumber) && versionNumber > 0))
+    candidate.dayLog.date === candidate.date
   );
 }
 

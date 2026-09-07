@@ -34,7 +34,6 @@ function presentSlot(date: string, lastValidatedAt = now): Extract<DayLogSlot, {
     },
     lastValidatedAt,
     unverified: false,
-    versionNumber: null,
   };
 }
 

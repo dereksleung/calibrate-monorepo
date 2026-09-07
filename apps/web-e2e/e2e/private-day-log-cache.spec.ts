@@ -331,7 +331,6 @@ function setDistinctiveTodaySlot(snapshot: StoredSnapshot, calories: number): st
     },
     lastValidatedAt: Date.now(),
     unverified: false,
-    versionNumber: null,
   };
   return date;
 }
