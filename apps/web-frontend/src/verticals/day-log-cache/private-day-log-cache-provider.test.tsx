@@ -196,6 +196,12 @@ describe("PrivateDayLogCacheProvider", () => {
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    queryClient.setQueryData(["dayLogs", accountId, "date", slot.date], { private: "selected-day" });
+    queryClient.setQueryData(["dayLogs", accountId, "range", "2026-09-01", "2026-09-03"], {
+      private: "range",
+    });
+    const otherAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";
+    queryClient.setQueryData(["dayLogs", otherAccountId, "date", slot.date], { private: "other-account" });
     const router = renderProvider(queryClient);
 
     await waitFor(() => expect(isCurrent).toHaveBeenCalled());
@@ -204,6 +210,13 @@ describe("PrivateDayLogCacheProvider", () => {
     await waitFor(() => {
       expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
       expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slot.date))).toBeUndefined();
+      expect(queryClient.getQueryData(["dayLogs", accountId, "date", slot.date])).toBeUndefined();
+      expect(
+        queryClient.getQueryData(["dayLogs", accountId, "range", "2026-09-01", "2026-09-03"]),
+      ).toBeUndefined();
+      expect(queryClient.getQueryData(["dayLogs", otherAccountId, "date", slot.date])).toEqual({
+        private: "other-account",
+      });
       expect(router.state.location.pathname).toBe("/signup-login");
     });
   });

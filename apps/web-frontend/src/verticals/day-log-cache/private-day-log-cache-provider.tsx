@@ -20,7 +20,7 @@ import {
 const LIFECYCLE_CHECK_INTERVAL_MS = 15_000;
 
 export async function clearPrivateDayLogMemory(queryClient: QueryClient, accountId?: string): Promise<void> {
-  const queryKey = accountId ? dayLogSlotQueryKeyPrefix(accountId) : ["dayLogs"];
+  const queryKey = accountId ? ["dayLogs", accountId] : ["dayLogs"];
   await queryClient.cancelQueries({ queryKey });
   queryClient.removeQueries({ queryKey });
 }
