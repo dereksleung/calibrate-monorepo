@@ -82,7 +82,7 @@ describe("signup email verification routing", () => {
     fireEvent.change(await screen.findByLabelText("Email Address"), {
       target: { value: " Person@Example.COM " },
     });
-    fireEvent.click(screen.getByRole("button", { name: /send verification code/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue with email" }));
 
     expect(await screen.findByRole("heading", { name: "Check your email" })).toBeTruthy();
     expect(screen.getByText("person@example.com")).toBeTruthy();
@@ -107,7 +107,7 @@ describe("signup email verification routing", () => {
   it("redirects a direct OTP visit back to signup", async () => {
     const router = renderRoute("/auth/otp");
 
-    expect(await screen.findByRole("heading", { name: "Create your account" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sign Up or Log In" })).toBeTruthy();
     expect(router.state.location.pathname).toBe("/signup-login");
   });
 });
