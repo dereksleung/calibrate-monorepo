@@ -34,18 +34,26 @@ A client-side cache is the design that makes sense from expected usage patterns.
 10. As a user explicitly selecting an old day, I get cached data first and a background reconciliation of that day plus its six predecessors when the selected day needs validation.
 11. As a user opening Nutrient Analytics, I see available cached nutrition first while the intentional 28-day window reconciles, and I do not see a partial comparison presented as complete.
 12. As a user adding Food Entry data, I see an acknowledged local update without the client immediately adding another sync request during peak meal-time traffic.
-13. As a user whose Day Log changed elsewhere, I eventually see the server truth when my stale or unverified date becomes eligible for ordinary synchronization.
+13. As a user whose Day Log changed elsewhere, I eventually see the server truth when my stale or invalidated date becomes eligible for ordinary synchronization.
 14. As a maintainer, I can measure cache usefulness and sync efficiency without recording Food Entry, Day Log, or authentication content.
 
 ## Product and protocol decisions
 
 ### Date-slot cache model
 
-- The canonical durable client shape is one account-scoped date slot per calendar date. A slot records Day Log data or `Known-empty`, a present Day Log `versionNumber`, `lastValidatedAt`, and whether a locally patched write is `unverified`.
-- A missing slot is Unloaded. `Known-empty` is a confirmed absence. An Empty Day Log is a present aggregate, potentially with a weight observation, and is not an absence.
+```ts
+type KnownEmptyResponse = null;
+type NotYetLoaded = undefined;
+
+type CachedDayLog = DayLogResponse | KnownEmptyResponse;
+type DayLogSlotResult = CachedDayLog | NotYetLoaded;
+```
+
+- The canonical durable client shape is one account-scoped date-slot query per calendar date. Its data is the raw `DayLogResponse` or `KnownEmptyResponse`; TanStack Query's own dehydrated query state supplies `dataUpdatedAt` and `isInvalidated`. Do not duplicate freshness, validation, or unverified fields in the payload.
+- A missing query entry is `NotYetLoaded`. `KnownEmptyResponse` is a confirmed absence. An Empty Day Log is a present aggregate, potentially with a weight observation, and is not an absence.
 - Query keys include account ID. The existing root `QueryClientProvider` remains because session-gate, Header, and auth UI use React Query. A `PersistQueryClientProvider` using the same client mounts only below server-authenticated content and is remounted for an account or cache-generation change.
-- Dehydration is an explicit allow list: Day Log slots and their validation metadata only. Never persist auth/session queries, access or refresh tokens, mutations, or unrelated queries.
-- Retain a slot for 30 days after last successful validation. Explicitly prune stale-retention records before hydration and persistence; do not rely on a 30-day JavaScript garbage-collection timer. IndexedDB errors are caught and result in a no-op persister plus online behavior.
+- Dehydration is an explicit allow list: Day Log slot queries and their TanStack query state only. Never persist auth/session queries, access or refresh tokens, mutations, or unrelated queries.
+- Retain a slot for 30 days after its `dataUpdatedAt`. Explicitly prune stale-retention records before hydration and persistence; do not rely on a 30-day JavaScript garbage-collection timer. IndexedDB errors are caught and result in a no-op persister plus online behavior.
 
 ### `POST /daylogs:sync`
 
@@ -54,7 +62,7 @@ A client-side cache is the design that makes sense from expected usage patterns.
 - The backend makes a narrow user-scoped `(date, version_number)` projection in a coherent database snapshot before loading aggregates. It returns:
   - `204 No Content` when every requested slot matches the manifest. The response has no body.
   - `200 OK` with only changed or unloaded `{ date, versionNumber, dayLog }` slots otherwise. `dayLog: null` confirms Known-empty.
-- A successful `200` or `204` confirms all requested dates. The client stamps `lastValidatedAt` for every requested date, not only returned slots.
+- A successful `200` or `204` reconciles the requested dates. The client writes received slot data using the accepted query result's `dataUpdatedAt`; cache state that must be repaired is represented by TanStack invalidation rather than a payload flag.
 - Responses use `Cache-Control: private, no-store`; they have no ETags, `If-None-Match`, `304`, `Vary: Cookie`, or rollover-overlap validator.
 - `day_logs.version_number` is a positive `int32`. Migration/backfill initializes existing rows. The aggregate-root repository atomically advances it with every response-visible Day Log write; a newly created log becomes version 1. Day Log deletion is not in this scope.
 
@@ -69,14 +77,14 @@ A client-side cache is the design that makes sense from expected usage patterns.
 ### View-specific synchronization
 
 - **Dashboard:** compose `today - 6` through today from date slots. It starts a background sync only when the view needs validation, and can reuse in-flight work through query deduplication.
-- **Logs:** display a Sunday-to-Saturday Calendar week. The current Calendar week reuses Dashboard's rolling seven-day range; dates after today are Upcoming and disabled. Users cannot navigate to future Calendar weeks. Merely scrolling a historical week is network-silent. When the user explicitly selects historical date `D`, compose the cache first and, only when slot `D` is Unloaded, unverified, or at least one hour since its last successful validation, sync `D - 6` through `D`. Check freshness of the selected date, not the whole week; all seven dates receive validation timestamps on success.
-- **Nutrient Analytics drawer:** opening the drawer is the deliberate 28-day action. Compose cached slots immediately and sync `today - 27` through today only when its coverage is stale, incomplete, or unverified. Display `Updating — N/28 days available` while incomplete. The existing Total remains the most recent seven days; Change compares the most recent 14 days with the preceding 14 and remains pending until all 28 dates are confirmed.
+- **Logs:** display a Sunday-to-Saturday Calendar week. The current Calendar week reuses Dashboard's rolling seven-day range; dates after today are Upcoming and disabled. Users cannot navigate to future Calendar weeks. Merely scrolling a historical week is network-silent. When the user explicitly selects historical date `D`, compose the cache first and, only when slot `D` is `NotYetLoaded`, invalidated, or at least one hour past its `dataUpdatedAt`, sync `D - 6` through `D`. Check freshness of the selected date, not the whole week; accepted query data supplies the updated timestamps.
+- **Nutrient Analytics drawer:** opening the drawer is the deliberate 28-day action. Compose cached slots immediately and sync `today - 27` through today only when its coverage is stale, incomplete, or invalidated. Display `Updating — N/28 days available` while incomplete. The existing Total remains the most recent seven days; Change compares the most recent 14 days with the preceding 14 and remains pending until all 28 dates are confirmed.
 
 ### Food Entry write behavior
 
 - Successful Food Entry creation returns the created entry, parent `dayLogId`, `previousVersionNumber` (`null` only for known absence becoming a new Day Log), and `versionNumber`.
 - The client patches a Day Log slot only if its cached predecessor version exactly equals `previousVersionNumber`. It updates the entry and version without issuing `sync`.
-- If the slot is absent or version-mismatched, keep a locally acknowledged UI result but mark the slot unverified. A later ordinary eligible sync retrieves truth; do not promote a partial stale cache to the new revision or globally invalidate every Day Log range.
+- If the slot is absent or version-mismatched, keep a locally acknowledged UI result and invalidate that slot. A later ordinary eligible sync retrieves truth; do not promote a partial stale cache to the new revision or globally invalidate every Day Log range.
 
 ## Implementation boundaries
 
@@ -89,7 +97,7 @@ A client-side cache is the design that makes sense from expected usage patterns.
 
 - **Sync protocol:** 31-date bound, malformed manifest rejection, authenticated account isolation, narrow unchanged `204` with no body, sparse `200` changed/unloaded slots, `no-store` headers, coherent projection/snapshot, and aggregate-write version advancement.
 - **Persistence and privacy:** actual IndexedDB browser coverage for server-gate-first restoration, account scoping, unavailable/corrupt storage fallback, successful versus failed logout, missed BroadcastChannel delivery, resume/focus fallback, and persist/restore races against a revocation fence.
-- **Client behavior:** Known-empty versus Empty versus Unloaded; every successful sync's per-date timestamp; dashboard reuse; Sunday calendar/DST/year boundaries; Upcoming future cells; historical scroll silence; historic selection `D-6..D`; neighbor selection fresh skip; cache-first offline/error states; local write patch and mismatch-to-unverified behavior.
+- **Client behavior:** Known-empty versus Empty versus NotYetLoaded; per-slot `dataUpdatedAt` and invalidation behavior; dashboard reuse; Sunday calendar/DST/year boundaries; Upcoming future cells; historical scroll silence; historic selection `D-6..D`; neighbor selection fresh skip; cache-first offline/error states; local write patch and mismatch-to-invalidation behavior.
 - **Analytics:** no 28-day request before drawer opening; cache-first partial coverage; 28-date stale sync; Total from seven dates; Change from 14-plus-14 only after complete confirmation; no partial data silently represented as known empty.
 - **Measurement:** privacy-safe cache-restore and usable-view timings, projection versus aggregate work, request/response bytes, `204` ratio, and sync reason. Never emit food, Day Log, user-session, or token content. Use deterministic behavioral assertions rather than timing thresholds in CI.
 
