@@ -67,7 +67,7 @@ beforeEach(() => {
 });
 
 describe("PasskeyEnrollmentPage", () => {
-  it("runs options, browser ceremony, and verification exactly once on success", async () => {
+  it("defers publishing the authenticated session to the restoration gate after successful enrollment", async () => {
     mockRequestOptions.mockResolvedValue({ challenge: "abc" });
     vi.mocked(browserAdapter.createPasskey).mockResolvedValue({
       id: "credential-id",
@@ -101,10 +101,7 @@ describe("PasskeyEnrollmentPage", () => {
         expect.objectContaining({ rememberDevice: true }),
       );
     });
-    expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toMatchObject({
-      sessionTransport: "cookie",
-      user: { email: "person@example.com" },
-    });
+    expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
     expect(mockNavigate).toHaveBeenCalledWith({ to: "/" });
   });
 

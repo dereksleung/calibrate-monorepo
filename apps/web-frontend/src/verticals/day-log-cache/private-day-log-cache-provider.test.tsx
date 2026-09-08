@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DayLogCacheLease } from "./indexed-db-day-log-cache.ts";
 
-import { DAY_LOG_CACHE_BUSTER, dayLogSlotQueryKey, type DayLogSlot } from "./day-log-cache.ts";
+import { DAY_LOG_CACHE_BUSTER, dayLogSlotQueryKey, type CachedDayLog } from "./day-log-cache.ts";
 import { PrivateDayLogCacheProvider } from "./private-day-log-cache-provider.tsx";
 
 const { acquireDayLogCacheLease } = vi.hoisted(() => ({ acquireDayLogCacheLease: vi.fn() }));
@@ -25,12 +25,8 @@ vi.mock("./indexed-db-day-log-cache.ts", async (importOriginal) => ({
 }));
 
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
-const slot: DayLogSlot = {
-  status: "known-empty",
-  date: "2026-09-03",
-  lastValidatedAt: Date.parse("2026-09-03T18:00:00.000Z"),
-  unverified: false,
-};
+const slotDate = "2026-09-03";
+const slot: CachedDayLog = null;
 
 function createLease(overrides: Partial<DayLogCacheLease> = {}): DayLogCacheLease {
   return {
@@ -46,13 +42,13 @@ function createLease(overrides: Partial<DayLogCacheLease> = {}): DayLogCacheLeas
 
 function CachedSlot() {
   const { data, isPending } = useQuery({
-    queryKey: dayLogSlotQueryKey(accountId, slot.date),
+    queryKey: dayLogSlotQueryKey(accountId, slotDate),
     queryFn: async () => {
       throw new Error("restoration must finish before the query runs");
     },
     staleTime: Infinity,
   });
-  return <p>{data ? (data as DayLogSlot).status : isPending ? "waiting" : "unavailable"}</p>;
+  return <p>{data === null ? "known-empty" : isPending ? "waiting" : "unavailable"}</p>;
 }
 
 function renderProvider(queryClient: QueryClient) {
@@ -117,7 +113,7 @@ describe("PrivateDayLogCacheProvider", () => {
     acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
-    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
     const router = renderProvider(queryClient);
 
     await waitFor(() => expect(isCurrent).toHaveBeenCalledTimes(1));
@@ -127,7 +123,7 @@ describe("PrivateDayLogCacheProvider", () => {
 
     await waitFor(() => {
       expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
-      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slot.date))).toBeUndefined();
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slotDate))).toBeUndefined();
       expect(router.state.location.pathname).toBe("/signup-login");
     });
   });
@@ -161,7 +157,7 @@ describe("PrivateDayLogCacheProvider", () => {
 
   it("restores the fenced cache before descendant queries may fetch", async () => {
     const storedClient = new QueryClient();
-    storedClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    storedClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
     acquireDayLogCacheLease.mockResolvedValue(
       createLease({
         restoreClient: vi.fn().mockResolvedValue({
@@ -186,7 +182,7 @@ describe("PrivateDayLogCacheProvider", () => {
     renderProvider(queryClient);
 
     await waitFor(() => {
-      expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, slot.date))?.status).toBe("error");
+      expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, slotDate))?.status).toBe("error");
     });
   });
 
@@ -195,13 +191,13 @@ describe("PrivateDayLogCacheProvider", () => {
     acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
-    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
-    queryClient.setQueryData(["dayLogs", accountId, "date", slot.date], { private: "selected-day" });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
+    queryClient.setQueryData(["dayLogs", accountId, "date", slotDate], { private: "selected-day" });
     queryClient.setQueryData(["dayLogs", accountId, "range", "2026-09-01", "2026-09-03"], {
       private: "range",
     });
     const otherAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";
-    queryClient.setQueryData(["dayLogs", otherAccountId, "date", slot.date], { private: "other-account" });
+    queryClient.setQueryData(["dayLogs", otherAccountId, "date", slotDate], { private: "other-account" });
     const router = renderProvider(queryClient);
 
     await waitFor(() => expect(isCurrent).toHaveBeenCalled());
@@ -209,12 +205,12 @@ describe("PrivateDayLogCacheProvider", () => {
 
     await waitFor(() => {
       expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
-      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slot.date))).toBeUndefined();
-      expect(queryClient.getQueryData(["dayLogs", accountId, "date", slot.date])).toBeUndefined();
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, slotDate))).toBeUndefined();
+      expect(queryClient.getQueryData(["dayLogs", accountId, "date", slotDate])).toBeUndefined();
       expect(
         queryClient.getQueryData(["dayLogs", accountId, "range", "2026-09-01", "2026-09-03"]),
       ).toBeUndefined();
-      expect(queryClient.getQueryData(["dayLogs", otherAccountId, "date", slot.date])).toEqual({
+      expect(queryClient.getQueryData(["dayLogs", otherAccountId, "date", slotDate])).toEqual({
         private: "other-account",
       });
       expect(router.state.location.pathname).toBe("/signup-login");
@@ -246,7 +242,7 @@ describe("PrivateDayLogCacheProvider", () => {
       markCancellationStarted();
       return cancellation;
     });
-    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
 
     window.dispatchEvent(new Event("focus"));
     await cancellationStarted;
@@ -254,14 +250,14 @@ describe("PrivateDayLogCacheProvider", () => {
 
     const replacementAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: replacementAccountId } });
-    queryClient.setQueryData(dayLogSlotQueryKey(replacementAccountId, slot.date), slot);
+    queryClient.setQueryData(dayLogSlotQueryKey(replacementAccountId, slotDate), slot);
     resolveCancellation();
 
     await waitFor(() => {
       expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual({
         user: { id: replacementAccountId },
       });
-      expect(queryClient.getQueryData(dayLogSlotQueryKey(replacementAccountId, slot.date))).toEqual(slot);
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(replacementAccountId, slotDate))).toEqual(slot);
     });
   });
 });

@@ -116,7 +116,7 @@ describe("SignupLoginPage", () => {
     });
   });
 
-  it("starts a local cookie-backed test session and navigates to the dashboard", async () => {
+  it("defers publishing a local test session to the restoration gate", async () => {
     mockStartLocalDevelopmentTestSession.mockResolvedValue({
       user: {
         id: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
@@ -140,10 +140,7 @@ describe("SignupLoginPage", () => {
     await waitFor(() => {
       expect(mockStartLocalDevelopmentTestSession).toHaveBeenCalledOnce();
     });
-    expect(queryClient.getQueryData(["authenticatedSession"])).toMatchObject({
-      user: { email: "local-test-session@example.test" },
-      sessionTransport: "cookie",
-    });
+    expect(queryClient.getQueryData(["authenticatedSession"])).toBeUndefined();
     expect(mockNavigate).toHaveBeenCalledWith({ to: "/" });
   });
 

@@ -7,7 +7,6 @@ import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.
 import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
-  dayLogSlotsFromRangeResponse,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { dayLogRangeQueryKey, dayLogRangeQueryKeyPrefix } from "@calibrate/api-client";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -173,8 +172,10 @@ function seedDashboardCache(
     `/api/v1/daylogs?startDate=${range.startDate}&endDate=${range.endDate}`,
     calories,
   );
-  for (const slot of dayLogSlotsFromRangeResponse(response, lastValidatedAt)) {
-    queryClient.setQueryData(dayLogSlotQueryKey(cacheAccountId, slot.date), slot);
+  for (const { date, dayLog } of response.days) {
+    queryClient.setQueryData(dayLogSlotQueryKey(cacheAccountId, date), dayLog, {
+      updatedAt: lastValidatedAt,
+    });
   }
 }
 
@@ -240,7 +241,7 @@ describe("dashboard live nutrition", () => {
 
     await waitFor(() => {
       expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, endDate!))).toEqual(
-        expect.objectContaining({ status: "present", lastValidatedAt: expect.any(Number) }),
+        expect.objectContaining({ date: endDate }),
       );
     });
     expect(queryClient.getQueryData(dayLogRangeQueryKey(accountId, getRollingSevenDayDateRange()))).toEqual(
