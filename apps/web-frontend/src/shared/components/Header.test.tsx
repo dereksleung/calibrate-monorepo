@@ -6,6 +6,7 @@ import {
   authenticatedSessionQueryKey,
   setAuthenticatedSession,
 } from "#/verticals/auth/authenticated-session.ts";
+import { ApiError } from "@calibrate/api-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterContextProvider,
@@ -20,13 +21,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Header from "./Header.tsx";
 
 const mockUseIsMobile = vi.fn<() => boolean>();
-const { mockBroadcastDayLogCacheRevocation, mockDeleteCurrentSession, mockRevokeDayLogCache } = vi.hoisted(
-  () => ({
-    mockBroadcastDayLogCacheRevocation: vi.fn(),
-    mockDeleteCurrentSession: vi.fn(),
-    mockRevokeDayLogCache: vi.fn(),
-  }),
-);
+const {
+  mockBeginDayLogCacheLogout,
+  mockBroadcastDayLogCacheRevocation,
+  mockCompleteDayLogCacheLogout,
+  mockDeleteCurrentSession,
+} = vi.hoisted(() => ({
+  mockBeginDayLogCacheLogout: vi.fn(),
+  mockBroadcastDayLogCacheRevocation: vi.fn(),
+  mockCompleteDayLogCacheLogout: vi.fn(),
+  mockDeleteCurrentSession: vi.fn(),
+}));
 
 vi.mock("@calibrate/api-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@calibrate/api-client")>()),
@@ -35,8 +40,9 @@ vi.mock("@calibrate/api-client", async (importOriginal) => ({
 
 vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
+  beginDayLogCacheLogout: mockBeginDayLogCacheLogout,
   broadcastDayLogCacheRevocation: mockBroadcastDayLogCacheRevocation,
-  revokeDayLogCache: mockRevokeDayLogCache,
+  completeDayLogCacheLogout: mockCompleteDayLogCacheLogout,
 }));
 
 vi.mock("#/shared/hooks/use-media-query.ts", () => ({
@@ -113,7 +119,16 @@ async function renderHeader(initialEntry = "/", options?: { authenticated?: bool
 
 beforeEach(() => {
   mockDeleteCurrentSession.mockResolvedValue(null);
-  mockRevokeDayLogCache.mockResolvedValue({ accountId: authenticatedSession.user.id, generation: 2 });
+  mockBeginDayLogCacheLogout.mockResolvedValue({
+    accountId: authenticatedSession.user.id,
+    operationId: "logout-operation",
+    phase: "logout-pending",
+  });
+  mockCompleteDayLogCacheLogout.mockResolvedValue({
+    serverLogoutConfirmed: true,
+    fenceCommitted: true,
+    revocation: { accountId: authenticatedSession.user.id, generation: 2 },
+  });
   mockUseIsMobile.mockReturnValue(false);
   window.scrollTo = vi.fn();
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -182,7 +197,11 @@ describe("Header", () => {
 
       await waitFor(() => {
         expect(mockDeleteCurrentSession).toHaveBeenCalledTimes(1);
-        expect(mockRevokeDayLogCache).toHaveBeenCalledWith(authenticatedSession.user.id);
+        expect(mockBeginDayLogCacheLogout).toHaveBeenCalledWith(authenticatedSession.user.id);
+        expect(mockCompleteDayLogCacheLogout).toHaveBeenCalledWith(
+          authenticatedSession.user.id,
+          "logout-operation",
+        );
         expect(mockBroadcastDayLogCacheRevocation).toHaveBeenCalledWith({
           accountId: authenticatedSession.user.id,
           generation: 2,
@@ -200,7 +219,9 @@ describe("Header", () => {
     });
 
     it("preserves authenticated state and shows a retryable error when logout fails", async () => {
-      mockDeleteCurrentSession.mockRejectedValueOnce(new Error("offline"));
+      mockDeleteCurrentSession.mockRejectedValueOnce(
+        new ApiError({ status: 500, statusText: "Server error", body: null }),
+      );
       const { queryClient, router } = await renderHeader("/", { authenticated: true });
       const privateQueryKey = ["dayLogs", authenticatedSession.user.id, "slot", "2026-07-10"];
       queryClient.setQueryData(privateQueryKey, { status: "known-empty" });
@@ -209,7 +230,25 @@ describe("Header", () => {
       fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
 
       await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("Unable to log out"));
-      expect(mockRevokeDayLogCache).not.toHaveBeenCalled();
+      expect(mockCompleteDayLogCacheLogout).not.toHaveBeenCalled();
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeDefined();
+      expect(queryClient.getQueryData(privateQueryKey)).toBeDefined();
+      expect(router.state.location.pathname).toBe("/");
+    });
+
+    it("does not send the server logout request when the durable marker cannot be written", async () => {
+      mockBeginDayLogCacheLogout.mockResolvedValueOnce(undefined);
+      const { queryClient, router } = await renderHeader("/", { authenticated: true });
+      const privateQueryKey = ["dayLogs", authenticatedSession.user.id, "slot", "2026-07-10"];
+      queryClient.setQueryData(privateQueryKey, { status: "known-empty" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("alert").textContent).toContain("Unable to prepare secure logout"),
+      );
+      expect(mockDeleteCurrentSession).not.toHaveBeenCalled();
       expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeDefined();
       expect(queryClient.getQueryData(privateQueryKey)).toBeDefined();
       expect(router.state.location.pathname).toBe("/");

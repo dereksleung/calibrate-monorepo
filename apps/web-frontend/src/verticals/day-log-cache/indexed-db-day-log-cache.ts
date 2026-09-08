@@ -11,6 +11,8 @@ export const DAY_LOG_CACHE_BROADCAST_CHANNEL = "calibrate-private-day-log-cache-
 
 const DATABASE_VERSION = 1;
 const LAST_CONFIRMED_ACCOUNT_KEY = "__last-confirmed-account__";
+const LOGOUT_RECORD_KEY_PREFIX = "__logout__:";
+const MAX_FENCE_ATTEMPTS = 3;
 
 type SnapshotRecord = {
   accountId: string;
@@ -30,6 +32,27 @@ export type DayLogCacheLease = {
 export type DayLogCacheRevocation = {
   accountId: string;
   generation: number;
+};
+
+export type LogoutPhase =
+  | "logout-pending"
+  | "server-logout-confirmed"
+  | "fence-committed"
+  | "cleanup-pending"
+  | "resolved";
+
+export type LogoutRecord = {
+  accountId: string;
+  operationId: string;
+  phase: LogoutPhase;
+  targetGeneration?: number;
+};
+
+export type DayLogCacheLogoutCompletion = {
+  serverLogoutConfirmed: boolean;
+  fenceCommitted: boolean;
+  cleanupPending: boolean;
+  revocation?: DayLogCacheRevocation;
 };
 
 export type DayLogCacheAccountConfirmation = {
@@ -107,6 +130,40 @@ function isGeneration(value: unknown): value is number {
 
 function isAccountId(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
+}
+
+function logoutRecordKey(accountId: string): string {
+  return `${LOGOUT_RECORD_KEY_PREFIX}${accountId}`;
+}
+
+function isLogoutPhase(value: unknown): value is LogoutPhase {
+  return (
+    value === "logout-pending" ||
+    value === "server-logout-confirmed" ||
+    value === "fence-committed" ||
+    value === "cleanup-pending" ||
+    value === "resolved"
+  );
+}
+
+function isLogoutRecord(value: unknown): value is LogoutRecord {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<LogoutRecord>;
+  return (
+    isAccountId(candidate.accountId) &&
+    typeof candidate.operationId === "string" &&
+    candidate.operationId.length > 0 &&
+    isLogoutPhase(candidate.phase) &&
+    (candidate.targetGeneration === undefined || isGeneration(candidate.targetGeneration))
+  );
+}
+
+function isCacheBlockedByLogoutRecord(value: unknown, accountId: string): boolean {
+  if (value === undefined) return false;
+  if (!isLogoutRecord(value) || value.accountId !== accountId) {
+    throw new Error("IndexedDB cache logout record is corrupt");
+  }
+  return value.phase !== "resolved";
 }
 
 function readCurrentConfirmedAccount(value: unknown): string | undefined {
@@ -286,13 +343,15 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           );
           const completed = transactionComplete(transaction);
           const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-          const [storedGeneration, storedCurrentAccount] = await Promise.all([
+          const [storedGeneration, storedCurrentAccount, storedLogoutRecord] = await Promise.all([
             requestResult(lifecycle.get(accountId)),
             requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+            requestResult(lifecycle.get(logoutRecordKey(accountId))),
           ]);
           if (
             storedGeneration === generation &&
-            readCurrentConfirmedAccount(storedCurrentAccount) === accountId
+            readCurrentConfirmedAccount(storedCurrentAccount) === accountId &&
+            !isCacheBlockedByLogoutRecord(storedLogoutRecord, accountId)
           ) {
             const record: SnapshotRecord = { accountId, generation, persistedClient: prunedClient };
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).put(record, accountId);
@@ -312,13 +371,15 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           );
           const completed = transactionComplete(transaction);
           const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-          const [storedGeneration, storedCurrentAccount] = await Promise.all([
+          const [storedGeneration, storedCurrentAccount, storedLogoutRecord] = await Promise.all([
             requestResult(lifecycle.get(accountId)),
             requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+            requestResult(lifecycle.get(logoutRecordKey(accountId))),
           ]);
           if (
             storedGeneration === generation &&
-            readCurrentConfirmedAccount(storedCurrentAccount) === accountId
+            readCurrentConfirmedAccount(storedCurrentAccount) === accountId &&
+            !isCacheBlockedByLogoutRecord(storedLogoutRecord, accountId)
           ) {
             transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
           }
@@ -340,15 +401,17 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           const lifecycleRequest = lifecycle.get(accountId);
           const currentAccountRequest = lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY);
           const snapshotRequest = transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).get(accountId);
-          const [storedGeneration, storedCurrentAccount, snapshot] = await Promise.all([
+          const [storedGeneration, storedCurrentAccount, storedLogoutRecord, snapshot] = await Promise.all([
             requestResult(lifecycleRequest),
             requestResult(currentAccountRequest),
+            requestResult(lifecycle.get(logoutRecordKey(accountId))),
             requestResult(snapshotRequest),
           ]);
           await completed;
           if (
             storedGeneration !== generation ||
             readCurrentConfirmedAccount(storedCurrentAccount) !== accountId ||
+            isCacheBlockedByLogoutRecord(storedLogoutRecord, accountId) ||
             !isSnapshotRecord(snapshot) ||
             snapshot.accountId !== accountId ||
             snapshot.generation !== generation
@@ -364,66 +427,291 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
   };
 }
 
-async function revokeAccount(accountId: string): Promise<DayLogCacheRevocation> {
-  return withDatabase(async (database) => {
-    const transaction = database.transaction(
-      [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
-      "readwrite",
-    );
-    const completed = transactionComplete(transaction);
-    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const storedGeneration = await requestResult(lifecycle.get(accountId));
-    const generation = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
-    lifecycle.put(generation, accountId);
-    const currentAccountId = readCurrentConfirmedAccount(
-      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
-    );
-    if (currentAccountId === accountId) {
-      lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
-    }
-    transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
-    await completed;
-    return { accountId, generation };
-  });
+function createLogoutOperationId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
 
-async function revokeOnlyConfirmedAccount(): Promise<DayLogCacheRevocation | undefined> {
-  return withDatabase(async (database) => {
-    const transaction = database.transaction(
-      [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
-      "readwrite",
-    );
-    const completed = transactionComplete(transaction);
-    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const accountId = readCurrentConfirmedAccount(
-      await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
-    );
-    if (!accountId) {
-      await completed;
-      return undefined;
-    }
-
-    const storedGeneration = await requestResult(lifecycle.get(accountId));
-    const generation = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
-    lifecycle.put(generation, accountId);
-    lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
-    transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
-    await completed;
-    return { accountId, generation };
-  });
-}
-
-export async function revokeDayLogCache(accountId: string): Promise<DayLogCacheRevocation | undefined> {
+export async function beginDayLogCacheLogout(
+  accountId: string,
+  operationId = createLogoutOperationId(),
+): Promise<LogoutRecord | undefined> {
   try {
-    return await revokeAccount(accountId);
+    return await withDatabase(async (database) => {
+      const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+      const completed = transactionComplete(transaction);
+      const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+      const existing = await requestResult(lifecycle.get(logoutRecordKey(accountId)));
+      if (existing !== undefined) {
+        if (!isLogoutRecord(existing) || existing.accountId !== accountId) {
+          throw new Error("IndexedDB cache logout record is corrupt");
+        }
+        await completed;
+        return existing;
+      }
+      const record: LogoutRecord = { accountId, operationId, phase: "logout-pending" };
+      lifecycle.put(record, logoutRecordKey(accountId));
+      await completed;
+      return record;
+    });
   } catch {
     return undefined;
   }
 }
 
+export async function clearPendingDayLogCacheLogout(
+  accountId: string,
+  operationId: string,
+): Promise<boolean> {
+  try {
+    return await withDatabase(async (database) => {
+      const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+      const completed = transactionComplete(transaction);
+      const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+      const existing = await requestResult(lifecycle.get(logoutRecordKey(accountId)));
+      const matches =
+        isLogoutRecord(existing) &&
+        existing.accountId === accountId &&
+        existing.operationId === operationId &&
+        existing.phase === "logout-pending";
+      if (matches) lifecycle.delete(logoutRecordKey(accountId));
+      await completed;
+      return matches;
+    });
+  } catch {
+    return false;
+  }
+}
+
+async function recordServerLogoutConfirmed(
+  accountId: string,
+  operationId: string,
+): Promise<LogoutRecord | undefined> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const [existing, storedGeneration] = await Promise.all([
+      requestResult(lifecycle.get(logoutRecordKey(accountId))),
+      requestResult(lifecycle.get(accountId)),
+    ]);
+    if (
+      !isLogoutRecord(existing) ||
+      existing.accountId !== accountId ||
+      existing.operationId !== operationId
+    ) {
+      await completed;
+      return undefined;
+    }
+    if (existing.phase !== "logout-pending") {
+      await completed;
+      return existing;
+    }
+    const targetGeneration = (isGeneration(storedGeneration) ? storedGeneration : 0) + 1;
+    const record: LogoutRecord = { ...existing, phase: "server-logout-confirmed", targetGeneration };
+    lifecycle.put(record, logoutRecordKey(accountId));
+    await completed;
+    return record;
+  });
+}
+
+async function advanceGenerationToTarget(
+  accountId: string,
+  targetGeneration: number,
+): Promise<number | undefined> {
+  for (let attempt = 0; attempt < MAX_FENCE_ATTEMPTS; attempt += 1) {
+    try {
+      await withDatabase(async (database) => {
+        const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+        const completed = transactionComplete(transaction);
+        const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+        const storedGeneration = await requestResult(lifecycle.get(accountId));
+        const generation = isGeneration(storedGeneration) ? storedGeneration : 0;
+        lifecycle.put(Math.max(generation, targetGeneration), accountId);
+        await completed;
+      });
+      const storedGeneration = await withDatabase(async (database) => {
+        const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
+        const completed = transactionComplete(transaction);
+        const generation = await requestResult(
+          transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(accountId),
+        );
+        await completed;
+        return generation;
+      });
+      if (isGeneration(storedGeneration) && storedGeneration >= targetGeneration) return storedGeneration;
+    } catch {
+      // Each attempt opens a fresh transaction. An aborted transaction is never reused.
+    }
+  }
+  return undefined;
+}
+
+async function commitFence(
+  accountId: string,
+  operationId: string,
+  targetGeneration: number,
+): Promise<boolean> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const [existing, currentAccount] = await Promise.all([
+      requestResult(lifecycle.get(logoutRecordKey(accountId))),
+      requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+    ]);
+    const matches =
+      isLogoutRecord(existing) &&
+      existing.accountId === accountId &&
+      existing.operationId === operationId &&
+      existing.targetGeneration === targetGeneration;
+    if (matches) {
+      lifecycle.put(
+        { ...existing, phase: "fence-committed" } satisfies LogoutRecord,
+        logoutRecordKey(accountId),
+      );
+      if (readCurrentConfirmedAccount(currentAccount) === accountId) {
+        lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
+      }
+    }
+    await completed;
+    return matches;
+  });
+}
+
+async function markCleanupPending(accountId: string, operationId: string): Promise<LogoutRecord | undefined> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const existing = await requestResult(lifecycle.get(logoutRecordKey(accountId)));
+    if (
+      !isLogoutRecord(existing) ||
+      existing.accountId !== accountId ||
+      existing.operationId !== operationId
+    ) {
+      await completed;
+      return undefined;
+    }
+    if (existing.phase === "cleanup-pending") {
+      await completed;
+      return existing;
+    }
+    if (existing.phase !== "fence-committed") {
+      await completed;
+      return undefined;
+    }
+    const record: LogoutRecord = { ...existing, phase: "cleanup-pending" };
+    lifecycle.put(record, logoutRecordKey(accountId));
+    await completed;
+    return record;
+  });
+}
+
+async function cleanUpLogoutRecord(accountId: string, operationId: string): Promise<boolean> {
+  return withDatabase(async (database) => {
+    const transaction = database.transaction(
+      [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
+      "readwrite",
+    );
+    const completed = transactionComplete(transaction);
+    const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
+    const existing = await requestResult(lifecycle.get(logoutRecordKey(accountId)));
+    const matches =
+      isLogoutRecord(existing) &&
+      existing.accountId === accountId &&
+      existing.operationId === operationId &&
+      existing.phase === "cleanup-pending";
+    if (matches) {
+      transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).delete(accountId);
+      lifecycle.delete(logoutRecordKey(accountId));
+    }
+    await completed;
+    return matches;
+  });
+}
+
+export async function completeDayLogCacheLogout(
+  accountId: string,
+  operationId: string,
+): Promise<DayLogCacheLogoutCompletion> {
+  let record: LogoutRecord | undefined;
+  try {
+    record = await recordServerLogoutConfirmed(accountId, operationId);
+  } catch {
+    return { serverLogoutConfirmed: false, fenceCommitted: false, cleanupPending: true };
+  }
+  if (!record || record.targetGeneration === undefined) {
+    return { serverLogoutConfirmed: false, fenceCommitted: false, cleanupPending: true };
+  }
+  const generation = await advanceGenerationToTarget(accountId, record.targetGeneration);
+  if (generation === undefined) {
+    return { serverLogoutConfirmed: true, fenceCommitted: false, cleanupPending: true };
+  }
+  try {
+    if (!(await commitFence(accountId, operationId, record.targetGeneration))) {
+      return { serverLogoutConfirmed: true, fenceCommitted: false, cleanupPending: true };
+    }
+    const cleanupRecord = await markCleanupPending(accountId, operationId);
+    const cleaned = cleanupRecord ? await cleanUpLogoutRecord(accountId, operationId) : false;
+    return {
+      serverLogoutConfirmed: true,
+      fenceCommitted: true,
+      cleanupPending: !cleaned,
+      revocation: { accountId, generation },
+    };
+  } catch {
+    return {
+      serverLogoutConfirmed: true,
+      fenceCommitted: true,
+      cleanupPending: true,
+      revocation: { accountId, generation },
+    };
+  }
+}
+
+export async function retryDayLogCacheCleanup(accountId: string, operationId: string): Promise<boolean> {
+  try {
+    const record = await markCleanupPending(accountId, operationId);
+    return record ? await cleanUpLogoutRecord(accountId, operationId) : false;
+  } catch {
+    return false;
+  }
+}
+
+export async function getDayLogCacheCleanupPending(): Promise<LogoutRecord[]> {
+  try {
+    return await withDatabase(async (database) => {
+      const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
+      const completed = transactionComplete(transaction);
+      const values = await requestResult(transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).getAll());
+      await completed;
+      return values.filter(
+        (value): value is LogoutRecord => isLogoutRecord(value) && value.phase === "cleanup-pending",
+      );
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function revokeDayLogCache(accountId: string): Promise<DayLogCacheRevocation | undefined> {
+  const record = await beginDayLogCacheLogout(accountId);
+  if (!record) return undefined;
+  return (await completeDayLogCacheLogout(accountId, record.operationId)).revocation;
+}
+
 export async function revokeLastConfirmedDayLogCache(): Promise<DayLogCacheRevocation | undefined> {
   try {
-    return await revokeOnlyConfirmedAccount();
+    const accountId = await withDatabase(async (database) => {
+      const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
+      const completed = transactionComplete(transaction);
+      const current = await requestResult(
+        transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).get(LAST_CONFIRMED_ACCOUNT_KEY),
+      );
+      await completed;
+      return readCurrentConfirmedAccount(current);
+    });
+    return accountId ? await revokeDayLogCache(accountId) : undefined;
   } catch {
     return undefined;
   }

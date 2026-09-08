@@ -8,10 +8,12 @@ import {
 } from "#/verticals/auth/authenticated-session.ts";
 import {
   broadcastDayLogCacheRevocation,
-  revokeDayLogCache,
+  beginDayLogCacheLogout,
+  clearPendingDayLogCacheLogout,
+  completeDayLogCacheLogout,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache.ts";
 import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider.tsx";
-import { deleteCurrentSession } from "@calibrate/api-client";
+import { ApiError, deleteCurrentSession } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { UserRound, UserRoundPlus } from "lucide-react";
@@ -81,21 +83,44 @@ export default function Header() {
   const session = useAuthenticatedSession();
   const isLoggedIn = session !== undefined;
   const [isLogoutPending, setIsLogoutPending] = useState(false);
-  const [logoutError, setLogoutError] = useState(false);
+  const [logoutError, setLogoutError] = useState<string>();
 
   async function handleLogout() {
     if (isLogoutPending) return;
     setIsLogoutPending(true);
-    setLogoutError(false);
+    setLogoutError(undefined);
+    const accountId = session!.user.id;
     try {
-      await deleteCurrentSession(apiTransport);
-      const revocation = await revokeDayLogCache(session!.user.id);
-      broadcastDayLogCacheRevocation(revocation);
+      const record = await beginDayLogCacheLogout(accountId);
+      if (!record) {
+        setLogoutError("Unable to prepare secure logout. Please try again.");
+        return;
+      }
+      if (record.phase === "logout-pending") {
+        try {
+          await deleteCurrentSession(apiTransport);
+        } catch (error) {
+          if (error instanceof ApiError) {
+            await clearPendingDayLogCacheLogout(accountId, record.operationId);
+            setLogoutError("Unable to log out. Please try again.");
+          } else {
+            setLogoutError("We couldn't confirm logout. Please try again.");
+          }
+          return;
+        }
+      }
+      const completion = await completeDayLogCacheLogout(accountId, record.operationId);
+      if (!completion.fenceCommitted) {
+        if (completion.serverLogoutConfirmed) await clearPrivateDayLogMemory(queryClient, accountId);
+        setLogoutError("Logout was confirmed, but secure cache cleanup needs to recover before continuing.");
+        return;
+      }
+      broadcastDayLogCacheRevocation(completion.revocation);
       await clearPrivateDayLogMemory(queryClient);
       clearAuthenticatedSession(queryClient);
       await navigate({ to: "/signup-login" });
     } catch {
-      setLogoutError(true);
+      setLogoutError("Unable to prepare secure logout. Please try again.");
     } finally {
       setIsLogoutPending(false);
     }
@@ -120,7 +145,7 @@ export default function Header() {
 
   const logoutAlert = logoutError ? (
     <p role="alert" className="text-sm text-destructive">
-      Unable to log out. Please try again.
+      {logoutError}
     </p>
   ) : null;
 

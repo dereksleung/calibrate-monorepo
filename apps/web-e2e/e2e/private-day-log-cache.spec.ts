@@ -201,15 +201,13 @@ async function setValidStaleSlot(page: Page, accountId: string, marker: string):
       const slotQuery = queryClient
         .getQueryCache()
         .getAll()
-        .find(
-          ({ queryKey }) => {
-            if (queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || queryKey[2] !== "slot") {
-              return false;
-            }
-            const data = queryClient.getQueryData(queryKey) as { breakfast?: unknown[] } | null | undefined;
-            return data !== null && data?.breakfast !== undefined;
-          },
-        );
+        .find(({ queryKey }) => {
+          if (queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || queryKey[2] !== "slot") {
+            return false;
+          }
+          const data = queryClient.getQueryData(queryKey) as { breakfast?: unknown[] } | null | undefined;
+          return data !== null && data?.breakfast !== undefined;
+        });
       if (!slotQuery) throw new Error("Expected a restored Day Log slot");
 
       const current = queryClient.getQueryData(slotQuery.queryKey) as
@@ -226,10 +224,7 @@ async function setValidStaleSlot(page: Page, accountId: string, marker: string):
 
       queryClient.setQueryData(slotQuery.queryKey, {
         ...current,
-        breakfast: [
-          { ...breakfastEntry, calories: 987654, name: marker },
-          ...current.breakfast!.slice(1),
-        ],
+        breakfast: [{ ...breakfastEntry, calories: 987654, name: marker }, ...current.breakfast!.slice(1)],
       });
     },
     { accountId, marker },
@@ -459,7 +454,10 @@ test("purges a stale tab when visibility returns to visible after a missed revoc
   ).toEqual([]);
 });
 
-test("rejects stale restore and persistence after a durable generation mismatch", async ({ context, page }) => {
+test("rejects stale restore and persistence after a durable generation mismatch", async ({
+  context,
+  page,
+}) => {
   await context.addInitScript(
     ({ lifecycleStore, snapshotStore }) => {
       const originalTransaction = IDBDatabase.prototype.transaction;
@@ -501,7 +499,11 @@ test("rejects stale restore and persistence after a durable generation mismatch"
   await writeSnapshot(page, accountId, (snapshot) => {
     setDistinctiveTodaySlot(snapshot, 888);
   });
-  const persistedBeforeFence = await readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId);
+  const persistedBeforeFence = await readStoreValue<StoredSnapshot>(
+    page,
+    DAY_LOG_CACHE_SNAPSHOT_STORE,
+    accountId,
+  );
   expect(persistedBeforeFence?.generation).toBe(generation);
 
   await context.route(DAY_LOG_SYNC_ENDPOINT, (route) => route.abort());
@@ -687,6 +689,9 @@ test("revokes durable and in-memory state only after successful server logout", 
   await expect(page.getByRole("alert")).toContainText("Unable to log out");
   expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(generation);
   expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeTruthy();
+  expect(
+    await readStoreValue(page, DAY_LOG_CACHE_LIFECYCLE_STORE, `__logout__:${accountId}`),
+  ).toBeUndefined();
 
   await page.unroute("**/api/v1/auth/session");
   await page.getByRole("button", { name: "Account menu" }).click();
@@ -696,6 +701,113 @@ test("revokes durable and in-memory state only after successful server logout", 
     (generation ?? 0) + 1,
   );
   expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeUndefined();
+});
+
+test("does not call server logout when the durable logout-pending marker aborts", async ({ page }) => {
+  await page.addInitScript(
+    ({ lifecycleStore }) => {
+      const originalPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function putWithPendingMarkerFailure(value, key) {
+        const request = originalPut.call(this, value, key);
+        if (
+          this.name === lifecycleStore &&
+          value &&
+          typeof value === "object" &&
+          "phase" in value &&
+          value.phase === "logout-pending"
+        ) {
+          queueMicrotask(() => this.transaction.abort());
+        }
+        return request;
+      };
+    },
+    { lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE },
+  );
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  let logoutRequests = 0;
+  await page.route("**/api/v1/auth/session", async (route) => {
+    if (route.request().method() === "DELETE") logoutRequests += 1;
+    await route.continue();
+  });
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("Unable to prepare secure logout");
+  expect(logoutRequests).toBe(0);
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeTruthy();
+});
+
+test("keeps an ambiguous logout durable and fail-closed without navigating", async ({ page }) => {
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  await page.route("**/api/v1/auth/session", async (route) => {
+    if (route.request().method() === "DELETE") {
+      await route.abort("connectionaborted");
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("couldn't confirm logout");
+  await expect(page).not.toHaveURL(/signup-login/);
+  expect(
+    await readStoreValue<{ phase: string; accountId: string }>(
+      page,
+      DAY_LOG_CACHE_LIFECYCLE_STORE,
+      `__logout__:${accountId}`,
+    ),
+  ).toMatchObject({ accountId, phase: "logout-pending" });
+  expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeTruthy();
+});
+
+test("retries a fresh generation transaction without double-advancing after a lost response", async ({
+  page,
+}) => {
+  await page.addInitScript(
+    ({ lifecycleStore }) => {
+      const originalPut = IDBObjectStore.prototype.put;
+      let abortNextGenerationWrite = true;
+      IDBObjectStore.prototype.put = function putWithOneGenerationAbort(value, key) {
+        const request = originalPut.call(this, value, key);
+        if (
+          this.name === lifecycleStore &&
+          key !== undefined &&
+          typeof value === "number" &&
+          value > 0 &&
+          abortNextGenerationWrite
+        ) {
+          abortNextGenerationWrite = false;
+          queueMicrotask(() => this.transaction.abort());
+        }
+        return request;
+      };
+    },
+    { lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE },
+  );
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  const generation = await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId);
+  let logoutRequests = 0;
+  await page.route("**/api/v1/auth/session", async (route) => {
+    if (route.request().method() === "DELETE") logoutRequests += 1;
+    await route.continue();
+  });
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+
+  await expect(page).toHaveURL(/signup-login/);
+  expect(logoutRequests).toBe(1);
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(
+    (generation ?? 0) + 1,
+  );
 });
 
 test("a stale tab that misses broadcast cannot re-persist after revocation and purges on focus", async ({

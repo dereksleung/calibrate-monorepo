@@ -22,6 +22,11 @@ import {
   startPasskeyAuthentication,
 } from "#/verticals/auth/browser-passkey-authentication-adapter";
 import {
+  getDayLogCacheCleanupPending,
+  retryDayLogCacheCleanup,
+  type LogoutRecord,
+} from "#/verticals/day-log-cache/indexed-db-day-log-cache";
+import {
   ApiError,
   parsePasskeyAuthenticationError,
   requestLocalDevelopmentPasskeyEnrollment,
@@ -430,6 +435,26 @@ function PasskeyLogin() {
 }
 
 function SignupLoginPage() {
+  const [cleanupRecords, setCleanupRecords] = useState<LogoutRecord[]>([]);
+  const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
+
+  const refreshCleanupRecords = async () => {
+    setCleanupRecords(await getDayLogCacheCleanupPending());
+  };
+
+  useEffect(() => {
+    void refreshCleanupRecords();
+  }, []);
+
+  const retryCleanup = async () => {
+    setIsRetryingCleanup(true);
+    await Promise.all(
+      cleanupRecords.map(({ accountId, operationId }) => retryDayLogCacheCleanup(accountId, operationId)),
+    );
+    await refreshCleanupRecords();
+    setIsRetryingCleanup(false);
+  };
+
   return (
     <main className="auth-page-background relative min-h-dvh overflow-hidden px-gutter py-xl text-on-background md:px-xl md:py-xxl">
       <div
@@ -469,6 +494,20 @@ function SignupLoginPage() {
             Mindful nourishment for a balanced life.
           </p>
         </header>
+
+        {cleanupRecords.length > 0 ? (
+          <WarningBanner>
+            <p>You&apos;re signed out, but we couldn&apos;t finish clearing your private Day Log data.</p>
+            <Button
+              className="mt-md"
+              type="button"
+              disabled={isRetryingCleanup}
+              onClick={() => void retryCleanup()}
+            >
+              {isRetryingCleanup ? "Clearing data…" : "Retry clearing data"}
+            </Button>
+          </WarningBanner>
+        ) : null}
 
         <LocalDevelopmentTestSession />
         <LocalDevelopmentPasskeyEnrollment />
