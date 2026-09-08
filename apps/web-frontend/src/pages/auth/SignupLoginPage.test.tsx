@@ -17,18 +17,22 @@ afterEach(() => {
 const {
   mockMutateAsync,
   mockConditionalPasskeyAuthenticationSupported,
+  mockGetDayLogCacheCleanupPending,
   mockNavigate,
   mockRequestPasskeyAuthenticationOptions,
   mockRequestLocalDevelopmentPasskeyEnrollment,
+  mockRetryDayLogCacheCleanup,
   mockStartLocalDevelopmentTestSession,
   mockStartPasskeyAuthentication,
   mockVerifyPasskeyAuthentication,
 } = vi.hoisted(() => ({
   mockMutateAsync: vi.fn(),
   mockConditionalPasskeyAuthenticationSupported: vi.fn(async () => false),
+  mockGetDayLogCacheCleanupPending: vi.fn<() => Promise<unknown[]>>(async () => []),
   mockNavigate: vi.fn(),
   mockRequestPasskeyAuthenticationOptions: vi.fn(),
   mockRequestLocalDevelopmentPasskeyEnrollment: vi.fn(),
+  mockRetryDayLogCacheCleanup: vi.fn(async () => true),
   mockStartLocalDevelopmentTestSession: vi.fn(),
   mockStartPasskeyAuthentication: vi.fn(),
   mockVerifyPasskeyAuthentication: vi.fn(),
@@ -56,6 +60,12 @@ vi.mock("#/verticals/auth/browser-passkey-authentication-adapter", () => ({
   startPasskeyAuthentication: mockStartPasskeyAuthentication,
 }));
 
+vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache")>()),
+  getDayLogCacheCleanupPending: mockGetDayLogCacheCleanupPending,
+  retryDayLogCacheCleanup: mockRetryDayLogCacheCleanup,
+}));
+
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const original = (await importOriginal()) as any;
   return {
@@ -75,6 +85,29 @@ describe("SignupLoginPage", () => {
 
     expect(screen.getByRole("heading", { name: "Sign Up or Log In" })).toBeTruthy();
     expect(screen.getByText(/Enter your email and we'll send a code to continue./i)).toBeTruthy();
+  });
+
+  it("offers local-only cleanup retry for a durable cleanup-pending logout", async () => {
+    const record = {
+      accountId: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
+      operationId: "logout-operation",
+      phase: "cleanup-pending" as const,
+      targetGeneration: 1,
+    };
+    mockGetDayLogCacheCleanupPending.mockResolvedValueOnce([record]).mockResolvedValueOnce([]);
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <SignupLoginPage />
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByText(/couldn't finish clearing your private Day Log data/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry clearing data" }));
+
+    await waitFor(() =>
+      expect(mockRetryDayLogCacheCleanup).toHaveBeenCalledWith(record.accountId, record.operationId),
+    );
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry clearing data" })).toBeNull());
   });
 
   it("authorizes a local passkey signup and navigates to enrollment", async () => {
