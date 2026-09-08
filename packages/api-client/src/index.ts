@@ -1,5 +1,6 @@
 export * from "./day-logs/get-day-log.js";
 export * from "./day-logs/get-day-log-range.js";
+export * from "./day-logs/sync-day-logs.js";
 export * from "./day-logs/save-food-entry.js";
 export * from "./errors.js";
 export * from "./transport.js";
