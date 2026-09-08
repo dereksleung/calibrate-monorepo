@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import type { DatabaseClient } from "../../database-client.js";
 import type { InsertableUser } from "../../schemas/users-table.js";
+
 import {
   clearIntegrationDatabase,
   createIntegrationDatabaseClient,
@@ -27,20 +28,23 @@ async function createActiveFamily(databaseClient: DatabaseClient) {
     .returning("id")
     .executeTakeFirstOrThrow();
   const familyId = randomUUID();
-  await databaseClient.insertInto("remembered_device_families").values({
-    id: familyId,
-    user_id: user.id,
-    created_at: now,
-    last_used_at: now,
-    inactivity_expires_at: new Date("2026-08-10T12:00:00.000Z"),
-    absolute_expires_at: new Date("2026-09-02T12:00:00.000Z"),
-    recent_passkey_authentication_at: null,
-    recent_passkey_authentication_purpose: null,
-    authentication_method: "passkey",
-    current_refresh_generation: 1,
-    revoked_at: null,
-    revocation_reason: null,
-  }).execute();
+  await databaseClient
+    .insertInto("remembered_device_families")
+    .values({
+      id: familyId,
+      user_id: user.id,
+      created_at: now,
+      last_used_at: now,
+      inactivity_expires_at: new Date("2026-08-10T12:00:00.000Z"),
+      absolute_expires_at: new Date("2026-09-02T12:00:00.000Z"),
+      recent_passkey_authentication_at: null,
+      recent_passkey_authentication_purpose: null,
+      authentication_method: "passkey",
+      current_refresh_generation: 1,
+      revoked_at: null,
+      revocation_reason: null,
+    })
+    .execute();
   return { familyId, userId: user.id };
 }
 
@@ -59,26 +63,39 @@ describe("PostgresAccessSessionRepository.revokeFamilyForLogout", () => {
   it("atomically revokes the family and every active access session identified by a valid access digest", async () => {
     const { familyId, userId } = await createActiveFamily(databaseClient);
     const activeSessionIds = [randomUUID(), randomUUID()];
-    await databaseClient.insertInto("sessions").values(activeSessionIds.map((id, index) => ({
-      id,
-      user_id: userId,
-      token_digest: index === 0 ? "access-digest" : "other-access-digest",
-      transport: "cookie",
-      mobile_platform: null,
-      remembered_device_family_id: familyId,
-      replaced_by_session_id: null,
-      created_at: now,
-      last_seen_at: now,
-      inactivity_expires_at: new Date("2026-08-03T12:30:00.000Z"),
-      absolute_expires_at: new Date("2026-08-03T20:00:00.000Z"),
-      revoked_at: null,
-      renewed_at: null,
-    }))).execute();
+    await databaseClient
+      .insertInto("sessions")
+      .values(
+        activeSessionIds.map((id, index) => ({
+          id,
+          user_id: userId,
+          token_digest: index === 0 ? "access-digest" : "other-access-digest",
+          transport: "cookie",
+          mobile_platform: null,
+          remembered_device_family_id: familyId,
+          replaced_by_session_id: null,
+          created_at: now,
+          last_seen_at: now,
+          inactivity_expires_at: new Date("2026-08-03T12:30:00.000Z"),
+          absolute_expires_at: new Date("2026-08-03T20:00:00.000Z"),
+          revoked_at: null,
+          renewed_at: null,
+        })),
+      )
+      .execute();
 
     await repository.revokeFamilyForLogout({ accessTokenDigest: "access-digest", now });
 
-    const family = await databaseClient.selectFrom("remembered_device_families").selectAll().where("id", "=", familyId).executeTakeFirstOrThrow();
-    const sessions = await databaseClient.selectFrom("sessions").selectAll().where("remembered_device_family_id", "=", familyId).execute();
+    const family = await databaseClient
+      .selectFrom("remembered_device_families")
+      .selectAll()
+      .where("id", "=", familyId)
+      .executeTakeFirstOrThrow();
+    const sessions = await databaseClient
+      .selectFrom("sessions")
+      .selectAll()
+      .where("remembered_device_family_id", "=", familyId)
+      .execute();
     expect(family.revoked_at).toEqual(now);
     expect(family.revocation_reason).toBe("current-device-logout");
     expect(sessions.every((session) => session.revoked_at?.getTime() === now.getTime())).toBe(true);
@@ -87,9 +104,17 @@ describe("PostgresAccessSessionRepository.revokeFamilyForLogout", () => {
   it("does not mutate state when neither credential is recognized", async () => {
     const { familyId } = await createActiveFamily(databaseClient);
 
-    await repository.revokeFamilyForLogout({ accessTokenDigest: "unknown", refreshTokenDigest: "unknown", now });
+    await repository.revokeFamilyForLogout({
+      accessTokenDigest: "unknown",
+      refreshTokenDigest: "unknown",
+      now,
+    });
 
-    const family = await databaseClient.selectFrom("remembered_device_families").select("revoked_at").where("id", "=", familyId).executeTakeFirstOrThrow();
+    const family = await databaseClient
+      .selectFrom("remembered_device_families")
+      .select("revoked_at")
+      .where("id", "=", familyId)
+      .executeTakeFirstOrThrow();
     expect(family.revoked_at).toBeNull();
   });
 });

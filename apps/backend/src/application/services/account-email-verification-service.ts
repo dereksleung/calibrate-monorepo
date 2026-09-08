@@ -1,4 +1,5 @@
 import type { MobilePlatform, SessionTransport } from "@application/auth/session-client.js";
+
 import { InvalidEmailVerificationCodeError } from "@application/errors/invalid-email-verification-code-error.js";
 import { ServiceUnavailableError } from "@application/errors/service-unavailable-error.js";
 import { IClock } from "@application/ports/clock.js";

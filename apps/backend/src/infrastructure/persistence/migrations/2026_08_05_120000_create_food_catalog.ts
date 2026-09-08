@@ -34,12 +34,25 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("updated_at", "timestamptz", (column) => column.notNull())
     .execute();
 
-  await db.schema.alterTable("food_entries").addColumn("food_catalog_id", "uuid", (column) => column.references("food_catalog.id")).execute();
-  await sql`CREATE UNIQUE INDEX food_catalog_source_identity ON food_catalog (source, source_food_id)`.execute(db);
-  await sql`CREATE UNIQUE INDEX food_catalog_normalized_gtin ON food_catalog (normalized_gtin) WHERE normalized_gtin IS NOT NULL`.execute(db);
-  await sql`CREATE INDEX food_catalog_search_vector_gin ON food_catalog USING gin (search_vector)`.execute(db);
-  await sql`CREATE INDEX food_catalog_search_text_trgm_gin ON food_catalog USING gin (search_text gin_trgm_ops)`.execute(db);
-  await sql`CREATE INDEX food_entries_recent_search_idx ON food_entries (day_log_id, created_at DESC)`.execute(db);
+  await db.schema
+    .alterTable("food_entries")
+    .addColumn("food_catalog_id", "uuid", (column) => column.references("food_catalog.id"))
+    .execute();
+  await sql`CREATE UNIQUE INDEX food_catalog_source_identity ON food_catalog (source, source_food_id)`.execute(
+    db,
+  );
+  await sql`CREATE UNIQUE INDEX food_catalog_normalized_gtin ON food_catalog (normalized_gtin) WHERE normalized_gtin IS NOT NULL`.execute(
+    db,
+  );
+  await sql`CREATE INDEX food_catalog_search_vector_gin ON food_catalog USING gin (search_vector)`.execute(
+    db,
+  );
+  await sql`CREATE INDEX food_catalog_search_text_trgm_gin ON food_catalog USING gin (search_text gin_trgm_ops)`.execute(
+    db,
+  );
+  await sql`CREATE INDEX food_entries_recent_search_idx ON food_entries (day_log_id, created_at DESC)`.execute(
+    db,
+  );
 }
 
 export async function down(db: Kysely<any>): Promise<void> {

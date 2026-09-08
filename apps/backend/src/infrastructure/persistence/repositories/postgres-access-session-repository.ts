@@ -1,15 +1,13 @@
 import type { IRefreshSessionRepository } from "@application/ports/access-session-repository.js";
 
-import type { DatabaseClient } from "../database-client.js";
 import { randomUUID } from "node:crypto";
+
+import type { DatabaseClient } from "../database-client.js";
 
 export class PostgresAccessSessionRepository implements IRefreshSessionRepository {
   constructor(private readonly databaseClient: DatabaseClient) {}
 
-  async findActiveUserIdByTokenDigest(
-    tokenDigest: string,
-    now: Date,
-  ): Promise<string | null> {
+  async findActiveUserIdByTokenDigest(tokenDigest: string, now: Date): Promise<string | null> {
     const session = await this.databaseClient
       .selectFrom("sessions")
       .leftJoin(
@@ -52,11 +50,7 @@ export class PostgresAccessSessionRepository implements IRefreshSessionRepositor
     return this.databaseClient.transaction().execute(async (trx) => {
       const generation = await trx
         .selectFrom("refresh_token_generations as generation")
-        .innerJoin(
-          "remembered_device_families as family",
-          "family.id",
-          "generation.family_id",
-        )
+        .innerJoin("remembered_device_families as family", "family.id", "generation.family_id")
         .select([
           "generation.id",
           "generation.family_id",
@@ -71,11 +65,7 @@ export class PostgresAccessSessionRepository implements IRefreshSessionRepositor
         .where("family.revoked_at", "is", null)
         .where("family.inactivity_expires_at", ">", input.now)
         .where("family.absolute_expires_at", ">", input.now)
-        .whereRef(
-          "generation.generation",
-          "=",
-          "family.current_refresh_generation",
-        )
+        .whereRef("generation.generation", "=", "family.current_refresh_generation")
         .forUpdate()
         .executeTakeFirst();
       if (!generation) return null;
@@ -90,19 +80,11 @@ export class PostgresAccessSessionRepository implements IRefreshSessionRepositor
       );
 
       const familyInactivityExpiresAt = new Date(
-        Math.min(
-          input.now.getTime() + 7 * 24 * 60 * 60 * 1000,
-          generation.absolute_expires_at.getTime(),
-        ),
+        Math.min(input.now.getTime() + 7 * 24 * 60 * 60 * 1000, generation.absolute_expires_at.getTime()),
       );
-      const accessInactivityExpiresAt = new Date(
-        input.now.getTime() + 30 * 60 * 1000,
-      );
+      const accessInactivityExpiresAt = new Date(input.now.getTime() + 30 * 60 * 1000);
       const accessAbsoluteExpiresAt = new Date(
-        Math.min(
-          input.now.getTime() + 8 * 60 * 60 * 1000,
-          generation.absolute_expires_at.getTime(),
-        ),
+        Math.min(input.now.getTime() + 8 * 60 * 60 * 1000, generation.absolute_expires_at.getTime()),
       );
       const replacementId = randomUUID();
       const sessionId = randomUUID();
@@ -208,11 +190,7 @@ export class PostgresAccessSessionRepository implements IRefreshSessionRepositor
       if (!familyId && input.refreshTokenDigest) {
         const refreshGeneration = await trx
           .selectFrom("refresh_token_generations as generation")
-          .innerJoin(
-            "remembered_device_families as family",
-            "family.id",
-            "generation.family_id",
-          )
+          .innerJoin("remembered_device_families as family", "family.id", "generation.family_id")
           .select("generation.family_id")
           .where("generation.token_digest", "=", input.refreshTokenDigest)
           .where("generation.revoked_at", "is", null)

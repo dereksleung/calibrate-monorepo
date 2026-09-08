@@ -97,15 +97,15 @@ describe("seedFoundationFoodsCatalog", () => {
 
 describe("upsertFoodCatalogBatches", () => {
   it.each([0, -1])("rejects non-positive batch size %s", async (batchSize) => {
-    await expect(
-      upsertFoodCatalogBatches({} as never, [catalogRecord()], batchSize),
-    ).rejects.toThrow("must be an integer between 1 and 250");
+    await expect(upsertFoodCatalogBatches({} as never, [catalogRecord()], batchSize)).rejects.toThrow(
+      "must be an integer between 1 and 250",
+    );
   });
 
   it("rejects a non-integer batch size", async () => {
-    await expect(
-      upsertFoodCatalogBatches({} as never, [catalogRecord()], 1.5),
-    ).rejects.toThrow("must be an integer between 1 and 250");
+    await expect(upsertFoodCatalogBatches({} as never, [catalogRecord()], 1.5)).rejects.toThrow(
+      "must be an integer between 1 and 250",
+    );
   });
 
   it("rejects a batch size above the maximum", async () => {

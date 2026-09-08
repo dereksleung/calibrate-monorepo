@@ -107,9 +107,7 @@ export class PasskeyAuthenticationServiceImpl implements IPasskeyAuthenticationS
     });
     let challenge: string;
     try {
-      const parsed = JSON.parse(
-        Buffer.from(input.assertion.clientDataJSON, "base64url").toString("utf8"),
-      );
+      const parsed = JSON.parse(Buffer.from(input.assertion.clientDataJSON, "base64url").toString("utf8"));
       if (typeof parsed.challenge !== "string") throw new Error();
       challenge = parsed.challenge;
     } catch {
