@@ -66,6 +66,25 @@ function DashboardV2Content() {
   useEffect(() => {
     if (!validation.data || !validation.isFetchedAfterMount) return;
     for (const { date, dayLog } of validation.data.days) {
+      /**
+       * TODO: Can move this logic into packages/api-client as part of a bigger refactor where 
+       * we make it less narrowly focused on defining a configured fetch / api-transport, and allowed to
+       * know a queryClient and other shared dependencies between web and mobile, 
+       * such as turning that into a packages/core.
+       * 
+       * Saw this, and considered simplifying by having the queryFn in getDayLogRangeQueryOptions 
+       * in packages/api-client/src/day-logs/get-day-log-range.ts delegate to a mapper function 
+       * to transform the data to slots, and run queryClient.setQueryData for each slot in the range.
+       * Then it would come already in slot form in the queryClient, both from a fresh API response and 
+       * after restoring from IndexedDB.
+       * 
+       * Problem is that retries, cancellation, or overlapping requests could write slot data 
+       * independently of which range result TanStack ultimately accepts as current.
+       * 
+       * The useEffect is actually the safe way to convert the range query into saved responses per day, 
+       * so that we can cut API requests for existing days.
+       * 
+       */
       queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), dayLog, {
         updatedAt: validation.dataUpdatedAt,
       });
