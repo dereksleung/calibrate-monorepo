@@ -78,7 +78,7 @@ describe("PostgresDayLogRepository day log sync", () => {
     );
 
     expect(result.foodEntry.name).toBe("Oats");
-    expect(result.versionNumber).toBe(2);
+    expect(result.dayLogVersionNumber).toBe(2);
 
     const persisted = await databaseClient
       .selectFrom("day_logs")
@@ -94,7 +94,7 @@ describe("PostgresDayLogRepository day log sync", () => {
     await insertDayLog(databaseClient, { userId, date: "2026-08-06" });
 
     await expect(
-      repository.readCoherentSnapshot({
+      repository.getChangesForRange({
         userId,
         startDate: "2026-08-06",
         endDate: "2026-08-06",
@@ -109,7 +109,7 @@ describe("PostgresDayLogRepository day log sync", () => {
     await repository.addFoodEntry(dayLogId, buildFoodEntry({ id: randomUUID(), dayLogId, name: "Eggs" }));
 
     await expect(
-      repository.readCoherentSnapshot({
+      repository.getChangesForRange({
         userId,
         startDate: "2026-08-06",
         endDate: "2026-08-07",
@@ -133,7 +133,7 @@ describe("PostgresDayLogRepository day log sync", () => {
       buildFoodEntry({ id: randomUUID(), dayLogId: matchingId, name: "Owner breakfast" }),
     );
 
-    const result = await repository.readCoherentSnapshot({
+    const result = await repository.getChangesForRange({
       userId: ownerId,
       startDate: "2026-08-06",
       endDate: "2026-08-08",
@@ -160,7 +160,7 @@ describe("PostgresDayLogRepository day log sync", () => {
     const userId = await insertUser(databaseClient, "owner@example.com");
     await insertDayLog(databaseClient, { userId, date: "2026-08-06", versionNumber: 1 });
 
-    const result = await repository.readCoherentSnapshot({
+    const result = await repository.getChangesForRange({
       userId,
       startDate: "2026-08-06",
       endDate: "2026-08-06",

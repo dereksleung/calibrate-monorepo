@@ -100,7 +100,7 @@ describe("PostgresDayLogRepository.addFoodEntry", () => {
     expect(updatedDayLogId).toBe("day-log-1");
     expect(returnedColumns).toBe("version_number");
     expect(result.foodEntry.id).toBe("food-entry-1");
-    expect(result.versionNumber).toBe(2);
+    expect(result.dayLogVersionNumber).toBe(2);
   });
 });
 
@@ -209,7 +209,7 @@ describe("PostgresDayLogRepository.findLogsByDateRangeAndUserId", () => {
   });
 });
 
-describe("PostgresDayLogRepository.readCoherentSnapshot", () => {
+describe("PostgresDayLogRepository.getChangesForRange", () => {
   it("returns unchanged without loading aggregates when every requested slot matches", async () => {
     const queriedTables: string[] = [];
     const isolationLevels: string[] = [];
@@ -240,7 +240,7 @@ describe("PostgresDayLogRepository.readCoherentSnapshot", () => {
     const repository = new PostgresDayLogRepository(databaseClient as never);
 
     await expect(
-      repository.readCoherentSnapshot({
+      repository.getChangesForRange({
         userId: "user-1",
         startDate: "2026-08-06",
         endDate: "2026-08-07",
@@ -297,7 +297,7 @@ describe("PostgresDayLogRepository.readCoherentSnapshot", () => {
     };
     const repository = new PostgresDayLogRepository(databaseClient as never);
 
-    const result = await repository.readCoherentSnapshot({
+    const result = await repository.getChangesForRange({
       userId: "user-1",
       startDate: "2026-08-06",
       endDate: "2026-08-07",

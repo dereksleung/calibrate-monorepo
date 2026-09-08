@@ -79,7 +79,7 @@ export class DayLogServiceImpl implements IDayLogService {
   }
 
   async syncLogsForDateRange(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult> {
-    return this.dayLogSyncQuery.readCoherentSnapshot(input);
+    return this.dayLogSyncQuery.getChangesForRange(input);
   }
 
   async addFoodEntry({ userId, date, foodEntry }: AddFoodEntryInput): Promise<AddFoodEntryResult> {
