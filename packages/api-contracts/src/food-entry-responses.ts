@@ -14,8 +14,9 @@ export const FoodEntryResponseSchema = FoodEntryBaseSchema.extend(FoodEntryChose
 
 export type FoodEntryResponse = z.infer<typeof FoodEntryResponseSchema>;
 
-export const CreateFoodEntryResponseSchema = FoodEntryResponseSchema.extend({
-  versionNumber: DayLogVersionNumberSchema,
+export const CreateFoodEntryResponseSchema = z.object({
+  foodEntry: FoodEntryResponseSchema,
+  dayLogVersionNumber: DayLogVersionNumberSchema,
 });
 
 export type CreateFoodEntryResponse = z.infer<typeof CreateFoodEntryResponseSchema>;

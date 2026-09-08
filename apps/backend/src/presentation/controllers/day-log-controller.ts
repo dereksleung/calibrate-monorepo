@@ -205,8 +205,8 @@ export class DayLogController {
         date: validatedDate?.data.date,
       });
       const response: CreateFoodEntryResponse = {
-        ...FoodEntryResponseMapper.toResponse(result.foodEntry),
-        versionNumber: result.versionNumber,
+        foodEntry: FoodEntryResponseMapper.toResponse(result.foodEntry),
+        dayLogVersionNumber: result.dayLogVersionNumber,
       };
       res.status(201).json(response);
     } catch (error) {

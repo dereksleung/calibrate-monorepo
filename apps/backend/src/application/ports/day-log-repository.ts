@@ -19,7 +19,7 @@ export interface FindOrCreateDayLogByDateAndUserInput {
 
 export interface AddFoodEntryResult {
   foodEntry: FoodEntry;
-  versionNumber: number;
+  dayLogVersionNumber: number;
 }
 
 export interface IDayLogRepository {

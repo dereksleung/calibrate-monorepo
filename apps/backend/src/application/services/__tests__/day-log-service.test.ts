@@ -36,7 +36,7 @@ describe("DayLogServiceImpl", () => {
       countDayLogsByUserId: vi.fn(),
     } as any;
     mockDayLogSyncQuery = {
-      readCoherentSnapshot: vi.fn(),
+      getChangesForRange: vi.fn(),
     } as any;
     dayLogService = new DayLogServiceImpl(mockDayLogRepository, mockUserRepository, mockDayLogSyncQuery);
   });
@@ -133,7 +133,7 @@ describe("DayLogServiceImpl", () => {
 
   describe("syncLogsForDateRange", () => {
     it("delegates the authenticated user and sparse manifest to the coherent snapshot port", async () => {
-      mockDayLogSyncQuery.readCoherentSnapshot.mockResolvedValue({ status: "unchanged" });
+      mockDayLogSyncQuery.getChangesForRange.mockResolvedValue({ status: "unchanged" });
       const input = {
         userId: "user-1",
         startDate: "2026-08-06",
@@ -142,7 +142,7 @@ describe("DayLogServiceImpl", () => {
       };
 
       await expect(dayLogService.syncLogsForDateRange(input)).resolves.toEqual({ status: "unchanged" });
-      expect(mockDayLogSyncQuery.readCoherentSnapshot).toHaveBeenCalledWith(input);
+      expect(mockDayLogSyncQuery.getChangesForRange).toHaveBeenCalledWith(input);
     });
 
     it("propagates a sparse changed snapshot", async () => {
@@ -150,7 +150,7 @@ describe("DayLogServiceImpl", () => {
         status: "changed" as const,
         slots: [{ date: "2026-08-07", versionNumber: null, dayLog: null }],
       };
-      mockDayLogSyncQuery.readCoherentSnapshot.mockResolvedValue(result);
+      mockDayLogSyncQuery.getChangesForRange.mockResolvedValue(result);
 
       await expect(
         dayLogService.syncLogsForDateRange({
@@ -168,7 +168,7 @@ describe("DayLogServiceImpl", () => {
       const foodEntryInput = { ...buildFoodEntryResponse(), iconName: null };
       const persistedResult = {
         foodEntry: buildFoodEntry({ id: "entry-1", dayLogId: mockDayLog.id }),
-        versionNumber: 2,
+        dayLogVersionNumber: 2,
       };
       mockUserRepository.findById.mockResolvedValue(
         User.create({ email: "user@example.com", passwordHash: "hash" }),

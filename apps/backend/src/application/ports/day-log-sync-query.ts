@@ -20,5 +20,5 @@ export type DayLogSyncQueryResult =
   | { status: "changed"; slots: ChangedDayLogSyncSlot[] };
 
 export interface IDayLogSyncQuery {
-  readCoherentSnapshot(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult>;
+  getChangesForRange(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult>;
 }

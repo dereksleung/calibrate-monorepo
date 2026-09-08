@@ -386,7 +386,7 @@ describe("DayLogController", () => {
     });
     mockDayLogService.addFoodEntry.mockResolvedValue({
       foodEntry: createdFoodEntry,
-      versionNumber: 2,
+      dayLogVersionNumber: 2,
     });
 
     const res = {
@@ -403,7 +403,7 @@ describe("DayLogController", () => {
     });
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
-      ...buildFoodEntryResponse({
+      foodEntry: buildFoodEntryResponse({
         id: createdFoodEntry.id,
         meal: MealNameEnum.BREAKFAST,
         name: "Scrambled Eggs",
@@ -422,7 +422,7 @@ describe("DayLogController", () => {
         quantityServing: 1,
         servingLabel: "serving",
       }),
-      versionNumber: 2,
+      dayLogVersionNumber: 2,
     });
   });
 

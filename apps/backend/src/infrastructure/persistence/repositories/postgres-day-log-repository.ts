@@ -106,7 +106,7 @@ export class PostgresDayLogRepository implements IDayLogRepository, IDayLogSyncQ
 
       return {
         foodEntry: this.mapRowToFoodEntry(foodEntryRow),
-        versionNumber: updated.version_number,
+        dayLogVersionNumber: updated.version_number,
       };
     });
   }
@@ -149,7 +149,7 @@ export class PostgresDayLogRepository implements IDayLogRepository, IDayLogSyncQ
     );
   }
 
-  async readCoherentSnapshot(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult> {
+  async getChangesForRange(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult> {
     return this.databaseClient
       .transaction()
       .setIsolationLevel("repeatable read")
