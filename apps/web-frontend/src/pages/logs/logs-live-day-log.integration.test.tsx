@@ -101,12 +101,12 @@ describe("logs live day log", () => {
       weight: 184.2,
     };
 
-    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
       const url = getFetchUrl(input);
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
-      if (url.includes("/daylogs/2026-06-10")) {
+      if (url.includes("/daylogs:sync")) {
         return Promise.resolve(
-          new Response(JSON.stringify(dayLog), {
+          new Response(JSON.stringify({ slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: 1, dayLog }] }), {
             status: 200,
             headers: { "content-type": "application/json" },
           }),
@@ -125,12 +125,12 @@ describe("logs live day log", () => {
   });
 
   it("treats a null JSON body as an empty day while keeping the overview layout", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
       const url = getFetchUrl(input);
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
-      if (url.includes("/daylogs/2026-06-11")) {
+      if (url.includes("/daylogs:sync")) {
         return Promise.resolve(
-          new Response(JSON.stringify(null), {
+          new Response(JSON.stringify({ slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: null, dayLog: null }] }), {
             status: 200,
             headers: { "content-type": "application/json" },
           }),
@@ -179,13 +179,13 @@ describe("logs live day log", () => {
     const heavyEntry = { ...oatmealFixture, id: "heavy", name: "Heavy meal", calories: 550 };
     const lightEntry = { ...oatmealFixture, id: "light", name: "Light meal", calories: 120 };
 
-    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
       const url = getFetchUrl(input);
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
-      if (url.includes("/daylogs/2026-01-01")) {
+      if (url.includes("/daylogs:sync") && JSON.parse(init!.body as string).endDate === "2026-01-01") {
         return Promise.resolve(
           new Response(
-            JSON.stringify({
+            JSON.stringify({ slots: [{ date: "2026-01-01", versionNumber: 1, dayLog: {
               id: "759ded89-e38b-4975-972b-89550ed06732",
               date: "2026-01-01",
               breakfast: [heavyEntry],
@@ -193,16 +193,16 @@ describe("logs live day log", () => {
               dinner: [],
               snacks: [],
               weight: null,
-            }),
+            }}] }),
             { status: 200, headers: { "content-type": "application/json" } },
           ),
         );
       }
 
-      if (url.includes("/daylogs/2026-01-02")) {
+      if (url.includes("/daylogs:sync") && JSON.parse(init!.body as string).endDate === "2026-01-02") {
         return Promise.resolve(
           new Response(
-            JSON.stringify({
+            JSON.stringify({ slots: [{ date: "2026-01-02", versionNumber: 1, dayLog: {
               id: "67ce15d2-9580-4e20-852c-a041f6e167a5",
               date: "2026-01-02",
               breakfast: [lightEntry],
@@ -210,7 +210,7 @@ describe("logs live day log", () => {
               dinner: [],
               snacks: [],
               weight: null,
-            }),
+            }}] }),
             { status: 200, headers: { "content-type": "application/json" } },
           ),
         );

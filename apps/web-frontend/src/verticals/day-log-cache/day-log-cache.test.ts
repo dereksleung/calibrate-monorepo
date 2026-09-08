@@ -5,7 +5,10 @@ import {
   DAY_LOG_CACHE_RETENTION_MS,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   composeDayLogRangeFromSlots,
+  applyDayLogSyncResult,
   dayLogSlotQueryKey,
+  dayLogSlotVersionQueryKey,
+  doesDayLogSlotNeedValidation,
   doesDashboardRangeNeedValidation,
   prunePersistedDayLogClient,
   type CachedDayLog,
@@ -93,6 +96,49 @@ describe("Day Log cache model", () => {
         now,
       ),
     ).toBe(true);
+  });
+
+  it("uses TanStack timestamps and invalidation for a selected slot's validation eligibility", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), null, { updatedAt: now });
+
+    expect(
+      doesDayLogSlotNeedValidation(
+        slot("2026-09-03", null, { dataUpdatedAt: now, isInvalidated: false }),
+        now,
+      ),
+    ).toBe(false);
+
+    await queryClient.invalidateQueries({ queryKey: dayLogSlotQueryKey(accountId, "2026-09-03") });
+    const invalidatedState = queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"));
+    expect(
+      doesDayLogSlotNeedValidation(
+        slot("2026-09-03", null, {
+          dataUpdatedAt: invalidatedState!.dataUpdatedAt,
+          isInvalidated: invalidatedState!.isInvalidated,
+        }),
+        now,
+      ),
+    ).toBe(true);
+  });
+
+  it("normalizes successful changed and unchanged syncs into raw slot data with one accepted timestamp", () => {
+    const queryClient = new QueryClient();
+    const syncRange = { startDate: "2026-09-02", endDate: "2026-09-03" };
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-02"), null, { updatedAt: now - 100 });
+
+    applyDayLogSyncResult(queryClient, accountId, syncRange, {
+      slots: [
+        { date: "2026-09-03", versionNumber: 7, dayLog: presentSlot("2026-09-03") },
+      ],
+    }, now);
+
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-02"))).toBeNull();
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-02"))?.dataUpdatedAt).toBe(now);
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toEqual(
+      expect.objectContaining({ date: "2026-09-03" }),
+    );
+    expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBe(7);
   });
 
   it("prunes expired, unrelated, other-account, and mutation state before persistence", () => {

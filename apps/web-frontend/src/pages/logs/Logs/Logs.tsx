@@ -2,17 +2,28 @@ import { apiTransport } from "#/shared/api/api-client.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
-import { useSelectedDayLog } from "@calibrate/api-client";
+import { syncDayLogs } from "@calibrate/api-client";
+import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import {
   MEAL_SECTIONS,
+  addDaysToIsoDate,
   getDailyProgress,
   getDailyTotals,
+  getTodayDateString,
   normalizeDayLogForRender,
 } from "../log-page-helpers.ts";
+import {
+  applyDayLogSyncResult,
+  dayLogSlotQueryKey,
+  dayLogSyncQueryKey,
+  doesDayLogSlotNeedValidation,
+  getDayLogSyncManifest,
+  type DayLogSlotResult,
+} from "#/verticals/day-log-cache/day-log-cache.ts";
 import { DailySummary } from "./components/DailySummary.tsx";
 import { DateStepper } from "./components/DateStepper.tsx";
 import { MealSection } from "./components/MealSection.tsx";
@@ -75,7 +86,37 @@ export function Logs({ selectedDate }: LogsProps) {
   const navigate = useNavigate();
 
   const session = useAuthenticatedSession();
-  const { data, isPending, error } = useSelectedDayLog(apiTransport, session!.user.id, selectedDate);
+  const accountId = session!.user.id;
+  const queryClient = useQueryClient();
+  const todayDate = getTodayDateString();
+  const isUpcoming = selectedDate > todayDate;
+  const slotQuery = useQuery({
+    queryKey: dayLogSlotQueryKey(accountId, selectedDate),
+    queryFn: skipToken,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+  const slot = {
+    date: selectedDate,
+    data: slotQuery.data as DayLogSlotResult,
+    dataUpdatedAt: slotQuery.dataUpdatedAt,
+    isInvalidated: queryClient.getQueryState(dayLogSlotQueryKey(accountId, selectedDate))?.isInvalidated ?? false,
+  };
+  const range = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
+  const needsValidation = !isUpcoming && doesDayLogSlotNeedValidation(slot, Date.now());
+  const validation = useQuery({
+    queryKey: dayLogSyncQueryKey(accountId, range),
+    queryFn: () => syncDayLogs(apiTransport, { ...range, known: getDayLogSyncManifest(queryClient, accountId, range) }),
+    enabled: needsValidation,
+    staleTime: needsValidation ? 0 : Infinity,
+  });
+  useEffect(() => {
+    if (!validation.isFetchedAfterMount || validation.data === undefined) return;
+    applyDayLogSyncResult(queryClient, accountId, range, validation.data, validation.dataUpdatedAt);
+  }, [accountId, queryClient, validation.data, validation.dataUpdatedAt, validation.isFetchedAfterMount]);
+  const data = slotQuery.data as DayLogSlotResult;
+  const isPending = !isUpcoming && data === undefined && validation.isPending;
+  const error = validation.error;
 
   useEffect(() => {
     if (!isPending && error) {
@@ -94,9 +135,10 @@ export function Logs({ selectedDate }: LogsProps) {
       <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
         <DateStepper selectedDate={selectedDate} date={headingDate} />
 
+        {isUpcoming ? <p role="status">Upcoming</p> : null}
         {isPending ? <LogsOverviewSkeleton /> : null}
 
-        {!isPending ? (
+        {!isPending && !isUpcoming ? (
           <>
             <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
 
