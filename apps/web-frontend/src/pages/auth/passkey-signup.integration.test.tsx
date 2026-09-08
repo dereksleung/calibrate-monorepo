@@ -72,7 +72,7 @@ describe("passkey enrollment routing", () => {
   it("redirects a direct visit back to signup when handoff state is missing", async () => {
     const router = renderRoute("/auth/passkey-enrollment");
 
-    expect(await screen.findByRole("heading", { name: "Create your account" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sign Up or Log In" })).toBeTruthy();
     expect(router.state.location.pathname).toBe("/signup-login");
   });
 
@@ -121,7 +121,7 @@ describe("passkey signup vertical flow", () => {
     fireEvent.change(await screen.findByLabelText("Email Address"), {
       target: { value: "person@example.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /send verification code/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue with email" }));
     await screen.findByRole("heading", { name: "Check your email" });
 
     fireEvent.change(screen.getByLabelText("Verification code"), { target: { value: "012345" } });
