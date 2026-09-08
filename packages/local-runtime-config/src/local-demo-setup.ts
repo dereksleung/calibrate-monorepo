@@ -1,16 +1,16 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import {
-  ensureLocalRuntimeConfiguration,
-  getLocalRuntimeEnvFilePath,
-  type LocalRuntimeConfiguration,
-} from "./local-runtime-configuration.js";
+import { runDemoSetup, type DemoSetupOptions, type DemoSetupResult } from "./demo-catalog-setup.js";
+import { getLocalRuntimeEnvFilePath } from "./local-runtime-configuration.js";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
-export function runLocalDemoSetup(directory = workspaceRoot): Promise<LocalRuntimeConfiguration> {
-  return ensureLocalRuntimeConfiguration(directory);
+export function runLocalDemoSetup(
+  directory = workspaceRoot,
+  options: Omit<DemoSetupOptions, "directory"> = {},
+): Promise<DemoSetupResult> {
+  return runDemoSetup({ directory, ...options });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
