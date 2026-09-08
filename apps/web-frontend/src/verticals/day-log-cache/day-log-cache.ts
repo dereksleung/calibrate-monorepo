@@ -1,26 +1,27 @@
-import type { DehydratedState, QueryClient } from "@tanstack/react-query";
+import type { DehydratedState } from "@tanstack/react-query";
 
 import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/api-client";
-import { DayLogResponseSchema, type DayLogRangeResponse } from "@calibrate/api-contracts";
+import {
+  DayLogResponseSchema,
+  type DayLogRangeResponse,
+  type DayLogResponse,
+} from "@calibrate/api-contracts";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_BUSTER = "day-log-cache-v1";
 
-export type DayLogSlot =
-  | {
-      status: "known-empty";
-      date: string;
-      lastValidatedAt: number;
-      unverified: boolean;
-    }
-  | {
-      status: "present";
-      date: string;
-      dayLog: NonNullable<DayLogRangeResponse["days"][number]["dayLog"]>;
-      lastValidatedAt: number;
-      unverified: boolean;
-    };
+export type KnownEmptyResponse = null;
+export type NotYetLoaded = undefined;
+export type CachedDayLog = DayLogResponse | KnownEmptyResponse;
+export type DayLogSlotResult = CachedDayLog | NotYetLoaded;
+
+export type DayLogSlotSnapshot = {
+  date: string;
+  data: DayLogSlotResult;
+  dataUpdatedAt: number;
+  isInvalidated: boolean;
+};
 
 export type PersistedDayLogClient = {
   buster: string;
@@ -61,52 +62,34 @@ export function dateRange(startDate: string, endDate: string): string[] {
   return dates;
 }
 
-export function dayLogSlotsFromRangeResponse(
-  response: DayLogRangeResponse,
-  lastValidatedAt: number,
-): DayLogSlot[] {
-  return response.days.map(({ date, dayLog }) =>
-    dayLog === null
-      ? { status: "known-empty", date, lastValidatedAt, unverified: false }
-      : {
-          status: "present",
-          date,
-          dayLog,
-          lastValidatedAt,
-          unverified: false,
-        },
-  );
-}
-
-export function composeDayLogRangeFromCache(
-  queryClient: Pick<QueryClient, "getQueryData">,
-  accountId: string,
+export function composeDayLogRangeFromSlots(
   range: { startDate: string; endDate: string },
+  slots: readonly DayLogSlotSnapshot[],
 ) {
-  const slots = dateRange(range.startDate, range.endDate)
-    .map((date) => queryClient.getQueryData<DayLogSlot>(dayLogSlotQueryKey(accountId, date)))
-    .filter((slot): slot is DayLogSlot => slot !== undefined);
+  const loadedSlots = slots.filter(
+    (slot): slot is DayLogSlotSnapshot & { data: CachedDayLog } => slot.data !== undefined,
+  );
 
   return {
-    isComplete: slots.length === dateRange(range.startDate, range.endDate).length,
-    loadedDateCount: slots.length,
+    isComplete: loadedSlots.length === dateRange(range.startDate, range.endDate).length,
+    loadedDateCount: loadedSlots.length,
     response: {
       ...range,
-      days: slots.map((slot) => ({
+      days: loadedSlots.map((slot) => ({
         date: slot.date,
-        dayLog: slot.status === "present" ? slot.dayLog : null,
+        dayLog: slot.data,
       })),
     } satisfies DayLogRangeResponse,
-    slots,
+    slots: loadedSlots,
   };
 }
 
-export function doesDashboardRangeNeedValidation(slots: readonly DayLogSlot[], now: number): boolean {
+export function doesDashboardRangeNeedValidation(slots: readonly DayLogSlotSnapshot[], now: number): boolean {
   return (
     slots.length !== 7 ||
     slots.some(
-      ({ lastValidatedAt, unverified }) =>
-        unverified || now - lastValidatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS,
+      ({ data, dataUpdatedAt, isInvalidated }) =>
+        data === undefined || isInvalidated || now - dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS,
     )
   );
 }
@@ -115,34 +98,16 @@ function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function isDayLogSlot(value: unknown): value is DayLogSlot {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<DayLogSlot>;
-  if (
-    !isIsoDate(candidate.date) ||
-    typeof candidate.lastValidatedAt !== "number" ||
-    !Number.isFinite(candidate.lastValidatedAt) ||
-    typeof candidate.unverified !== "boolean"
-  ) {
-    return false;
-  }
-
-  if (candidate.status === "known-empty") return true;
-  if (candidate.status !== "present") return false;
-
-  return (
-    DayLogResponseSchema.safeParse(candidate.dayLog).success &&
-    candidate.dayLog !== null &&
-    candidate.dayLog !== undefined &&
-    candidate.dayLog.date === candidate.date
-  );
+function isCachedDayLog(value: unknown, date: string): value is CachedDayLog {
+  if (value === null) return true;
+  const result = DayLogResponseSchema.safeParse(value);
+  return result.success && result.data !== null && result.data.date === date;
 }
 
 export function isPersistableDayLogQueryData(
   queryKey: readonly unknown[],
   data: unknown,
   accountId: string,
-  now = Date.now(),
 ): boolean {
   if (
     queryKey.length !== 4 ||
@@ -154,12 +119,7 @@ export function isPersistableDayLogQueryData(
     return false;
   }
 
-  return (
-    isDayLogSlot(data) &&
-    data.date === queryKey[3] &&
-    data.lastValidatedAt <= now &&
-    now - data.lastValidatedAt < DAY_LOG_CACHE_RETENTION_MS
-  );
+  return isCachedDayLog(data, queryKey[3]);
 }
 
 export function isPersistableDayLogQuery(
@@ -168,11 +128,17 @@ export function isPersistableDayLogQuery(
   now = Date.now(),
 ): boolean {
   if (!query || typeof query !== "object") return false;
-  const candidate = query as { queryKey?: unknown; state?: { data?: unknown } };
+  const candidate = query as { queryKey?: unknown; state?: { data?: unknown; dataUpdatedAt?: unknown } };
   if (!Array.isArray(candidate.queryKey) || !candidate.state || typeof candidate.state !== "object") {
     return false;
   }
-  return isPersistableDayLogQueryData(candidate.queryKey, candidate.state.data, accountId, now);
+  return (
+    typeof candidate.state.dataUpdatedAt === "number" &&
+    Number.isFinite(candidate.state.dataUpdatedAt) &&
+    candidate.state.dataUpdatedAt <= now &&
+    now - candidate.state.dataUpdatedAt < DAY_LOG_CACHE_RETENTION_MS &&
+    isPersistableDayLogQueryData(candidate.queryKey, candidate.state.data, accountId)
+  );
 }
 
 export function prunePersistedDayLogClient(

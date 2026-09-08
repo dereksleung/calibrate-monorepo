@@ -4,12 +4,11 @@ import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.
 import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
 import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
-  composeDayLogRangeFromCache,
+  composeDayLogRangeFromSlots,
   dateRange,
   dayLogSlotQueryKey,
-  dayLogSlotsFromRangeResponse,
   doesDashboardRangeNeedValidation,
-  type DayLogSlot,
+  type DayLogSlotResult,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { getDayLogRange, getDayLogRangeQueryOptions } from "@calibrate/api-client";
 import { skipToken, useIsRestoring, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,11 +40,19 @@ function DashboardV2Content() {
       staleTime: Infinity,
     })),
   });
-  const cached = composeDayLogRangeFromCache(queryClient, accountId, dayLogRange);
-  const cachedSlots = slotQueries.flatMap(({ data }) => (data ? [data as DayLogSlot] : []));
-  const needsValidation = doesDashboardRangeNeedValidation(cachedSlots, Date.now());
-  const oldestValidation = cachedSlots.length
-    ? Math.min(...cachedSlots.map(({ lastValidatedAt }) => lastValidatedAt))
+  const slots = slotQueries.map((query, index) => {
+    const date = dates[index]!;
+    return {
+      date,
+      data: query.data as DayLogSlotResult,
+      dataUpdatedAt: query.dataUpdatedAt,
+      isInvalidated: queryClient.getQueryState(dayLogSlotQueryKey(accountId, date))?.isInvalidated ?? false,
+    };
+  });
+  const cached = composeDayLogRangeFromSlots(dayLogRange, slots);
+  const needsValidation = doesDashboardRangeNeedValidation(slots, Date.now());
+  const oldestValidation = cached.slots.length
+    ? Math.min(...cached.slots.map(({ dataUpdatedAt }) => dataUpdatedAt))
     : undefined;
   const { queryKey } = getDayLogRangeQueryOptions(apiTransport, accountId, dayLogRange);
   const validation = useQuery({
@@ -58,8 +65,10 @@ function DashboardV2Content() {
 
   useEffect(() => {
     if (!validation.data || !validation.isFetchedAfterMount) return;
-    for (const slot of dayLogSlotsFromRangeResponse(validation.data, validation.dataUpdatedAt)) {
-      queryClient.setQueryData(dayLogSlotQueryKey(accountId, slot.date), slot);
+    for (const { date, dayLog } of validation.data.days) {
+      queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), dayLog, {
+        updatedAt: validation.dataUpdatedAt,
+      });
     }
   }, [accountId, queryClient, validation.data, validation.dataUpdatedAt, validation.isFetchedAfterMount]);
 
