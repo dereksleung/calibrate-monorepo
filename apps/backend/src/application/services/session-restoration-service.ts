@@ -1,8 +1,9 @@
-import type { IClock } from "@application/ports/clock.js";
 import type { IRefreshSessionRepository } from "@application/ports/access-session-repository.js";
+import type { IClock } from "@application/ports/clock.js";
 import type { IOpaqueTokenService } from "@application/ports/session-token-service.js";
 import type { IUserRepository } from "@application/ports/user-repository.js";
 import type { User } from "@domain/entities/user.js";
+
 import { createHash } from "node:crypto";
 
 export interface ISessionRestorationService {

@@ -1,5 +1,5 @@
-import type { IAuthService } from "@application/services/auth-service.js";
 import type { IAccountEmailVerificationService } from "@application/services/account-email-verification-service.js";
+import type { IAuthService } from "@application/services/auth-service.js";
 import type { ISignupPasskeyRegistrationService } from "@application/services/signup-passkey-registration-service.js";
 import type { Server } from "node:http";
 import type { AddressInfo } from "node:net";

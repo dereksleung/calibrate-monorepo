@@ -10,5 +10,4 @@ export class NodeOpaqueTokenService implements IOpaqueTokenService {
       digest: createHash("sha256").update(token).digest("base64url"),
     };
   }
-
 }

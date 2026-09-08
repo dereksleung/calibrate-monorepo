@@ -5,8 +5,8 @@ import {
   AccountEmailVerificationCodeEmailInfo,
 } from "@application/ports/email-sender.js";
 
-import { passkeyAddedNotificationTemplate } from "./passkey-added-notification-template.js";
 import { accountEmailVerificationTemplate } from "./account-email-verification-template.js";
+import { passkeyAddedNotificationTemplate } from "./passkey-added-notification-template.js";
 
 /**
  * Requirements for timeout and retry logic:

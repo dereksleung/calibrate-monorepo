@@ -82,7 +82,13 @@ describe("mapFoundationFood", () => {
         description: "Tomatoes, grape, raw",
         foodPortions: [
           portion({ id: 118808, amount: 5, gramWeight: 49.7, measureUnit: { name: "tomatoes" } }),
-          portion({ id: 118809, sequenceNumber: 2, amount: 1, gramWeight: 152, measureUnit: { name: "cup" } }),
+          portion({
+            id: 118809,
+            sequenceNumber: 2,
+            amount: 1,
+            gramWeight: 152,
+            measureUnit: { name: "cup" },
+          }),
         ],
       }),
     );

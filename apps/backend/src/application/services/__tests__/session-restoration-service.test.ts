@@ -1,6 +1,7 @@
 import type { IRefreshSessionRepository } from "@application/ports/access-session-repository.js";
 import type { IOpaqueTokenService } from "@application/ports/session-token-service.js";
 import type { IUserRepository } from "@application/ports/user-repository.js";
+
 import { SessionRestorationServiceImpl } from "@application/services/session-restoration-service.js";
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
