@@ -204,38 +204,30 @@ async function setValidStaleSlot(page: Page, accountId: string, marker: string):
             if (queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || queryKey[2] !== "slot") {
               return false;
             }
-            const data = queryClient.getQueryData(queryKey) as { status?: string } | undefined;
-            return data?.status === "present";
+            const data = queryClient.getQueryData(queryKey) as { breakfast?: unknown[] } | null | undefined;
+            return data !== null && data?.breakfast !== undefined;
           },
         );
       if (!slotQuery) throw new Error("Expected a restored Day Log slot");
 
       const current = queryClient.getQueryData(slotQuery.queryKey) as
         | {
-            status?: string;
-            lastValidatedAt?: number;
-            dayLog?: {
-              breakfast?: Array<Record<string, unknown>>;
-              [key: string]: unknown;
-            };
+            breakfast?: Array<Record<string, unknown>>;
             [key: string]: unknown;
           }
+        | null
         | undefined;
-      const breakfastEntry = current?.dayLog?.breakfast?.[0];
-      if (current?.status !== "present" || !current.dayLog || !breakfastEntry) {
+      const breakfastEntry = current?.breakfast?.[0];
+      if (!current || !breakfastEntry) {
         throw new Error("Expected a present restored Day Log slot");
       }
 
       queryClient.setQueryData(slotQuery.queryKey, {
         ...current,
-        lastValidatedAt: Date.now(),
-        dayLog: {
-          ...current.dayLog,
-          breakfast: [
-            { ...breakfastEntry, calories: 987654, name: marker },
-            ...current.dayLog.breakfast!.slice(1),
-          ],
-        },
+        breakfast: [
+          { ...breakfastEntry, calories: 987654, name: marker },
+          ...current.breakfast!.slice(1),
+        ],
       });
     },
     { accountId, marker },
@@ -275,12 +267,8 @@ async function dispatchVisibilityResume(page: Page): Promise<void> {
 function persistedBreakfastNames(snapshot: StoredSnapshot): string[] {
   return snapshot.persistedClient.clientState.queries.flatMap(({ queryKey, state }) => {
     if (queryKey[0] !== "dayLogs" || queryKey[2] !== "slot") return [];
-    const data = state.data as
-      | { status?: string; dayLog?: { breakfast?: Array<{ name?: string }> } }
-      | undefined;
-    return data?.status === "present"
-      ? (data.dayLog?.breakfast?.flatMap(({ name }) => (name ? [name] : [])) ?? [])
-      : [];
+    const data = state.data as { breakfast?: Array<{ name?: string }> } | null | undefined;
+    return data?.breakfast?.flatMap(({ name }) => (name ? [name] : [])) ?? [];
   });
 }
 
@@ -294,43 +282,37 @@ function setDistinctiveTodaySlot(snapshot: StoredSnapshot, calories: number): st
   const date = String(query.queryKey[3]);
   query.state.dataUpdatedAt = Date.now();
   query.state.data = {
-    status: "present",
+    id: "3299278b-12d8-477f-b146-b626c2061f36",
     date,
-    dayLog: {
-      id: "3299278b-12d8-477f-b146-b626c2061f36",
-      date,
-      breakfast: [
-        {
-          id: "c5500bb3-1f5e-4544-a6d6-6998435f4693",
-          meal: "BREAKFAST",
-          name: `Cached ${calories}`,
-          brand: null,
-          calories,
-          totalFatGrams: 1,
-          saturatedFatGrams: null,
-          cholesterolMg: null,
-          sodiumMg: null,
-          totalCarbohydrateGrams: 1,
-          fiberGrams: null,
-          sugarGrams: null,
-          proteinGrams: 1,
-          chosenQuantity: 1,
-          chosenUnit: "serving",
-          quantityServing: 1,
-          servingLabel: "serving",
-          quantityMass: null,
-          massUnit: null,
-          quantityVolume: null,
-          volumeUnit: null,
-        },
-      ],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-      weight: null,
-    },
-    lastValidatedAt: Date.now(),
-    unverified: false,
+    breakfast: [
+      {
+        id: "c5500bb3-1f5e-4544-a6d6-6998435f4693",
+        meal: "BREAKFAST",
+        name: `Cached ${calories}`,
+        brand: null,
+        calories,
+        totalFatGrams: 1,
+        saturatedFatGrams: null,
+        cholesterolMg: null,
+        sodiumMg: null,
+        totalCarbohydrateGrams: 1,
+        fiberGrams: null,
+        sugarGrams: null,
+        proteinGrams: 1,
+        chosenQuantity: 1,
+        chosenUnit: "serving",
+        quantityServing: 1,
+        servingLabel: "serving",
+        quantityMass: null,
+        massUnit: null,
+        quantityVolume: null,
+        volumeUnit: null,
+      },
+    ],
+    lunch: [],
+    dinner: [],
+    snacks: [],
+    weight: null,
   };
   return date;
 }
