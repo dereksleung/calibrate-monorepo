@@ -2,6 +2,63 @@
 
 A calorie tracker application, because I've gotten into healthier eating, jogging, and calisthenics.
 
+## Frontend Current State
+
+The Overview (Dashboard) page and Logs pages load data and let you add new food entries if you run the frontend and backend dev servers and sign up a user. 
+
+One goal is to show product judgment: take what could easily become dense, data-heavy areas in the Dashboard page, and keep it simple enough to be useful. The target user is not an expert mathematician or nutrition analyst, rather they are people wanting to change themselves, who may need help building new habits, and need to understand what to do next, and what is working or not working. The most important product work is surfacing actions and actionable insights that help them keep momentum with new habits, while suggesting small tweaks they may not have realized they can do that will help them get results.
+
+Charts and data stay at overview level by default. When a user chooses to drill deeper, the app should still be selective about what it shows. More data is only useful when it creates a clearer insight, a better decision, or a practical adjustment the user can actually make.
+
+There are some planned "Daily Insights" and "Smart Swap" features, if they show up, they are mock UI right now, while I learn the AI backing needed to properly create them.
+
+## Screenshots
+
+### Dashboard page
+
+- A compact, mobile-friendly design with rolling **Seven-Day Nutrition** section with both daily charts and the average over the last 7 days lets the user quickly gain a sense of how they are doing and if it is good to give efforts for special adjustments today. 
+- On mobile screens it takes up half the screen, so that the next section for Habits also appears without scrolling and help the user build their habits.
+- The **Habits** section is next in sequence, and gently encourages the user with to keep up their good work with calendar heatmaps and weekly usage stats. The acts of logging food and weight are so key to making progress; the awareness they bring to your current habits and how much for example snacking or higher calorie foods in your meals account for are priceless.
+  - The small cards MiniAnalyticsCard is a compound component.
+    - They are suited for this case because there are common subcomponents and layout styles to capture, like MiniAnalyticsCard.Title or MiniAnalyticsCard.ChartArea, while allowing choosing subcomponents to compose for different cases, like MiniAnalyticsCard.BottomSummary composing MiniAnalyticsCard.GoDeeperIcon only when it should be interactive and let you click it to go somewhere else.
+- The **Nutrition** section after has mini cards you can use to drill in deeper for that nutrient.
+<br></br>
+<table>
+  <tr>
+    <td><img width="1186" height="945" src="https://github.com/user-attachments/assets/5cce7cf3-c249-47bf-8a06-8b2ad832c64e" /></td>
+  </tr>
+</table>
+<br></br>
+
+#### Nutrient Analytics
+- Clicking a nutrient mini card from the Dashboard's **Nutrition** section opens an analytics panel, surfacing simple, actionable insights.
+- In the **Total** tab, seeing what recently had the highest contributions to calories or fats especially can drive what to try reducing next.
+- The **Change** tab lets you see both what you've been hard at work reducing, and what you didn't notice you've been increasing.
+  - You get both some congratulations and reinforcement, as well as suggestions about further eating trends to watch.
+<br></br>
+<table>
+  <tr>
+    <td><b>Initial view - Total tab</b></td>
+    <td><b>Change tab</b></td>
+  </tr>
+  <tr>
+    <td><img width="1197" height="850" src="https://github.com/user-attachments/assets/7aa0e2da-0bf5-4b1e-b1f0-7328e146e43f" /></td>
+    <td><img width="487" height="906" alt="Screenshot 2026-09-01 at 11 29 52 AM" src="https://github.com/user-attachments/assets/ff7ab55b-3382-478a-95ac-b1c7f637212a" /></td>
+  </tr>
+</table>
+
+### Daily Logs Page
+- Each day starts with a compact summary of calories eaten, calories remaining, and macros with line graphs to give the user a quick sense of if their day is on the right track, and what they can still afford. As they are working on building new habits, it helps to know this information so they can quickly adjust in the same day.
+- Logging can be done via the floating Plus button, or an Add Item button under the specific meal to quickly reach logging for it, which a user will frequently do.
+- Will revisit this page's design further, it is an older page I have harmonized partially with the new Dashboard's design.
+<br></br>
+
+<table>
+  <tr>
+    <td><img width="1225" height="915" src="https://github.com/user-attachments/assets/0d215884-2055-43fe-9b5c-3973a2aecfb6" /></td>
+  </tr>
+</table>
+
 ## Experimenting with scaling myself with AI development flows - code may not be perfect
 
 - I am changing when and how much I review code, including after first merging lower-risk feature changes
@@ -14,51 +71,6 @@ A calorie tracker application, because I've gotten into healthier eating, joggin
 - Jobhunting is its own full-time effort, and does also mean I cannot devote constant attention to reviewing with a fine-toothed comb the large amounts of code AI agents can write.
 - So I am investing in and testing systems that take a good amount of the review and validation burden off me, while still
   doing some manual verification like Amplitude's recent article on their usage of AI, and examining diffs from time to time for opportunities to simplify and improve the code.
-
-## Frontend Current State
-
-The Overview (Dashboard) page and Logs pages load data and let you add new food entries if you run the frontend and backend dev servers and sign up a user. 
-
-There are some planned "Daily Insights" and "Smart Swap" features, if they show up, they are mock UI right now, while I learn the AI backing needed to properly create them.
-
-One goal is to show product judgment: take what could easily become dense, data-heavy areas in the Dashboard page, and keep it simple enough to be useful. The target user is not an expert mathematician or nutrition analyst, rather they are people wanting to change themselves, who may need help building new habits, and need to understand what to do next, and what is working or not working. The most important product work is surfacing actions and actionable insights that help them keep momentum with new habits, while suggesting small tweaks they may not have realized they can do that will help them get results.
-
-Charts and data stay at overview level by default. When a user chooses to drill deeper, the app should still be selective about what it shows. More data is only useful when it creates a clearer insight, a better decision, or a practical adjustment the user can actually make.
-
-### Screenshots
-
-#### Dashboard page
-
-Initial page:
-<br></br>
-<img width="1186" height="945" src="https://github.com/user-attachments/assets/5cce7cf3-c249-47bf-8a06-8b2ad832c64e" />
-<br></br>
-- A compact, rolling **Seven-Day Nutrition** section with both daily charts and the average over the last 7 days lets the user quickly gain a sense of how they are doing and if it is good to give efforts for special adjustments today. 
-- On mobile screens it takes up half the screen, so that the next section for Habits also appears without scrolling and help the user build their habits.
-- The **Habits** section is next in sequence, and gently encourages the user with to keep up their good work with calendar heatmaps and weekly usage stats. The acts of logging food and weight are so key to making progress; the awareness they bring to your current habits and how much for example snacking or higher calorie foods in your meals account for are priceless.
-  - The small cards MiniAnalyticsCard is a compound component, they are suited for this case because there are common subcomponents and layout styles to capture, like MiniAnalyticsCard.Title or MiniAnalyticsCard.ChartArea, while allowing choosing subcomponents to compose for different cases, like MiniAnalyticsCard.BottomSummary composing MiniAnalyticsCard.GoDeeperIcon only the mini card is interactive and lets you click it to go somewhere else.
-- The **Nutrition** section after has mini cards you can use to drill in deeper for that nutrient.
-
-##### Nutrient Analytics
-- Clicking a nutrient mini card from the Dashboard's **Nutrition** section opens an analytics panel, surfacing simple, actionable insights.
-- In the **Total** tab, seeing what recently had the highest contributions to calories or fats especially can drive what to try reducing next.
-- The **Change** tab lets you see both what you've been hard at work reducing, and what you didn't notice you've been increasing.
-  - You get both some congratulations and reinforcement, as well as suggestions about further eating trends to watch.
-<br></br>
-<div style="column-gap: 20px">
-  <img width="1197" height="850" src="https://github.com/user-attachments/assets/7aa0e2da-0bf5-4b1e-b1f0-7328e146e43f" />
-  <img width="487" height="906" alt="Screenshot 2026-09-01 at 11 29 52 AM" src="https://github.com/user-attachments/assets/ff7ab55b-3382-478a-95ac-b1c7f637212a" />
-</div>
-
-
-#### Daily Logs Page
-- Will revisit this page's design further, it is an older page I have harmonized partially with the new Dashboard's design.
-- Each day starts with a compact summary of calories eaten, calories remaining, and macros with line graphs to give the user a quick sense of if their day is on the right track, and what they can still afford. As they are working on building new habits, it helps to know this information so they can quickly adjust in the same day.
-- Logging can be done via the floating Plus button, or an Add Item button under the specific meal to quickly reach logging for it, which a user will frequently do.
-<br></br>
-<img width="1225" height="915" src="https://github.com/user-attachments/assets/0d215884-2055-43fe-9b5c-3973a2aecfb6" />
-
-
 
 # Tech Stack
 
