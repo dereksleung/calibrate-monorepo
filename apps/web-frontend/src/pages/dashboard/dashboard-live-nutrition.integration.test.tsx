@@ -8,7 +8,6 @@ import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { dayLogRangeQueryKey, dayLogRangeQueryKeyPrefix } from "@calibrate/api-client";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -161,6 +160,16 @@ function dayLogRangeResponse(url: string, calories: number): DayLogRangeResponse
   };
 }
 
+function dayLogSyncResponse(calories: number) {
+  const range = getRollingSevenDayDateRange();
+  return {
+    slots: dayLogRangeResponse(
+      `/api/v1/daylogs?startDate=${range.startDate}&endDate=${range.endDate}`,
+      calories,
+    ).days.map(({ date, dayLog }) => ({ date, dayLog, versionNumber: dayLog ? 1 : null })),
+  };
+}
+
 function seedDashboardCache(
   queryClient: QueryClient,
   calories: number,
@@ -210,11 +219,9 @@ afterEach(() => {
 
 describe("dashboard live nutrition", () => {
   it("requests the inclusive seven-day range and renders selected Dashboard V2 values", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-      const url = getFetchUrl(input);
-
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => {
       return Promise.resolve(
-        new Response(JSON.stringify(dayLogRangeResponse(url, 425)), {
+        new Response(JSON.stringify(dayLogSyncResponse(425)), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
@@ -231,22 +238,15 @@ describe("dashboard live nutrition", () => {
     expect(screen.queryByRole("heading", { name: "Daily Insights" })).toBeNull();
 
     const requestUrl = new URL(getFetchUrl(fetchMock.mock.calls[0][0]));
-    const startDate = requestUrl.searchParams.get("startDate");
-    const endDate = requestUrl.searchParams.get("endDate");
-
-    expect(requestUrl.pathname).toBe("/api/v1/daylogs");
-    expect(startDate).toBeTruthy();
-    expect(endDate).toBeTruthy();
-    expect(dateRange(startDate!, endDate!)).toHaveLength(7);
+    expect(requestUrl.pathname).toBe("/api/v1/daylogs:sync");
+    const requestBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
+    expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(7);
 
     await waitFor(() => {
-      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, endDate!))).toEqual(
-        expect.objectContaining({ date: endDate }),
+      expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, requestBody.endDate))).toEqual(
+        expect.objectContaining({ date: requestBody.endDate }),
       );
     });
-    expect(queryClient.getQueryData(dayLogRangeQueryKey(accountId, getRollingSevenDayDateRange()))).toEqual(
-      expect.objectContaining({ startDate, endDate }),
-    );
   });
 
   it("renders a complete fresh cache without requesting the range", async () => {
@@ -318,9 +318,9 @@ describe("dashboard live nutrition", () => {
       .mockResolvedValueOnce(
         new Response("server error", { status: 500, statusText: "Internal Server Error" }),
       );
-    fetchMock.mockImplementation((input: RequestInfo | URL) =>
+    fetchMock.mockImplementation(() =>
       Promise.resolve(
-        new Response(JSON.stringify(dayLogRangeResponse(getFetchUrl(input), 425)), {
+        new Response(JSON.stringify(dayLogSyncResponse(425)), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
@@ -340,11 +340,11 @@ describe("dashboard live nutrition", () => {
 
   it("updates the active dashboard range after a day-log range invalidation", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
-    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+    fetchMock.mockImplementation(() => {
       const calories = fetchMock.mock.calls.length === 1 ? 100 : 250;
 
       return Promise.resolve(
-        new Response(JSON.stringify(dayLogRangeResponse(getFetchUrl(input), calories)), {
+        new Response(JSON.stringify(dayLogSyncResponse(calories)), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
@@ -356,7 +356,7 @@ describe("dashboard live nutrition", () => {
     expect(await screen.findByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("100")).toBeTruthy();
 
-    await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
+    await queryClient.invalidateQueries({ queryKey: ["dayLogs", accountId, "sync"] });
 
     await waitFor(() => {
       expect(within(screen.getByRole("region", { name: "Calories" })).getByText("250")).toBeTruthy();
@@ -364,9 +364,9 @@ describe("dashboard live nutrition", () => {
   });
 
   it("opens the selected Nutrition card drawer", async () => {
-    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) =>
+    vi.spyOn(globalThis, "fetch").mockImplementation(() =>
       Promise.resolve(
-        new Response(JSON.stringify(dayLogRangeResponse(getFetchUrl(input), 425)), {
+        new Response(JSON.stringify(dayLogSyncResponse(425)), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),

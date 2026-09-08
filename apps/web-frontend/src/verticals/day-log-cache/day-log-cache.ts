@@ -1,8 +1,9 @@
-import type { DehydratedState } from "@tanstack/react-query";
+import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
 import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/api-client";
 import {
   DayLogResponseSchema,
+  type DayLogSyncResponse,
   type DayLogRangeResponse,
   type DayLogResponse,
 } from "@calibrate/api-contracts";
@@ -50,6 +51,32 @@ export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accou
 
 export const dayLogSlotQueryKey = createDayLogSlotQueryKey;
 
+/** Runtime-only sync manifest data; slot payloads themselves remain raw API responses. */
+export const dayLogSlotVersionQueryKey = (accountId: string, date: string) =>
+  ["dayLogs", accountId, "slotVersion", date] as const;
+
+export const dayLogSyncQueryKey = (accountId: string, range: { startDate: string; endDate: string }) =>
+  ["dayLogs", accountId, "sync", range.startDate, range.endDate] as const;
+
+export function getDayLogSyncManifest(
+  queryClient: QueryClient,
+  accountId: string,
+  range: { startDate: string; endDate: string },
+): Record<string, number | null> {
+  const known: Record<string, number | null> = {};
+  for (const date of dateRange(range.startDate, range.endDate)) {
+      const data = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
+      if (data === undefined) continue;
+      if (data === null) {
+        known[date] = null;
+        continue;
+      }
+      const version = queryClient.getQueryData<number>(dayLogSlotVersionQueryKey(accountId, date));
+      if (version !== undefined) known[date] = version;
+  }
+  return known;
+}
+
 export function dateRange(startDate: string, endDate: string): string[] {
   const dates: string[] = [];
   const cursor = new Date(`${startDate}T00:00:00.000Z`);
@@ -92,6 +119,44 @@ export function doesDashboardRangeNeedValidation(slots: readonly DayLogSlotSnaps
         data === undefined || isInvalidated || now - dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS,
     )
   );
+}
+
+export function doesDayLogSlotNeedValidation(slot: DayLogSlotSnapshot, now: number): boolean {
+  return (
+    slot.data === undefined ||
+    slot.isInvalidated ||
+    now - slot.dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS
+  );
+}
+
+/**
+ * Applies only an accepted sync response. TanStack's query state remains the
+ * single source for a slot's validation timestamp and invalidation flag.
+ */
+export function applyDayLogSyncResult(
+  queryClient: QueryClient,
+  accountId: string,
+  range: { startDate: string; endDate: string },
+  response: DayLogSyncResponse | null,
+  dataUpdatedAt: number,
+): void {
+  const returnedByDate = new Map(response?.slots.map((slot) => [slot.date, slot]));
+
+  for (const date of dateRange(range.startDate, range.endDate)) {
+    const returned = returnedByDate.get(date);
+    const current = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
+    const next = returned?.dayLog ?? current;
+
+    if (next === undefined) continue;
+
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), next, { updatedAt: dataUpdatedAt });
+
+    if (returned) {
+      queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, date), returned.versionNumber, {
+        updatedAt: dataUpdatedAt,
+      });
+    }
+  }
 }
 
 function isIsoDate(value: unknown): value is string {
