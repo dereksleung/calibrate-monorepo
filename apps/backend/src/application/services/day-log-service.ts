@@ -2,12 +2,8 @@ import { DayLog } from "@domain/entities/day-log.js";
 import { FoodEntry, MealNameEnumType } from "@domain/entities/food-entry.js";
 import { BusinessLogicError } from "@domain/errors/business-logic-error.js";
 
-import { IDayLogRepository, type AddFoodEntryResult } from "../ports/day-log-repository.js";
-import {
-  type DayLogSyncQueryInput,
-  type DayLogSyncQueryResult,
-  type IDayLogSyncQuery,
-} from "../ports/day-log-sync-query.js";
+import { IDayLogRepository } from "../ports/day-log-repository.js";
+import { type IDayLogSyncQuery } from "../ports/day-log-sync-query.js";
 import { IUserRepository } from "../ports/user-repository.js";
 
 export interface GetDayLogInput {
@@ -20,6 +16,25 @@ export interface GetDayLogRangeInput {
   startDate: string;
   endDate: string;
 }
+
+export type KnownDayLogRevision = number | null;
+
+export interface SyncLogsForDateRangeInput {
+  userId: string;
+  startDate: string;
+  endDate: string;
+  known: Readonly<Record<string, KnownDayLogRevision>>;
+}
+
+export interface ChangedDayLogSlot {
+  date: string;
+  versionNumber: number | null;
+  dayLog: DayLog | null;
+}
+
+export type SyncLogsForDateRangeResult =
+  | { status: "unchanged" }
+  | { status: "changed"; slots: ChangedDayLogSlot[] };
 
 export interface AddFoodEntryInput {
   userId: string;
@@ -49,10 +64,15 @@ export interface AddFoodEntryInput {
   };
 }
 
+export interface AddFoodEntryResult {
+  foodEntry: FoodEntry;
+  dayLogVersionNumber: number;
+}
+
 export interface IDayLogService {
   getLogForDay({ userId, date }: GetDayLogInput): Promise<DayLog | null>;
   getLogsForDateRange({ userId, startDate, endDate }: GetDayLogRangeInput): Promise<DayLog[]>;
-  syncLogsForDateRange(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult>;
+  syncLogsForDateRange(input: SyncLogsForDateRangeInput): Promise<SyncLogsForDateRangeResult>;
   addFoodEntry({ userId, date, foodEntry }: AddFoodEntryInput): Promise<AddFoodEntryResult>;
 }
 
@@ -78,8 +98,21 @@ export class DayLogServiceImpl implements IDayLogService {
     return this.dayLogRepository.findLogsByDateRangeAndUserId({ userId, startDate, endDate });
   }
 
-  async syncLogsForDateRange(input: DayLogSyncQueryInput): Promise<DayLogSyncQueryResult> {
-    return this.dayLogSyncQuery.getChangesForRange(input);
+  async syncLogsForDateRange(input: SyncLogsForDateRangeInput): Promise<SyncLogsForDateRangeResult> {
+    const result = await this.dayLogSyncQuery.getChangesForRange(input);
+
+    if (result.status === "unchanged") {
+      return { status: "unchanged" };
+    }
+
+    return {
+      status: "changed",
+      slots: result.slots.map((slot) => ({
+        date: slot.date,
+        versionNumber: slot.versionNumber,
+        dayLog: slot.dayLog,
+      })),
+    };
   }
 
   async addFoodEntry({ userId, date, foodEntry }: AddFoodEntryInput): Promise<AddFoodEntryResult> {
@@ -109,6 +142,11 @@ export class DayLogServiceImpl implements IDayLogService {
 
     // Apply domain aggregate's business rules - each day log has a maximum of 25 food entries per meal
     const entry = dayLog.addFoodEntry(newFoodEntry);
-    return this.dayLogRepository.addFoodEntry(dayLog.id, entry);
+    const persisted = await this.dayLogRepository.addFoodEntry(dayLog.id, entry);
+
+    return {
+      foodEntry: persisted.foodEntry,
+      dayLogVersionNumber: persisted.dayLogVersionNumber,
+    };
   }
 }
