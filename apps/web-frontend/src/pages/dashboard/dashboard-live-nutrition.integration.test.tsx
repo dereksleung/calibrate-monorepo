@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import type { DayLogRangeResponse } from "@calibrate/api-contracts";
-import { invalidateDayLogQueries } from "@calibrate/api-client";
 
 import { getRollingSevenDayDateRange } from "#/shared/date/local-date-range.ts";
 import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
@@ -9,6 +8,7 @@ import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
+import { invalidateDayLogQueries } from "@calibrate/api-client";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";

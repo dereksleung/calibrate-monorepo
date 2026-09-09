@@ -2,6 +2,14 @@ import { apiTransport } from "#/shared/api/api-client.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
+import {
+  applyDayLogSyncResult,
+  dayLogSlotQueryKey,
+  dayLogSyncQueryKey,
+  doesDayLogSlotNeedValidation,
+  getDayLogSyncManifest,
+  type DayLogSlotResult,
+} from "#/verticals/day-log-cache/day-log-cache.ts";
 import { syncDayLogs } from "@calibrate/api-client";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -16,14 +24,6 @@ import {
   getTodayDateString,
   normalizeDayLogForRender,
 } from "../log-page-helpers.ts";
-import {
-  applyDayLogSyncResult,
-  dayLogSlotQueryKey,
-  dayLogSyncQueryKey,
-  doesDayLogSlotNeedValidation,
-  getDayLogSyncManifest,
-  type DayLogSlotResult,
-} from "#/verticals/day-log-cache/day-log-cache.ts";
 import { DailySummary } from "./components/DailySummary.tsx";
 import { DateStepper } from "./components/DateStepper.tsx";
 import { MealSection } from "./components/MealSection.tsx";
@@ -100,13 +100,15 @@ export function Logs({ selectedDate }: LogsProps) {
     date: selectedDate,
     data: slotQuery.data as DayLogSlotResult,
     dataUpdatedAt: slotQuery.dataUpdatedAt,
-    isInvalidated: queryClient.getQueryState(dayLogSlotQueryKey(accountId, selectedDate))?.isInvalidated ?? false,
+    isInvalidated:
+      queryClient.getQueryState(dayLogSlotQueryKey(accountId, selectedDate))?.isInvalidated ?? false,
   };
   const range = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
   const needsValidation = !isUpcoming && doesDayLogSlotNeedValidation(slot, Date.now());
   const validation = useQuery({
     queryKey: dayLogSyncQueryKey(accountId, range),
-    queryFn: () => syncDayLogs(apiTransport, { ...range, known: getDayLogSyncManifest(queryClient, accountId, range) }),
+    queryFn: () =>
+      syncDayLogs(apiTransport, { ...range, known: getDayLogSyncManifest(queryClient, accountId, range) }),
     enabled: needsValidation,
     staleTime: needsValidation ? 0 : Infinity,
   });

@@ -70,8 +70,7 @@ function DashboardV2Content() {
   }, [accountId, queryClient, validation.data, validation.dataUpdatedAt, validation.isFetchedAfterMount]);
 
   const cachedViewModel = cached.loadedDateCount > 0 ? buildDashboardV2ViewModel(cached.response) : undefined;
-  const viewModel =
-    cachedViewModel;
+  const viewModel = cachedViewModel;
 
   return (
     <DashboardV2Page

@@ -106,10 +106,15 @@ describe("logs live day log", () => {
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
       if (url.includes("/daylogs:sync")) {
         return Promise.resolve(
-          new Response(JSON.stringify({ slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: 1, dayLog }] }), {
-            status: 200,
-            headers: { "content-type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: 1, dayLog }],
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          ),
         );
       }
 
@@ -130,10 +135,15 @@ describe("logs live day log", () => {
       if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
       if (url.includes("/daylogs:sync")) {
         return Promise.resolve(
-          new Response(JSON.stringify({ slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: null, dayLog: null }] }), {
-            status: 200,
-            headers: { "content-type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: null, dayLog: null }],
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          ),
         );
       }
 
@@ -185,15 +195,23 @@ describe("logs live day log", () => {
       if (url.includes("/daylogs:sync") && JSON.parse(init!.body as string).endDate === "2026-01-01") {
         return Promise.resolve(
           new Response(
-            JSON.stringify({ slots: [{ date: "2026-01-01", versionNumber: 1, dayLog: {
-              id: "759ded89-e38b-4975-972b-89550ed06732",
-              date: "2026-01-01",
-              breakfast: [heavyEntry],
-              lunch: [],
-              dinner: [],
-              snacks: [],
-              weight: null,
-            }}] }),
+            JSON.stringify({
+              slots: [
+                {
+                  date: "2026-01-01",
+                  versionNumber: 1,
+                  dayLog: {
+                    id: "759ded89-e38b-4975-972b-89550ed06732",
+                    date: "2026-01-01",
+                    breakfast: [heavyEntry],
+                    lunch: [],
+                    dinner: [],
+                    snacks: [],
+                    weight: null,
+                  },
+                },
+              ],
+            }),
             { status: 200, headers: { "content-type": "application/json" } },
           ),
         );
@@ -202,15 +220,23 @@ describe("logs live day log", () => {
       if (url.includes("/daylogs:sync") && JSON.parse(init!.body as string).endDate === "2026-01-02") {
         return Promise.resolve(
           new Response(
-            JSON.stringify({ slots: [{ date: "2026-01-02", versionNumber: 1, dayLog: {
-              id: "67ce15d2-9580-4e20-852c-a041f6e167a5",
-              date: "2026-01-02",
-              breakfast: [lightEntry],
-              lunch: [],
-              dinner: [],
-              snacks: [],
-              weight: null,
-            }}] }),
+            JSON.stringify({
+              slots: [
+                {
+                  date: "2026-01-02",
+                  versionNumber: 1,
+                  dayLog: {
+                    id: "67ce15d2-9580-4e20-852c-a041f6e167a5",
+                    date: "2026-01-02",
+                    breakfast: [lightEntry],
+                    lunch: [],
+                    dinner: [],
+                    snacks: [],
+                    weight: null,
+                  },
+                },
+              ],
+            }),
             { status: 200, headers: { "content-type": "application/json" } },
           ),
         );
