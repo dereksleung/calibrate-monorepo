@@ -78,6 +78,19 @@ describe("prepareDemoRuntime", () => {
     expect(getBackendListenHost()).toBe("127.0.0.1");
   });
 
+  it("replaces encrypted normal-runtime limits with demo-safe defaults", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "http://localhost:3000";
+    process.env.EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT = "encrypted-normal-runtime-value";
+    process.env.TRUST_PROXY_HOPS = "encrypted-normal-runtime-value";
+
+    await prepareDemoRuntime(directory);
+    await expect(import("../container.js")).resolves.toHaveProperty("Container");
+  });
+
   it("is an explicit selection rather than an implicit fallback", async () => {
     delete process.env.CALIBRATE_DEMO;
 
