@@ -212,6 +212,35 @@ describe("Header", () => {
       });
     });
 
+    it("revokes the current server session when recovering an earlier logout cleanup", async () => {
+      mockBeginDayLogCacheLogout.mockResolvedValueOnce({
+        accountId: authenticatedSession.user.id,
+        operationId: "earlier-logout-operation",
+        phase: "cleanup-pending",
+        targetGeneration: 2,
+      });
+      mockCompleteDayLogCacheLogout.mockResolvedValueOnce({
+        serverLogoutConfirmed: true,
+        fenceCommitted: true,
+        cleanupPending: false,
+        revocation: { accountId: authenticatedSession.user.id, generation: 2 },
+      });
+      const { queryClient, router } = await renderHeader("/", { authenticated: true });
+
+      fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+
+      await waitFor(() => {
+        expect(mockDeleteCurrentSession).toHaveBeenCalledTimes(1);
+        expect(mockCompleteDayLogCacheLogout).toHaveBeenCalledWith(
+          authenticatedSession.user.id,
+          "earlier-logout-operation",
+        );
+        expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeUndefined();
+        expect(router.state.location.pathname).toBe("/signup-login");
+      });
+    });
+
     it("uses the shared content frame for inner header content", async () => {
       await renderHeader();
 

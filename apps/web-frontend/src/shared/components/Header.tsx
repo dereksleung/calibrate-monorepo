@@ -96,18 +96,18 @@ export default function Header() {
         setLogoutError("Unable to prepare secure logout. Please try again.");
         return;
       }
-      if (record.phase === "logout-pending") {
-        try {
-          await deleteCurrentSession(apiTransport);
-        } catch (error) {
-          if (error instanceof ApiError) {
+      try {
+        await deleteCurrentSession(apiTransport);
+      } catch (error) {
+        if (error instanceof ApiError) {
+          if (record.phase === "logout-pending") {
             await clearPendingDayLogCacheLogout(accountId, record.operationId);
-            setLogoutError("Unable to log out. Please try again.");
-          } else {
-            setLogoutError("We couldn't confirm logout. Please try again.");
           }
-          return;
+          setLogoutError("Unable to log out. Please try again.");
+        } else {
+          setLogoutError("We couldn't confirm logout. Please try again.");
         }
+        return;
       }
       const completion = await completeDayLogCacheLogout(accountId, record.operationId);
       if (!completion.fenceCommitted) {

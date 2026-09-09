@@ -166,6 +166,14 @@ function isCacheBlockedByLogoutRecord(value: unknown, accountId: string): boolea
   return value.phase !== "resolved";
 }
 
+function isLeaseRevokedByLogoutRecord(value: unknown, accountId: string): boolean {
+  if (value === undefined) return false;
+  if (!isLogoutRecord(value) || value.accountId !== accountId) {
+    throw new Error("IndexedDB cache logout record is corrupt");
+  }
+  return value.phase !== "logout-pending" && value.phase !== "resolved";
+}
+
 function readCurrentConfirmedAccount(value: unknown): string | undefined {
   if (value === undefined) return undefined;
   if (isAccountId(value)) return value;
@@ -246,7 +254,10 @@ async function confirmDurableAccount(
 
     const lifecycleKeys = await requestResult(lifecycle.getAllKeys());
     const accountIds = lifecycleKeys.filter(
-      (key): key is string => key !== LAST_CONFIRMED_ACCOUNT_KEY && isAccountId(key),
+      (key): key is string =>
+        isAccountId(key) &&
+        key !== LAST_CONFIRMED_ACCOUNT_KEY &&
+        !key.startsWith(LOGOUT_RECORD_KEY_PREFIX),
     );
     const storedGenerations = await Promise.all(
       accountIds.map(async (storedAccountId) => ({
@@ -316,14 +327,16 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
           const completed = transactionComplete(transaction);
           const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-          const [storedGeneration, storedConfirmedAccount] = await Promise.all([
+          const [storedGeneration, storedConfirmedAccount, storedLogoutRecord] = await Promise.all([
             requestResult(lifecycle.get(accountId)),
             requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+            requestResult(lifecycle.get(logoutRecordKey(accountId))),
           ]);
           await completed;
           return (
             storedGeneration === generation &&
-            readCurrentConfirmedAccount(storedConfirmedAccount) === accountId
+            readCurrentConfirmedAccount(storedConfirmedAccount) === accountId &&
+            !isLeaseRevokedByLogoutRecord(storedLogoutRecord, accountId)
           );
         });
       } catch {
