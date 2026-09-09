@@ -5,17 +5,17 @@ import {
   type CreateFoodEntryRequest,
   type FoodEntryResponse,
 } from "@calibrate/api-contracts";
-import {
-  type QueryClient,
-  type UseMutationOptions,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { ApiTransport } from "../transport.js";
 
 import { dayLogRangeQueryKeyPrefix } from "./get-day-log-range.js";
 import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
+
+type DayLogQueryInvalidator = {
+  invalidateQueries: (filters: { queryKey: readonly unknown[] }) => Promise<void>;
+  resetQueries: (filters: { queryKey: readonly unknown[] }) => Promise<void>;
+};
 
 export function saveFoodEntry(
   transport: ApiTransport,
@@ -40,7 +40,7 @@ export function getSaveFoodEntryMutationOptions(transport: ApiTransport, date: s
 }
 
 export async function invalidateDayLogQueries(
-  queryClient: Pick<QueryClient, "invalidateQueries" | "resetQueries">,
+  queryClient: DayLogQueryInvalidator,
   accountId: string,
   date: string,
 ): Promise<void> {

@@ -51,7 +51,7 @@ export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accou
 
 export const dayLogSlotQueryKey = createDayLogSlotQueryKey;
 
-/** Runtime-only sync manifest data; slot payloads themselves remain raw API responses. */
+/** Sync manifest metadata is stored separately from raw API-response slot payloads. */
 export const dayLogSlotVersionQueryKey = (accountId: string, date: string) =>
   ["dayLogs", accountId, "slotVersion", date] as const;
 
@@ -179,7 +179,12 @@ export function isPersistableDayLogQueryData(
   data: unknown,
   accountId: string,
 ): boolean {
-  if (queryKey.length !== 4 || queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || !isIsoDate(queryKey[3])) {
+  if (
+    queryKey.length !== 4 ||
+    queryKey[0] !== "dayLogs" ||
+    queryKey[1] !== accountId ||
+    !isIsoDate(queryKey[3])
+  ) {
     return false;
   }
 

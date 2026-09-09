@@ -128,11 +128,15 @@ describe("Day Log cache model", () => {
     const syncRange = { startDate: "2026-09-02", endDate: "2026-09-03" };
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-02"), null, { updatedAt: now - 100 });
 
-    applyDayLogSyncResult(queryClient, accountId, syncRange, {
-      slots: [
-        { date: "2026-09-03", versionNumber: 7, dayLog: presentSlot("2026-09-03") },
-      ],
-    }, now);
+    applyDayLogSyncResult(
+      queryClient,
+      accountId,
+      syncRange,
+      {
+        slots: [{ date: "2026-09-03", versionNumber: 7, dayLog: presentSlot("2026-09-03") }],
+      },
+      now,
+    );
 
     expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-02"))).toBeNull();
     expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-02"))?.dataUpdatedAt).toBe(now);
@@ -146,9 +150,15 @@ describe("Day Log cache model", () => {
     const queryClient = new QueryClient();
     const syncRange = { startDate: "2026-09-03", endDate: "2026-09-03" };
 
-    applyDayLogSyncResult(queryClient, accountId, syncRange, {
-      slots: [{ date: "2026-09-03", versionNumber: null, dayLog: null }],
-    }, now);
+    applyDayLogSyncResult(
+      queryClient,
+      accountId,
+      syncRange,
+      {
+        slots: [{ date: "2026-09-03", versionNumber: null, dayLog: null }],
+      },
+      now,
+    );
 
     expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toBeNull();
     expect(getDayLogSyncManifest(queryClient, accountId, syncRange)).toEqual({ "2026-09-03": null });
@@ -157,9 +167,15 @@ describe("Day Log cache model", () => {
   it("retains a present slot version through persisted cache restoration", () => {
     const sourceClient = new QueryClient();
     const syncRange = { startDate: "2026-09-03", endDate: "2026-09-03" };
-    applyDayLogSyncResult(sourceClient, accountId, syncRange, {
-      slots: [{ date: "2026-09-03", versionNumber: 7, dayLog: presentSlot("2026-09-03") }],
-    }, now);
+    applyDayLogSyncResult(
+      sourceClient,
+      accountId,
+      syncRange,
+      {
+        slots: [{ date: "2026-09-03", versionNumber: 7, dayLog: presentSlot("2026-09-03") }],
+      },
+      now,
+    );
     const persistedClient = {
       buster: "day-log-cache-v1",
       timestamp: now,
