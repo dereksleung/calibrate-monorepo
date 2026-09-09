@@ -120,21 +120,28 @@ Will use the backend to explore/practice various backend topics.
 
 1. Run `npm ci` in the project root.
 
-The shared local-only runtime configuration for demo tooling can be generated
-or reused with:
+Set up or reuse the local Demo catalog with:
 
 ```bash
 npx nx run @calibrate/local-runtime-config:demo-setup
 ```
 
-This writes the gitignored `.local.env` file in the repository root. It
-generates fresh, non-production Ed25519 and HMAC values without reading
-`.env.keys` or normal Dotenvx configuration; port, origin, and database
-bindings remain separate.
+This writes or reuses the gitignored `.local.env` file in the repository root,
+generating fresh, non-production Ed25519 and HMAC values without reading
+`.env.keys` or normal Dotenvx configuration. It then starts PostgreSQL, applies
+migrations, and idempotently seeds the Foundation Foods Demo catalog. The
+command prints the generated data-quality report path.
 
 Demo setup uses the `calibrate_demo` database on the Calibrate PostgreSQL
 service at `127.0.0.1:5433`. Host port 5433 must be free so Docker Compose can
 start the demo PostgreSQL service.
+
+Normal reruns preserve the Demo database. To intentionally recreate its
+PostgreSQL volume and reseed the catalog while preserving `.local.env`, run:
+
+```bash
+npx nx run @calibrate/local-runtime-config:demo-reset
+```
 
 ## Git worktrees (shared Postgres)
 
