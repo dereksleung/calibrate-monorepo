@@ -344,7 +344,7 @@ function setDistinctiveTodaySlot(snapshot: StoredSnapshot, calories: number): st
   return date;
 }
 
-test("opens private storage only after session confirmation and falls back when IndexedDB is denied", async ({
+test("defers session cache initialization until confirmation and falls back when IndexedDB is denied", async ({
   browser,
   page,
 }) => {
@@ -358,6 +358,14 @@ test("opens private storage only after session confirmation and falls back when 
     }) as IDBFactory["open"];
   });
   await page.goto("signup-login");
+  await expect.poll(() =>
+    page.evaluate(
+      () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
+    ),
+  ).toBeGreaterThan(0);
+  const startupOpenCount = await page.evaluate(
+    () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
+  );
 
   let heldSessionRequest: Route | undefined;
   await page.route("**/api/v1/auth/session", async (route) => {
@@ -373,7 +381,7 @@ test("opens private storage only after session confirmation and falls back when 
     await page.evaluate(
       () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
     ),
-  ).toBe(0);
+  ).toBe(startupOpenCount);
   await heldSessionRequest!.continue();
   await startSession;
   await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
@@ -381,7 +389,7 @@ test("opens private storage only after session confirmation and falls back when 
     await page.evaluate(
       () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
     ),
-  ).toBeGreaterThan(0);
+  ).toBeGreaterThan(startupOpenCount);
 
   const deniedContext = await browser.newContext();
   await deniedContext.addInitScript(() => {
