@@ -255,9 +255,7 @@ async function confirmDurableAccount(
     const lifecycleKeys = await requestResult(lifecycle.getAllKeys());
     const accountIds = lifecycleKeys.filter(
       (key): key is string =>
-        isAccountId(key) &&
-        key !== LAST_CONFIRMED_ACCOUNT_KEY &&
-        !key.startsWith(LOGOUT_RECORD_KEY_PREFIX),
+        isAccountId(key) && key !== LAST_CONFIRMED_ACCOUNT_KEY && !key.startsWith(LOGOUT_RECORD_KEY_PREFIX),
     );
     const storedGenerations = await Promise.all(
       accountIds.map(async (storedAccountId) => ({
