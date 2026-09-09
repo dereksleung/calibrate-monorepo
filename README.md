@@ -132,6 +132,10 @@ generates fresh, non-production Ed25519 and HMAC values without reading
 `.env.keys` or normal Dotenvx configuration; port, origin, and database
 bindings remain separate.
 
+Demo setup uses the `calibrate_demo` database on the Calibrate PostgreSQL
+service at `127.0.0.1:5433`. Leave that port free for Docker Compose to start
+PostgreSQL, or run the compatible Calibrate PostgreSQL container there first.
+
 ## Git worktrees (shared Postgres)
 
 Several linked git worktrees on one machine can share the existing Compose Postgres on `127.0.0.1:5433`. Each checkout gets its own database name, sticky frontend/backend ports, and matching API/CORS/WebAuthn URLs.
