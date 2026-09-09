@@ -70,7 +70,7 @@ describe("saveFoodEntry", () => {
 });
 
 describe("invalidateDayLogQueries", () => {
-  it("removes the confirmed account's cached slot so Dashboard revalidates it", async () => {
+  it("clears the confirmed account's cached slot so Dashboard revalidates it", async () => {
     const queryClient = new QueryClient();
     const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
     const otherAccountId = "95434f9a-da1f-47dd-8175-a26ff42ee11e";

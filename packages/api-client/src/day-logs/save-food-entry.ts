@@ -40,13 +40,13 @@ export function getSaveFoodEntryMutationOptions(transport: ApiTransport, date: s
 }
 
 export async function invalidateDayLogQueries(
-  queryClient: Pick<QueryClient, "invalidateQueries" | "removeQueries">,
+  queryClient: Pick<QueryClient, "invalidateQueries" | "resetQueries">,
   accountId: string,
   date: string,
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: dayLogQueryKey(accountId, date) });
   await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
-  queryClient.removeQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
+  await queryClient.resetQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
 }
 
 /** Portable save hook. It refreshes the selected day and cached dashboard ranges after a successful entry creation. */

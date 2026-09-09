@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import type { DayLogRangeResponse } from "@calibrate/api-contracts";
+import { invalidateDayLogQueries } from "@calibrate/api-client";
 
 import { getRollingSevenDayDateRange } from "#/shared/date/local-date-range.ts";
 import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
@@ -338,7 +339,7 @@ describe("dashboard live nutrition", () => {
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("425")).toBeTruthy();
   });
 
-  it("updates the active dashboard range after a day-log range invalidation", async () => {
+  it("updates the active dashboard after a food entry invalidates the saved date", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     fetchMock.mockImplementation(() => {
       const calories = fetchMock.mock.calls.length === 1 ? 100 : 250;
@@ -356,7 +357,7 @@ describe("dashboard live nutrition", () => {
     expect(await screen.findByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("100")).toBeTruthy();
 
-    await queryClient.invalidateQueries({ queryKey: ["dayLogs", accountId, "sync"] });
+    await invalidateDayLogQueries(queryClient, accountId, getRollingSevenDayDateRange().endDate);
 
     await waitFor(() => {
       expect(within(screen.getByRole("region", { name: "Calories" })).getByText("250")).toBeTruthy();
