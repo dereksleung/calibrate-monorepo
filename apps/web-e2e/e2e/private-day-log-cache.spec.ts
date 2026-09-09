@@ -848,7 +848,7 @@ test("retries a fresh generation transaction without double-advancing after a lo
   );
 });
 
-test("resumes each confirmed logout recovery phase from the sign-in page", async ({ page }) => {
+test("resumes each confirmed logout recovery phase from the sign-in page", async ({ page }, testInfo) => {
   await startLocalTestSession(page);
   const accountId = await getConfirmedAccountId(page);
   await waitForSnapshot(page, accountId);
@@ -882,6 +882,12 @@ test("resumes each confirmed logout recovery phase from the sign-in page", async
   await expect(
     page.getByText(/couldn't complete secure cleanup for your private Day Log data/i),
   ).toBeVisible();
+  if (process.env.CALIBRATE_E2E_CAPTURE_SCREENSHOTS === "1") {
+    await testInfo.attach("logout-recovery-prompt", {
+      body: await page.screenshot(),
+      contentType: "image/png",
+    });
+  }
   await page.getByRole("button", { name: "Retry secure cleanup" }).click();
 
   await expect

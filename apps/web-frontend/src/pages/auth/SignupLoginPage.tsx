@@ -449,7 +449,9 @@ function SignupLoginPage() {
   const retryRecovery = async () => {
     setIsRetryingRecovery(true);
     await Promise.all(
-      recoveryRecords.map(({ accountId, operationId }) => retryDayLogCacheLogoutRecovery(accountId, operationId)),
+      recoveryRecords.map(({ accountId, operationId }) =>
+        retryDayLogCacheLogoutRecovery(accountId, operationId),
+      ),
     );
     await refreshRecoveryRecords();
     setIsRetryingRecovery(false);
@@ -497,7 +499,10 @@ function SignupLoginPage() {
 
         {recoveryRecords.length > 0 ? (
           <WarningBanner>
-            <p>You&apos;re signed out, but we couldn&apos;t complete secure cleanup for your private Day Log data.</p>
+            <p>
+              You&apos;re signed out, but we couldn&apos;t complete secure cleanup for your private Day Log
+              data.
+            </p>
             <Button
               className="mt-md"
               type="button"
