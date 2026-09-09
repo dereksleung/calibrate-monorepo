@@ -133,8 +133,8 @@ generates fresh, non-production Ed25519 and HMAC values without reading
 bindings remain separate.
 
 Demo setup uses the `calibrate_demo` database on the Calibrate PostgreSQL
-service at `127.0.0.1:5433`. Leave that port free for Docker Compose to start
-PostgreSQL, or run the compatible Calibrate PostgreSQL container there first.
+service at `127.0.0.1:5433`. Host port 5433 must be free so Docker Compose can
+start the demo PostgreSQL service.
 
 ## Git worktrees (shared Postgres)
 
