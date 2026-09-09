@@ -64,7 +64,7 @@ export default defineConfig({
         },
         {
           name: "backend",
-          command: "npx nx run backend:e2e-dev",
+          command: "./node_modules/.bin/tsx --tsconfig apps/backend/tsconfig.json apps/backend/src/app.ts",
           url: `${bindings.backendUrl}/health`,
           reuseExistingServer: false,
           timeout: 120_000,
