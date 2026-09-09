@@ -25,6 +25,8 @@ type StoredSnapshot = {
   };
 };
 
+const DAY_LOG_SYNC_ENDPOINT = "**/api/v1/daylogs:sync";
+
 async function startLocalTestSession(page: Page): Promise<void> {
   await page.goto("signup-login");
   await page.getByRole("button", { name: "Start local test session" }).click();
@@ -372,7 +374,7 @@ test("falls back to online queries when IndexedDB storage is corrupt", async ({ 
   await page.goto("signup-login");
   await createCorruptDayLogCacheDatabase(page);
 
-  const dayLogResponse = page.waitForResponse("**/api/v1/daylogs?**");
+  const dayLogResponse = page.waitForResponse(DAY_LOG_SYNC_ENDPOINT);
   await page.getByRole("button", { name: "Start local test session" }).click();
 
   expect((await dayLogResponse).ok()).toBe(true);
@@ -388,7 +390,7 @@ test("falls back to online queries when an existing snapshot has no lifecycle fe
   });
   await deleteLifecycleGeneration(page, accountId);
 
-  await page.route("**/api/v1/daylogs?**", (route) => route.abort());
+  await page.route(DAY_LOG_SYNC_ENDPOINT, (route) => route.abort());
   await page.reload();
 
   await expect(page.getByRole("heading", { name: "Seven-day nutrition" })).toBeVisible();
@@ -404,7 +406,7 @@ test("skips malformed persisted clients and replaces them after an online fetch"
     snapshot.persistedClient.clientState.mutations = "corrupt" as unknown as unknown[];
   });
 
-  const dayLogResponse = page.waitForResponse("**/api/v1/daylogs?**");
+  const dayLogResponse = page.waitForResponse(DAY_LOG_SYNC_ENDPOINT);
   await page.reload();
 
   expect((await dayLogResponse).ok()).toBe(true);
@@ -502,7 +504,7 @@ test("rejects stale restore and persistence after a durable generation mismatch"
   const persistedBeforeFence = await readStoreValue<StoredSnapshot>(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId);
   expect(persistedBeforeFence?.generation).toBe(generation);
 
-  await context.route("**/api/v1/daylogs?**", (route) => route.abort());
+  await context.route(DAY_LOG_SYNC_ENDPOINT, (route) => route.abort());
   const stalePage = await context.newPage();
   await stalePage.goto("");
   await expect(stalePage.getByRole("region", { name: "Calories" })).toContainText("888");
@@ -628,7 +630,7 @@ test("restores only the confirmed account's allow-listed slots before background
     },
   );
 
-  await page.route("**/api/v1/daylogs?**", () => new Promise(() => undefined));
+  await page.route(DAY_LOG_SYNC_ENDPOINT, () => new Promise(() => undefined));
   await page.reload();
 
   await expect(page.getByRole("region", { name: "Calories" })).toContainText("777");
