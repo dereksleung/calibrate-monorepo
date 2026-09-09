@@ -94,6 +94,7 @@ export async function runDemoReset({
 function createDemoEnvironment(configuration: LocalRuntimeConfiguration): NodeJS.ProcessEnv {
   return {
     ...process.env,
+    CALIBRATE_DEMO: "1",
     DB_HOST: DEMO_DATABASE_HOST,
     DB_NAME: DEMO_DATABASE_NAME,
     DB_PASSWORD: configuration.otpHmacKey,

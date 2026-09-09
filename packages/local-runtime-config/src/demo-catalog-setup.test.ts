@@ -65,7 +65,11 @@ describe("demo catalog workspace tooling", () => {
         expect.objectContaining({
           command: "npx",
           args: ["nx", "run", "backend:kysely", "migrate:latest"],
-          environment: expect.objectContaining({ DB_HOST: "127.0.0.1", DB_PORT: "5433" }),
+          environment: expect.objectContaining({
+            CALIBRATE_DEMO: "1",
+            DB_HOST: "127.0.0.1",
+            DB_PORT: "5433",
+          }),
         }),
         expect.objectContaining({
           command: "npx",
