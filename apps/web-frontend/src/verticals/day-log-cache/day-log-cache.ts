@@ -55,6 +55,9 @@ export const dayLogSlotQueryKey = createDayLogSlotQueryKey;
 export const dayLogSlotVersionQueryKey = (accountId: string, date: string) =>
   ["dayLogs", accountId, "slotVersion", date] as const;
 
+export const dayLogSlotVersionQueryKeyPrefix = (accountId: string) =>
+  ["dayLogs", accountId, "slotVersion"] as const;
+
 export const dayLogSyncQueryKey = (accountId: string, range: { startDate: string; endDate: string }) =>
   ["dayLogs", accountId, "sync", range.startDate, range.endDate] as const;
 
@@ -65,14 +68,14 @@ export function getDayLogSyncManifest(
 ): Record<string, number | null> {
   const known: Record<string, number | null> = {};
   for (const date of dateRange(range.startDate, range.endDate)) {
-      const data = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
-      if (data === undefined) continue;
-      if (data === null) {
-        known[date] = null;
-        continue;
-      }
-      const version = queryClient.getQueryData<number>(dayLogSlotVersionQueryKey(accountId, date));
-      if (version !== undefined) known[date] = version;
+    const data = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
+    if (data === undefined) continue;
+    if (data === null) {
+      known[date] = null;
+      continue;
+    }
+    const version = queryClient.getQueryData<number>(dayLogSlotVersionQueryKey(accountId, date));
+    if (version !== undefined) known[date] = version;
   }
   return known;
 }
@@ -145,13 +148,15 @@ export function applyDayLogSyncResult(
   for (const date of dateRange(range.startDate, range.endDate)) {
     const returned = returnedByDate.get(date);
     const current = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
-    const next = returned?.dayLog ?? current;
+    const next = returned ? returned.dayLog : current;
 
     if (next === undefined) continue;
 
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), next, { updatedAt: dataUpdatedAt });
 
-    if (returned) {
+    if (returned?.dayLog === null) {
+      queryClient.removeQueries({ queryKey: dayLogSlotVersionQueryKey(accountId, date) });
+    } else if (returned) {
       queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, date), returned.versionNumber, {
         updatedAt: dataUpdatedAt,
       });
@@ -174,17 +179,12 @@ export function isPersistableDayLogQueryData(
   data: unknown,
   accountId: string,
 ): boolean {
-  if (
-    queryKey.length !== 4 ||
-    queryKey[0] !== "dayLogs" ||
-    queryKey[1] !== accountId ||
-    queryKey[2] !== "slot" ||
-    !isIsoDate(queryKey[3])
-  ) {
+  if (queryKey.length !== 4 || queryKey[0] !== "dayLogs" || queryKey[1] !== accountId || !isIsoDate(queryKey[3])) {
     return false;
   }
 
-  return isCachedDayLog(data, queryKey[3]);
+  if (queryKey[2] === "slot") return isCachedDayLog(data, queryKey[3]);
+  return queryKey[2] === "slotVersion" && typeof data === "number" && Number.isSafeInteger(data) && data > 0;
 }
 
 export function isPersistableDayLogQuery(

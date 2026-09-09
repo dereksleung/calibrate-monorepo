@@ -8,6 +8,7 @@ import {
   DAY_LOG_CACHE_BUSTER,
   DAY_LOG_CACHE_RETENTION_MS,
   dayLogSlotQueryKeyPrefix,
+  dayLogSlotVersionQueryKeyPrefix,
   isPersistableDayLogQueryData,
 } from "./day-log-cache.ts";
 import {
@@ -238,6 +239,7 @@ export function PrivateDayLogCacheProvider({
       // Native timers cannot represent the 30-day retention window reliably;
       // explicit pruning owns retention for this narrowly scoped query family.
       queryClient.setQueryDefaults(dayLogSlotQueryKeyPrefix(accountId), { gcTime: Infinity });
+      queryClient.setQueryDefaults(dayLogSlotVersionQueryKeyPrefix(accountId), { gcTime: Infinity });
       setLease(acquiredLease);
     });
     return () => {
