@@ -18,6 +18,7 @@ import {
 } from "@calibrate/local-runtime-config";
 
 import { getBackendListenHost, prepareDemoRuntime } from "../demo-runtime.js";
+import { loadDatabaseConnectionConfigFromEnvironment } from "../persistence/database-environment.js";
 import { getRuntimeEnvironmentValue } from "../runtime-environment.js";
 import { JoseAccessTokenService } from "../security/jose-access-token-service.js";
 
@@ -64,6 +65,14 @@ describe("prepareDemoRuntime", () => {
     expect(localRuntimeConfigurationToProcessEnv(configuration).JWT_ISSUER).toBe("calibrate-local");
     expect(getRuntimeEnvironmentValue("JWT_ISSUER")).toBe("calibrate-local");
     expect(getRuntimeEnvironmentValue("JWT_PRIVATE_KEY_PEM")).toBe(generated.jwtPrivateKeyPem);
+    expect(loadDatabaseConnectionConfigFromEnvironment()).toEqual({
+      database: "calibrate_demo",
+      host: "127.0.0.1",
+      maxConnections: 10,
+      password: generated.otpHmacKey,
+      port: 5433,
+      user: "calibrate_demo",
+    });
     expect(await tokenService.verify(issued.token)).toEqual({ userId: "demo-user" });
     expect(dotenvGet).not.toHaveBeenCalled();
     expect(getBackendListenHost()).toBe("127.0.0.1");

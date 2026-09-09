@@ -1,4 +1,8 @@
 import {
+  DEMO_DATABASE_HOST,
+  DEMO_DATABASE_NAME,
+  DEMO_DATABASE_PORT,
+  DEMO_DATABASE_USER,
   LOCAL_RUNTIME_ENV_FILE_NAME,
   localRuntimeConfigurationToProcessEnv,
   readLocalRuntimeConfiguration,
@@ -34,7 +38,14 @@ export async function prepareDemoRuntime(directory = process.cwd()): Promise<Loc
     );
   }
 
-  const environment = localRuntimeConfigurationToProcessEnv(configuration);
+  const environment = {
+    ...localRuntimeConfigurationToProcessEnv(configuration),
+    DB_HOST: DEMO_DATABASE_HOST,
+    DB_NAME: DEMO_DATABASE_NAME,
+    DB_PASSWORD: configuration.otpHmacKey,
+    DB_PORT: DEMO_DATABASE_PORT,
+    DB_USER: DEMO_DATABASE_USER,
+  };
   for (const [name, value] of Object.entries(environment)) {
     process.env[name] = value;
   }
