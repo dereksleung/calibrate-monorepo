@@ -101,7 +101,9 @@ describe("SignupLoginPage", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByText(/couldn't complete secure cleanup for your private Day Log data/i)).toBeTruthy();
+    expect(
+      await screen.findByText(/couldn't complete secure cleanup for your private Day Log data/i),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Retry secure cleanup" }));
 
     await waitFor(() =>

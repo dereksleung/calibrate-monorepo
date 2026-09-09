@@ -358,11 +358,11 @@ test("defers session cache initialization until confirmation and falls back when
     }) as IDBFactory["open"];
   });
   await page.goto("signup-login");
-  await expect.poll(() =>
-    page.evaluate(
-      () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
-    ),
-  ).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page.evaluate(() => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount),
+    )
+    .toBeGreaterThan(0);
   const startupOpenCount = await page.evaluate(
     () => (window as unknown as { __dayLogCacheOpenCount: number }).__dayLogCacheOpenCount,
   );
