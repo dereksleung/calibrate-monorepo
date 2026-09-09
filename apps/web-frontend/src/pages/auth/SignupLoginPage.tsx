@@ -22,8 +22,8 @@ import {
   startPasskeyAuthentication,
 } from "#/verticals/auth/browser-passkey-authentication-adapter";
 import {
-  getDayLogCacheCleanupPending,
-  retryDayLogCacheCleanup,
+  getDayLogCacheLogoutRecoveryPending,
+  retryDayLogCacheLogoutRecovery,
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache";
 import {
@@ -435,24 +435,24 @@ function PasskeyLogin() {
 }
 
 function SignupLoginPage() {
-  const [cleanupRecords, setCleanupRecords] = useState<LogoutRecord[]>([]);
-  const [isRetryingCleanup, setIsRetryingCleanup] = useState(false);
+  const [recoveryRecords, setRecoveryRecords] = useState<LogoutRecord[]>([]);
+  const [isRetryingRecovery, setIsRetryingRecovery] = useState(false);
 
-  const refreshCleanupRecords = async () => {
-    setCleanupRecords(await getDayLogCacheCleanupPending());
+  const refreshRecoveryRecords = async () => {
+    setRecoveryRecords(await getDayLogCacheLogoutRecoveryPending());
   };
 
   useEffect(() => {
-    void refreshCleanupRecords();
+    void refreshRecoveryRecords();
   }, []);
 
-  const retryCleanup = async () => {
-    setIsRetryingCleanup(true);
+  const retryRecovery = async () => {
+    setIsRetryingRecovery(true);
     await Promise.all(
-      cleanupRecords.map(({ accountId, operationId }) => retryDayLogCacheCleanup(accountId, operationId)),
+      recoveryRecords.map(({ accountId, operationId }) => retryDayLogCacheLogoutRecovery(accountId, operationId)),
     );
-    await refreshCleanupRecords();
-    setIsRetryingCleanup(false);
+    await refreshRecoveryRecords();
+    setIsRetryingRecovery(false);
   };
 
   return (
@@ -495,16 +495,16 @@ function SignupLoginPage() {
           </p>
         </header>
 
-        {cleanupRecords.length > 0 ? (
+        {recoveryRecords.length > 0 ? (
           <WarningBanner>
-            <p>You&apos;re signed out, but we couldn&apos;t finish clearing your private Day Log data.</p>
+            <p>You&apos;re signed out, but we couldn&apos;t complete secure cleanup for your private Day Log data.</p>
             <Button
               className="mt-md"
               type="button"
-              disabled={isRetryingCleanup}
-              onClick={() => void retryCleanup()}
+              disabled={isRetryingRecovery}
+              onClick={() => void retryRecovery()}
             >
-              {isRetryingCleanup ? "Clearing data…" : "Retry clearing data"}
+              {isRetryingRecovery ? "Recovering cleanup…" : "Retry secure cleanup"}
             </Button>
           </WarningBanner>
         ) : null}

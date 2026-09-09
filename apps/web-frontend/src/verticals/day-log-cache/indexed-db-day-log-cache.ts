@@ -682,16 +682,15 @@ export async function completeDayLogCacheLogout(
   }
 }
 
-export async function retryDayLogCacheCleanup(accountId: string, operationId: string): Promise<boolean> {
-  try {
-    const record = await markCleanupPending(accountId, operationId);
-    return record ? await cleanUpLogoutRecord(accountId, operationId) : false;
-  } catch {
-    return false;
-  }
+export async function retryDayLogCacheLogoutRecovery(
+  accountId: string,
+  operationId: string,
+): Promise<boolean> {
+  const completion = await completeDayLogCacheLogout(accountId, operationId);
+  return completion.fenceCommitted && !completion.cleanupPending;
 }
 
-export async function getDayLogCacheCleanupPending(): Promise<LogoutRecord[]> {
+export async function getDayLogCacheLogoutRecoveryPending(): Promise<LogoutRecord[]> {
   try {
     return await withDatabase(async (database) => {
       const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readonly");
@@ -699,7 +698,12 @@ export async function getDayLogCacheCleanupPending(): Promise<LogoutRecord[]> {
       const values = await requestResult(transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE).getAll());
       await completed;
       return values.filter(
-        (value): value is LogoutRecord => isLogoutRecord(value) && value.phase === "cleanup-pending",
+        (value): value is LogoutRecord =>
+          isLogoutRecord(value) &&
+          value.targetGeneration !== undefined &&
+          (value.phase === "server-logout-confirmed" ||
+            value.phase === "fence-committed" ||
+            value.phase === "cleanup-pending"),
       );
     });
   } catch {

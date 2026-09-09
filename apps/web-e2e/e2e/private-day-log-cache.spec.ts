@@ -146,6 +146,36 @@ async function writeLifecycleGeneration(page: Page, accountId: string, generatio
   );
 }
 
+async function writeLogoutRecord(
+  page: Page,
+  accountId: string,
+  record: { operationId: string; phase: string; targetGeneration: number },
+): Promise<void> {
+  await page.evaluate(
+    ({ accountId, databaseName, lifecycleStore, record }) =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open(databaseName);
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const database = open.result;
+          const transaction = database.transaction(lifecycleStore, "readwrite");
+          transaction.objectStore(lifecycleStore).put({ accountId, ...record }, `__logout__:${accountId}`);
+          transaction.onerror = () => reject(transaction.error);
+          transaction.oncomplete = () => {
+            database.close();
+            resolve();
+          };
+        };
+      }),
+    {
+      accountId,
+      databaseName: DAY_LOG_CACHE_DATABASE_NAME,
+      lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE,
+      record,
+    },
+  );
+}
+
 async function deleteLifecycleGeneration(page: Page, accountId: string): Promise<void> {
   await page.evaluate(
     ({ accountId, databaseName, lifecycleStore }) =>
@@ -808,6 +838,54 @@ test("retries a fresh generation transaction without double-advancing after a lo
   expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(
     (generation ?? 0) + 1,
   );
+});
+
+test("resumes each confirmed logout recovery phase from the sign-in page", async ({ page }) => {
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+  await expect(page).toHaveURL(/signup-login/);
+
+  const fenceCommittedAccountId = "17e6b362-5db1-4f01-a274-152ab1f6b0f0";
+  const cleanupPendingAccountId = "75b1b59a-47d0-49d8-980f-cd648f34dcab";
+  await writeLifecycleGeneration(page, accountId, 1);
+  await writeLifecycleGeneration(page, fenceCommittedAccountId, 2);
+  await writeLifecycleGeneration(page, cleanupPendingAccountId, 3);
+  await writeLogoutRecord(page, accountId, {
+    operationId: "server-confirmed-operation",
+    phase: "server-logout-confirmed",
+    targetGeneration: 2,
+  });
+  await writeLogoutRecord(page, fenceCommittedAccountId, {
+    operationId: "fence-committed-operation",
+    phase: "fence-committed",
+    targetGeneration: 2,
+  });
+  await writeLogoutRecord(page, cleanupPendingAccountId, {
+    operationId: "cleanup-pending-operation",
+    phase: "cleanup-pending",
+    targetGeneration: 3,
+  });
+
+  await page.reload();
+  await expect(
+    page.getByText(/couldn't complete secure cleanup for your private Day Log data/i),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Retry secure cleanup" }).click();
+
+  await expect
+    .poll(async () =>
+      Promise.all(
+        [accountId, fenceCommittedAccountId, cleanupPendingAccountId].map((id) =>
+          readStoreValue(page, DAY_LOG_CACHE_LIFECYCLE_STORE, `__logout__:${id}`),
+        ),
+      ),
+    )
+    .toEqual([undefined, undefined, undefined]);
+  await expect(page.getByRole("button", { name: "Retry secure cleanup" })).toBeHidden();
 });
 
 test("a stale tab that misses broadcast cannot re-persist after revocation and purges on focus", async ({
