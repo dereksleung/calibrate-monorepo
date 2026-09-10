@@ -7,6 +7,7 @@ import {
   applyDayLogSyncResult,
   dateRange,
   getDayLogSyncManifest,
+  getDayLogsWithStalenessState,
   dayLogSlotQueryKey,
   dayLogSlotVersionQueryKey,
   doesDayLogSlotNeedValidation,
@@ -53,6 +54,32 @@ describe("Day Log cache model", () => {
     expect(dayLogSlotQueryKey(accountId, "2026-09-03")).not.toEqual(
       dayLogSlotQueryKey(otherAccountId, "2026-09-03"),
     );
+  });
+
+  it("reads slot data and staleness from query state", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-08-28"), null, { updatedAt: now });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-08-30"), presentSlot("2026-08-30"), {
+      updatedAt: now,
+    });
+    await queryClient.invalidateQueries({ queryKey: dayLogSlotQueryKey(accountId, "2026-08-30") });
+    const invalidatedState = queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-08-30"));
+
+    expect(
+      getDayLogsWithStalenessState(queryClient, accountId, {
+        startDate: "2026-08-28",
+        endDate: "2026-08-30",
+      }),
+    ).toEqual([
+      { date: "2026-08-28", data: null, dataUpdatedAt: now, isInvalidated: false },
+      { date: "2026-08-29", data: undefined, dataUpdatedAt: 0, isInvalidated: false },
+      {
+        date: "2026-08-30",
+        data: presentSlot("2026-08-30"),
+        dataUpdatedAt: invalidatedState!.dataUpdatedAt,
+        isInvalidated: true,
+      },
+    ]);
   });
 
   it("requires validation for any range with unloaded, invalidated, or one-hour-old slots", () => {

@@ -6,7 +6,7 @@ import {
   dayLogSlotQueryKey,
   dayLogSyncQueryKey,
   doesDayLogRangeNeedValidation,
-  getDayLogSlotSnapshots,
+  getDayLogsWithStalenessState,
   getDayLogSyncManifest,
   type DayLogSlotResult,
   type DayLogSnapshot,
@@ -34,6 +34,13 @@ export function useSyncDayLogsForDateRange({
   const cached = useQueries({
     queries: dates.map((date) => ({
       queryKey: dayLogSlotQueryKey(accountId, date),
+      // skipToken subscribes without fetching: first to what a persister
+      // restores under each date slot's queryKey, then to what queryClient.setQueryData in
+      // applyDayLogSyncResult stores under each date slot's queryKey when
+      // the sync endpoint runs. The returned value ultimately helps cut API
+      // traffic by letting a date-range query with any start and end first 
+      // check staleness for every date in that range, no matter how that 
+      // date's data first got populated.
       queryFn: skipToken,
       gcTime: Infinity,
       staleTime: Infinity,
@@ -42,7 +49,7 @@ export function useSyncDayLogsForDateRange({
   });
   const needsValidation = doesDayLogRangeNeedValidation(
     requestedRange,
-    getDayLogSlotSnapshots(queryClient, accountId, requestedRange),
+    getDayLogsWithStalenessState(queryClient, accountId, requestedRange),
     Date.now(),
   );
   const syncResponse = useQuery({
@@ -51,7 +58,7 @@ export function useSyncDayLogsForDateRange({
       if (
         !doesDayLogRangeNeedValidation(
           requestedRange,
-          getDayLogSlotSnapshots(queryClient, accountId, requestedRange),
+          getDayLogsWithStalenessState(queryClient, accountId, requestedRange),
           Date.now(),
         )
       ) {
