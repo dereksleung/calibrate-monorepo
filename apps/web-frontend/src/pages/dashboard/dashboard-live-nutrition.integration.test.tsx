@@ -5,10 +5,10 @@ import type { DayLogRangeResponse } from "@calibrate/api-contracts";
 import { getRollingSevenDayDateRange } from "#/shared/date/local-date-range.ts";
 import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
+  applyDayLogSyncResult,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { invalidateDayLogQueries } from "@calibrate/api-client";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -339,25 +339,24 @@ describe("dashboard live nutrition", () => {
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("425")).toBeTruthy();
   });
 
-  it("updates the active dashboard after a food entry invalidates the saved date", async () => {
+  it("updates the active dashboard when a day-log sync writes its cached slot", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
-    fetchMock.mockImplementation(() => {
-      const calories = fetchMock.mock.calls.length === 1 ? 100 : 250;
-
-      return Promise.resolve(
-        new Response(JSON.stringify(dayLogSyncResponse(calories)), {
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(dayLogSyncResponse(100)), {
           status: 200,
           headers: { "content-type": "application/json" },
         }),
-      );
-    });
+      ),
+    );
 
     const queryClient = renderDashboard();
 
     expect(await screen.findByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("100")).toBeTruthy();
 
-    await invalidateDayLogQueries(queryClient, accountId, getRollingSevenDayDateRange().endDate);
+    const range = getRollingSevenDayDateRange();
+    applyDayLogSyncResult(queryClient, accountId, range, dayLogSyncResponse(250), Date.now());
 
     await waitFor(() => {
       expect(within(screen.getByRole("region", { name: "Calories" })).getByText("250")).toBeTruthy();
