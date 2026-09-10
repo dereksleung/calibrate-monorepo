@@ -23,22 +23,22 @@ export function DashboardV2Container() {
 function DashboardV2Content() {
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
-  const dayLogRange = getRollingSevenDayDateRange();
-  const analyticsRange = getRollingTwentyEightDayDateRange();
+  const initialDataDateRange = getRollingSevenDayDateRange();
+  const deeperAnalyticsDateRange = getRollingTwentyEightDayDateRange();
   const [shouldFetch28DayRange, setShouldFetch28DayRange] = useState(false);
   const { cached, syncResponse } = useSyncDayLogsForDateRange({
     accountId,
-    dateRange: dayLogRange,
+    dateRange: initialDataDateRange,
     enabled: true,
   });
   const { cached: twentyEightDayData } = useSyncDayLogsForDateRange({
     accountId,
-    dateRange: analyticsRange,
+    dateRange: deeperAnalyticsDateRange,
     enabled: shouldFetch28DayRange,
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-        endDate: dayLogRange.endDate,
+        endDate: initialDataDateRange.endDate,
         initialSevenDayData: cached,
         twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
           ? twentyEightDayData
