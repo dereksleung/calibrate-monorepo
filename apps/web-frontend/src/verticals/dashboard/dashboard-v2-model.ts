@@ -96,12 +96,15 @@ const NUTRIENT_CONFIGURATIONS: readonly NutrientConfiguration[] = [
   { metric: "totalCarbohydrateGrams", title: "Carbs", unit: "g" },
 ];
 
-export function buildDashboardV2ViewModel(
-  response: DayLogRangeResponse,
-  analyticsDays: readonly DashboardHistoryDay[] = response.days,
-): DashboardV2ViewModel {
+export function buildDashboardV2ViewModel({
+  initialSevenDayData,
+  twentyEightDayData = initialSevenDayData,
+}: {
+  initialSevenDayData: DayLogRangeResponse;
+  twentyEightDayData?: DayLogRangeResponse;
+}): DashboardV2ViewModel {
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
-    buildSevenDayNutritionRow(response.days, response.endDate, configuration),
+    buildSevenDayNutritionRow(initialSevenDayData.days, initialSevenDayData.endDate, configuration),
   );
   const nutritionCards = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["nutritionCards"]>>(
     (cards, configuration) => {
@@ -123,9 +126,10 @@ export function buildDashboardV2ViewModel(
   const analytics = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["analytics"]>>(
     (models, configuration) => {
       models[configuration.metric] = buildNutrientAnalyticsModel({
-        days: analyticsDays,
-        endDate: response.endDate,
+        contributionDays: twentyEightDayData.days,
+        endDate: initialSevenDayData.endDate,
         metric: configuration.metric,
+        totalDays: initialSevenDayData.days,
       });
 
       return models;
@@ -135,33 +139,35 @@ export function buildDashboardV2ViewModel(
 
   return {
     analytics,
-    habits: buildHabitModels(response),
+    habits: buildHabitModels(initialSevenDayData),
     nutritionCards,
     sevenDayNutrition: { rows },
   };
 }
 
 export function buildNutrientAnalyticsModel({
-  days,
+  contributionDays,
   endDate,
   metric,
+  totalDays,
 }: {
-  days: readonly DashboardHistoryDay[];
+  contributionDays: readonly DashboardHistoryDay[];
   endDate: string;
   metric: DashboardNutritionMetric;
+  totalDays: readonly DashboardHistoryDay[];
 }): NutrientAnalyticsModel {
   const configuration = getNutrientConfiguration(metric);
-  const totalContributions = collectFoodContributions(days, metric);
+  const totalContributions = collectFoodContributions(totalDays, metric);
   const totalAmount = sumContributions(totalContributions);
   const currentWindowStart = offsetDate(endDate, -13);
   const previousWindowStart = offsetDate(endDate, -27);
   const previousWindowEnd = offsetDate(endDate, -14);
   const currentContributions = collectFoodContributions(
-    days.filter(({ date }) => date >= currentWindowStart && date <= endDate),
+    contributionDays.filter(({ date }) => date >= currentWindowStart && date <= endDate),
     metric,
   );
   const previousContributions = collectFoodContributions(
-    days.filter(({ date }) => date >= previousWindowStart && date <= previousWindowEnd),
+    contributionDays.filter(({ date }) => date >= previousWindowStart && date <= previousWindowEnd),
     metric,
   );
 
