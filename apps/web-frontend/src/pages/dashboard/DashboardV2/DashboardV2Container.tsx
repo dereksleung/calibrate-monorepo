@@ -31,20 +31,20 @@ function DashboardV2Content() {
     dateRange: dayLogRange,
     enabled: true,
   });
-  const { cached: analyticsCached } = useSyncDayLogsForDateRange({
+  const { cached: twentyEightDayData } = useSyncDayLogsForDateRange({
     accountId,
     dateRange: analyticsRange,
     enabled: shouldFetch28DayRange,
   });
-
-  const cachedViewModel =
-    cached.loadedDateCount > 0
-      ? buildDashboardV2ViewModel({
-          initialSevenDayData: cached.response,
-          twentyEightDayData: analyticsCached.loadedDateCount > 0 ? analyticsCached.response : undefined,
-        })
-      : undefined;
-  const viewModel = cachedViewModel;
+  const viewModel = cached.some((query) => query.data !== undefined)
+    ? buildDashboardV2ViewModel({
+        endDate: dayLogRange.endDate,
+        initialSevenDayData: cached,
+        twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
+          ? twentyEightDayData
+          : undefined,
+      })
+    : undefined;
 
   return (
     <DashboardV2Page

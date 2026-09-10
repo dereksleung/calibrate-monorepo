@@ -4,12 +4,7 @@ import {
   dayLogSlotQueryKey as createDayLogSlotQueryKey,
   type DayLogSyncRequest,
 } from "@calibrate/api-client";
-import {
-  DayLogResponseSchema,
-  type DayLogSyncResponse,
-  type DayLogRangeResponse,
-  type DayLogResponse,
-} from "@calibrate/api-contracts";
+import { DayLogResponseSchema, type DayLogSyncResponse, type DayLogResponse } from "@calibrate/api-contracts";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
@@ -26,6 +21,9 @@ export type DayLogSlotSnapshot = {
   dataUpdatedAt: number;
   isInvalidated: boolean;
 };
+
+/** Observed slot payload for Dashboard queries. Date is owned here so callers do not zip query keys. */
+export type DayLogSnapshot = Pick<DayLogSlotSnapshot, "date" | "data">;
 
 export type PersistedDayLogClient = {
   buster: string;
@@ -111,28 +109,6 @@ export function getDayLogSlotSnapshots(
       isInvalidated: queryState?.isInvalidated ?? false,
     };
   });
-}
-
-export function composeDayLogRangeFromSlots(
-  range: { startDate: string; endDate: string },
-  slots: readonly DayLogSlotSnapshot[],
-) {
-  const loadedSlots = slots.filter(
-    (slot): slot is DayLogSlotSnapshot & { data: CachedDayLog } => slot.data !== undefined,
-  );
-
-  return {
-    isComplete: loadedSlots.length === dateRange(range.startDate, range.endDate).length,
-    loadedDateCount: loadedSlots.length,
-    response: {
-      ...range,
-      days: loadedSlots.map((slot) => ({
-        date: slot.date,
-        dayLog: slot.data,
-      })),
-    } satisfies DayLogRangeResponse,
-    slots: loadedSlots,
-  };
 }
 
 /**

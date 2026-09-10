@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import {
   DAY_LOG_CACHE_RETENTION_MS,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
-  composeDayLogRangeFromSlots,
   applyDayLogSyncResult,
   dateRange,
   getDayLogSyncManifest,
@@ -54,21 +53,6 @@ describe("Day Log cache model", () => {
     expect(dayLogSlotQueryKey(accountId, "2026-09-03")).not.toEqual(
       dayLogSlotQueryKey(otherAccountId, "2026-09-03"),
     );
-  });
-
-  it("keeps known-empty distinct from an unloaded date when composing observed Dashboard slots", () => {
-    const result = composeDayLogRangeFromSlots(range, [
-      slot("2026-08-28", null),
-      slot("2026-08-29", undefined),
-      slot("2026-08-30", presentSlot("2026-08-30")),
-    ]);
-
-    expect(result.response.days).toEqual([
-      { date: "2026-08-28", dayLog: null },
-      { date: "2026-08-30", dayLog: expect.objectContaining({ date: "2026-08-30" }) },
-    ]);
-    expect(result.loadedDateCount).toBe(2);
-    expect(result.isComplete).toBe(false);
   });
 
   it("requires validation for any range with unloaded, invalidated, or one-hour-old slots", () => {

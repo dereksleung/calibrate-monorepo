@@ -13,11 +13,6 @@ import { dayLogRangeQueryKeyPrefix } from "./get-day-log-range.js";
 import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
 import { dayLogSyncQueryKeyPrefix } from "./sync-day-logs.js";
 
-type DayLogQueryInvalidator = {
-  invalidateQueries: (filters: { queryKey: readonly unknown[] }) => Promise<void>;
-  resetQueries: (filters: { queryKey: readonly unknown[] }) => Promise<void>;
-};
-
 export function saveFoodEntry(
   transport: ApiTransport,
   date: string,
@@ -40,17 +35,6 @@ export function getSaveFoodEntryMutationOptions(transport: ApiTransport, date: s
   };
 }
 
-export async function invalidateDayLogQueries(
-  queryClient: DayLogQueryInvalidator,
-  accountId: string,
-  date: string,
-): Promise<void> {
-  await queryClient.invalidateQueries({ queryKey: dayLogQueryKey(accountId, date) });
-  await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
-  await queryClient.invalidateQueries({ queryKey: dayLogSyncQueryKeyPrefix(accountId) });
-  await queryClient.resetQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
-}
-
 /** Portable save hook. It refreshes the selected day and cached dashboard ranges after a successful entry creation. */
 export function useSaveFoodEntry(
   transport: ApiTransport,
@@ -64,7 +48,10 @@ export function useSaveFoodEntry(
     ...getSaveFoodEntryMutationOptions(transport, date),
     ...mutationOptions,
     onSuccess: async (entry, variables, context, mutation) => {
-      await invalidateDayLogQueries(queryClient, accountId, date);
+      await queryClient.invalidateQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
+      await queryClient.invalidateQueries({ queryKey: dayLogQueryKey(accountId, date) });
+      await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
+      await queryClient.invalidateQueries({ queryKey: dayLogSyncQueryKeyPrefix(accountId) });
       await onSuccess?.(entry, variables, context, mutation);
     },
   });

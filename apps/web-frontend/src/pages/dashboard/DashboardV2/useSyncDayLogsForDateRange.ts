@@ -1,7 +1,6 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import {
   applyDayLogSyncResult,
-  composeDayLogRangeFromSlots,
   dateRange,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
@@ -10,6 +9,7 @@ import {
   getDayLogSlotSnapshots,
   getDayLogSyncManifest,
   type DayLogSlotResult,
+  type DayLogSnapshot,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { syncDayLogs } from "@calibrate/api-client";
 import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,25 +31,20 @@ export function useSyncDayLogsForDateRange({
 }) {
   const queryClient = useQueryClient();
   const dates = enabled ? dateRange(requestedRange.startDate, requestedRange.endDate) : [];
-  const slotQueries = useQueries({
+  const cached = useQueries({
     queries: dates.map((date) => ({
       queryKey: dayLogSlotQueryKey(accountId, date),
       queryFn: skipToken,
       gcTime: Infinity,
       staleTime: Infinity,
+      select: (data: DayLogSlotResult): DayLogSnapshot => ({ date, data }),
     })),
   });
-  const slots = slotQueries.map((query, index) => {
-    const date = dates[index]!;
-    return {
-      date,
-      data: query.data as DayLogSlotResult,
-      dataUpdatedAt: query.dataUpdatedAt,
-      isInvalidated: queryClient.getQueryState(dayLogSlotQueryKey(accountId, date))?.isInvalidated ?? false,
-    };
-  });
-  const cached = composeDayLogRangeFromSlots(requestedRange, slots);
-  const needsValidation = doesDayLogRangeNeedValidation(requestedRange, slots, Date.now());
+  const needsValidation = doesDayLogRangeNeedValidation(
+    requestedRange,
+    getDayLogSlotSnapshots(queryClient, accountId, requestedRange),
+    Date.now(),
+  );
   const syncResponse = useQuery({
     enabled,
     queryFn: async () => {
