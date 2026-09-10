@@ -2,6 +2,7 @@
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
+import { createDayLogSyncResponse } from "@calibrate/api-contracts";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -41,7 +42,7 @@ beforeEach(() => {
     dispatchEvent: vi.fn(),
   }));
 
-  vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+  vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
     const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
     if (url.includes("/auth/session")) {
       return Promise.resolve(
@@ -60,12 +61,23 @@ beforeEach(() => {
         ),
       );
     }
-    if (url.includes("/daylogs/2026-05-18")) {
+    if (url.includes("/daylogs:sync")) {
       return Promise.resolve(
-        new Response(JSON.stringify(dayLogMay18Response), {
+        new Response(
+          JSON.stringify(
+            createDayLogSyncResponse([
+              {
+                date: JSON.parse(init!.body as string).endDate,
+                dayLog: dayLogMay18Response,
+                versionNumber: 1,
+              },
+            ]),
+          ),
+          {
           status: 200,
           headers: { "content-type": "application/json" },
-        }),
+          },
+        ),
       );
     }
 

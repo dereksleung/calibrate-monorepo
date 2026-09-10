@@ -1,6 +1,9 @@
 import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
-import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/api-client";
+import {
+  dayLogSlotQueryKey as createDayLogSlotQueryKey,
+  type DayLogSyncRequest,
+} from "@calibrate/api-client";
 import {
   DayLogResponseSchema,
   type DayLogSyncResponse,
@@ -65,8 +68,8 @@ export function getDayLogSyncManifest(
   queryClient: QueryClient,
   accountId: string,
   range: { startDate: string; endDate: string },
-): Record<string, number | null> {
-  const known: Record<string, number | null> = {};
+): DayLogSyncRequest["known"] {
+  const known: DayLogSyncRequest["known"] = {};
   for (const date of dateRange(range.startDate, range.endDate)) {
     const data = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
     if (data === undefined) continue;
@@ -92,6 +95,24 @@ export function dateRange(startDate: string, endDate: string): string[] {
   return dates;
 }
 
+export function getDayLogSlotSnapshots(
+  queryClient: QueryClient,
+  accountId: string,
+  range: { startDate: string; endDate: string },
+): DayLogSlotSnapshot[] {
+  return dateRange(range.startDate, range.endDate).map((date) => {
+    const queryKey = dayLogSlotQueryKey(accountId, date);
+    const queryState = queryClient.getQueryState(queryKey);
+
+    return {
+      date,
+      data: queryClient.getQueryData<CachedDayLog>(queryKey),
+      dataUpdatedAt: queryState?.dataUpdatedAt ?? 0,
+      isInvalidated: queryState?.isInvalidated ?? false,
+    };
+  });
+}
+
 export function composeDayLogRangeFromSlots(
   range: { startDate: string; endDate: string },
   slots: readonly DayLogSlotSnapshot[],
@@ -114,14 +135,23 @@ export function composeDayLogRangeFromSlots(
   };
 }
 
-export function doesDashboardRangeNeedValidation(slots: readonly DayLogSlotSnapshot[], now: number): boolean {
-  return (
-    slots.length !== 7 ||
-    slots.some(
-      ({ data, dataUpdatedAt, isInvalidated }) =>
-        data === undefined || isInvalidated || now - dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS,
-    )
-  );
+/**
+ * Avoids redundant Day Log API requests when every date in a requested range
+ * already has a fresh cache slot. The Dashboard initially fetches today and
+ * the prior six days; when Logs opens a missing day, it fetches that day and
+ * the preceding six likely next visits.
+ */
+export function doesDayLogRangeNeedValidation(
+  range: { startDate: string; endDate: string },
+  slots: readonly DayLogSlotSnapshot[],
+  now: number,
+): boolean {
+  const slotsByDate = new Map(slots.map((slot) => [slot.date, slot]));
+
+  return dateRange(range.startDate, range.endDate).some((date) => {
+    const slot = slotsByDate.get(date);
+    return slot === undefined || doesDayLogSlotNeedValidation(slot, now);
+  });
 }
 
 export function doesDayLogSlotNeedValidation(slot: DayLogSlotSnapshot, now: number): boolean {

@@ -96,7 +96,10 @@ const NUTRIENT_CONFIGURATIONS: readonly NutrientConfiguration[] = [
   { metric: "totalCarbohydrateGrams", title: "Carbs", unit: "g" },
 ];
 
-export function buildDashboardV2ViewModel(response: DayLogRangeResponse): DashboardV2ViewModel {
+export function buildDashboardV2ViewModel(
+  response: DayLogRangeResponse,
+  analyticsDays: readonly DashboardHistoryDay[] = response.days,
+): DashboardV2ViewModel {
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
     buildSevenDayNutritionRow(response.days, response.endDate, configuration),
   );
@@ -120,7 +123,7 @@ export function buildDashboardV2ViewModel(response: DayLogRangeResponse): Dashbo
   const analytics = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["analytics"]>>(
     (models, configuration) => {
       models[configuration.metric] = buildNutrientAnalyticsModel({
-        days: response.days,
+        days: analyticsDays,
         endDate: response.endDate,
         metric: configuration.metric,
       });

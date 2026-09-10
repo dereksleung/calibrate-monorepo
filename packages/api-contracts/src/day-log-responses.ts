@@ -114,3 +114,7 @@ export const DayLogSyncResponseSchema = z.object({
 });
 
 export type DayLogSyncResponse = z.infer<typeof DayLogSyncResponseSchema>;
+
+export function createDayLogSyncResponse(slots: readonly DayLogSyncSlot[]): DayLogSyncResponse {
+  return { slots: [...slots] };
+}

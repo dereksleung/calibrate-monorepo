@@ -11,6 +11,7 @@ import type { ApiTransport } from "../transport.js";
 
 import { dayLogRangeQueryKeyPrefix } from "./get-day-log-range.js";
 import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
+import { dayLogSyncQueryKeyPrefix } from "./sync-day-logs.js";
 
 type DayLogQueryInvalidator = {
   invalidateQueries: (filters: { queryKey: readonly unknown[] }) => Promise<void>;
@@ -46,6 +47,7 @@ export async function invalidateDayLogQueries(
 ): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: dayLogQueryKey(accountId, date) });
   await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
+  await queryClient.invalidateQueries({ queryKey: dayLogSyncQueryKeyPrefix(accountId) });
   await queryClient.resetQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
 }
 
