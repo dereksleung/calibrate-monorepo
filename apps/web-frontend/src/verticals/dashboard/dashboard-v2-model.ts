@@ -1,3 +1,4 @@
+import type { DayLogSnapshot } from "#/verticals/day-log-cache/day-log-cache.ts";
 import type { DayLogRangeResponse, FoodEntryResponse } from "@calibrate/api-contracts";
 
 import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
@@ -8,6 +9,9 @@ import {
 } from "#/shared/nutrition/nutrition-totals.ts";
 
 export type DashboardHistoryDay = DayLogRangeResponse["days"][number];
+export type CachedDayLogQuery = {
+  data: DayLogSnapshot | undefined;
+};
 export type DashboardNutritionMetric = keyof NutritionTotals;
 
 type NutrientConfiguration = {
@@ -97,14 +101,20 @@ const NUTRIENT_CONFIGURATIONS: readonly NutrientConfiguration[] = [
 ];
 
 export function buildDashboardV2ViewModel({
+  endDate: endDateInput,
   initialSevenDayData,
   twentyEightDayData = initialSevenDayData,
 }: {
-  initialSevenDayData: DayLogRangeResponse;
-  twentyEightDayData?: DayLogRangeResponse;
+  endDate?: string;
+  initialSevenDayData: ReadonlyArray<CachedDayLogQuery>;
+  twentyEightDayData?: ReadonlyArray<CachedDayLogQuery>;
 }): DashboardV2ViewModel {
+  const sevenDayHistory = historyDaysFromSlotQueries(initialSevenDayData);
+  const twentyEightDayHistory = historyDaysFromSlotQueries(twentyEightDayData);
+  const endDate =
+    endDateInput ?? endDateFromSlotQueries(initialSevenDayData) ?? sevenDayHistory.at(-1)?.date ?? "";
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
-    buildSevenDayNutritionRow(initialSevenDayData.days, initialSevenDayData.endDate, configuration),
+    buildSevenDayNutritionRow(sevenDayHistory, endDate, configuration),
   );
   const nutritionCards = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["nutritionCards"]>>(
     (cards, configuration) => {
@@ -126,10 +136,10 @@ export function buildDashboardV2ViewModel({
   const analytics = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["analytics"]>>(
     (models, configuration) => {
       models[configuration.metric] = buildNutrientAnalyticsModel({
-        contributionDays: twentyEightDayData.days,
-        endDate: initialSevenDayData.endDate,
+        contributionDays: twentyEightDayHistory,
+        endDate,
         metric: configuration.metric,
-        totalDays: initialSevenDayData.days,
+        totalDays: sevenDayHistory,
       });
 
       return models;
@@ -139,7 +149,7 @@ export function buildDashboardV2ViewModel({
 
   return {
     analytics,
-    habits: buildHabitModels(initialSevenDayData),
+    habits: buildHabitModels(sevenDayHistory, endDate),
     nutritionCards,
     sevenDayNutrition: { rows },
   };
@@ -215,9 +225,29 @@ function buildSevenDayNutritionRow(
   };
 }
 
-function buildHabitModels(response: DayLogRangeResponse): DashboardV2ViewModel["habits"] {
-  const firstDate = offsetDate(response.endDate, -29);
-  const liveDays = new Map(response.days.map((day) => [day.date, day]));
+function historyDaysFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): DashboardHistoryDay[] {
+  return queries.flatMap((query) => {
+    const snapshot = query.data;
+    if (snapshot === undefined || snapshot.data === undefined) return [];
+    return [{ date: snapshot.date, dayLog: snapshot.data }];
+  });
+}
+
+function endDateFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): string | undefined {
+  for (let index = queries.length - 1; index >= 0; index -= 1) {
+    const date = queries[index]?.data?.date;
+    if (typeof date === "string") return date;
+  }
+
+  return undefined;
+}
+
+function buildHabitModels(
+  days: readonly DashboardHistoryDay[],
+  endDate: string,
+): DashboardV2ViewModel["habits"] {
+  const firstDate = offsetDate(endDate, -29);
+  const liveDays = new Map(days.map((day) => [day.date, day]));
   const historyDates = Array.from({ length: 30 }, (_, index) => offsetDate(firstDate, index));
 
   const buildHabit = (
