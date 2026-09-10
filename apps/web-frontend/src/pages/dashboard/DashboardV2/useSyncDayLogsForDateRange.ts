@@ -38,8 +38,8 @@ export function useSyncDayLogsForDateRange({
       // restores under each date slot's queryKey, then to what queryClient.setQueryData in
       // applyDayLogSyncResult stores under each date slot's queryKey when
       // the sync endpoint runs. The returned value ultimately helps cut API
-      // traffic by letting a date-range query with any start and end first 
-      // check staleness for every date in that range, no matter how that 
+      // traffic by letting a date-range query with any start and end first
+      // check staleness for every date in that range, no matter how that
       // date's data first got populated.
       queryFn: skipToken,
       gcTime: Infinity,
@@ -47,6 +47,8 @@ export function useSyncDayLogsForDateRange({
       select: (data: DayLogSlotResult): DayLogSnapshot => ({ date, data }),
     })),
   });
+  // Errored slot observers still expose cached data. Treat them as unverified:
+  // sync the range, and omit those dates from `known` so the server returns a copy.
   const needsValidation = doesDayLogRangeNeedValidation(
     requestedRange,
     getDayLogsWithStalenessState(queryClient, accountId, requestedRange),

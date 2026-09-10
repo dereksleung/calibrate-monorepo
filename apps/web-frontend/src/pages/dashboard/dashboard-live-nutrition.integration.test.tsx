@@ -8,6 +8,7 @@ import {
   applyDayLogSyncResult,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
+  dayLogSlotVersionQueryKey,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -260,6 +261,30 @@ describe("dashboard live nutrition", () => {
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("315")).toBeTruthy();
     await Promise.resolve();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps errored cached slots on screen and syncs them as unloaded", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => new Promise<Response>(() => undefined));
+    const queryClient = createDashboardQueryClient();
+    seedDashboardCache(queryClient, 210, Date.now());
+    const { endDate } = getRollingSevenDayDateRange();
+    queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, endDate), 7);
+    queryClient
+      .getQueryCache()
+      .find({ queryKey: dayLogSlotQueryKey(accountId, endDate) })
+      ?.setState({
+        error: new Error("slot observer failed"),
+        status: "error",
+      });
+
+    renderDashboard(queryClient);
+
+    expect(within(screen.getByRole("region", { name: "Calories" })).getByText("210")).toBeTruthy();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const requestBody = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
+    expect(requestBody.known[endDate]).toBeUndefined();
   });
 
   it("waits for persistence restoration before creating the range observer", async () => {

@@ -96,12 +96,13 @@ export function Logs({ selectedDate }: LogsProps) {
     staleTime: Infinity,
     gcTime: Infinity,
   });
+  const slotQueryState = queryClient.getQueryState(dayLogSlotQueryKey(accountId, selectedDate));
   const slot = {
     date: selectedDate,
     data: slotQuery.data as DayLogSlotResult,
     dataUpdatedAt: slotQuery.dataUpdatedAt,
-    isInvalidated:
-      queryClient.getQueryState(dayLogSlotQueryKey(accountId, selectedDate))?.isInvalidated ?? false,
+    isError: slotQuery.isError || slotQueryState?.status === "error",
+    isInvalidated: slotQueryState?.isInvalidated ?? false,
   };
   const range = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
   const needsValidation = !isUpcoming && doesDayLogSlotNeedValidation(slot, Date.now());
