@@ -93,18 +93,17 @@ export function dateRange(startDate: string, endDate: string): string[] {
   return dates;
 }
 
-export function getDayLogSlotSnapshots(
+export function getDayLogsWithStalenessState(
   queryClient: QueryClient,
   accountId: string,
   range: { startDate: string; endDate: string },
 ): DayLogSlotSnapshot[] {
   return dateRange(range.startDate, range.endDate).map((date) => {
-    const queryKey = dayLogSlotQueryKey(accountId, date);
-    const queryState = queryClient.getQueryState(queryKey);
+    const queryState = queryClient.getQueryState<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
 
     return {
       date,
-      data: queryClient.getQueryData<CachedDayLog>(queryKey),
+      data: queryState?.data,
       dataUpdatedAt: queryState?.dataUpdatedAt ?? 0,
       isInvalidated: queryState?.isInvalidated ?? false,
     };
