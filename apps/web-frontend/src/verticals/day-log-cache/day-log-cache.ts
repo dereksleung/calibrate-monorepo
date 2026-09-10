@@ -19,6 +19,7 @@ export type DayLogSlotSnapshot = {
   date: string;
   data: DayLogSlotResult;
   dataUpdatedAt: number;
+  isError: boolean;
   isInvalidated: boolean;
 };
 
@@ -69,7 +70,9 @@ export function getDayLogSyncManifest(
 ): DayLogSyncRequest["known"] {
   const known: DayLogSyncRequest["known"] = {};
   for (const date of dateRange(range.startDate, range.endDate)) {
-    const data = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
+    const queryState = queryClient.getQueryState<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
+    if (queryState?.status === "error") continue;
+    const data = queryState?.data;
     if (data === undefined) continue;
     if (data === null) {
       known[date] = null;
@@ -105,6 +108,7 @@ export function getDayLogsWithStalenessState(
       date,
       data: queryState?.data,
       dataUpdatedAt: queryState?.dataUpdatedAt ?? 0,
+      isError: queryState?.status === "error",
       isInvalidated: queryState?.isInvalidated ?? false,
     };
   });
@@ -112,7 +116,7 @@ export function getDayLogsWithStalenessState(
 
 /**
  * Avoids redundant Day Log API requests when every date in a requested range
- * already has a fresh cache slot. The Dashboard initially fetches today and
+ * already has a fresh, trusted cache slot. The Dashboard initially fetches today and
  * the prior six days; when Logs opens a missing day, it fetches that day and
  * the preceding six likely next visits.
  */
@@ -132,6 +136,7 @@ export function doesDayLogRangeNeedValidation(
 export function doesDayLogSlotNeedValidation(slot: DayLogSlotSnapshot, now: number): boolean {
   return (
     slot.data === undefined ||
+    slot.isError ||
     slot.isInvalidated ||
     now - slot.dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS
   );

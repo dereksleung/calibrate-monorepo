@@ -43,9 +43,20 @@ function slot(
     date,
     data,
     dataUpdatedAt: now,
+    isError: false,
     isInvalidated: false,
     ...overrides,
   };
+}
+
+function markSlotQueryError(queryClient: QueryClient, date: string) {
+  queryClient
+    .getQueryCache()
+    .find({ queryKey: dayLogSlotQueryKey(accountId, date) })
+    ?.setState({
+      error: new Error("slot observer failed"),
+      status: "error",
+    });
 }
 
 describe("Day Log cache model", () => {
@@ -71,18 +82,19 @@ describe("Day Log cache model", () => {
         endDate: "2026-08-30",
       }),
     ).toEqual([
-      { date: "2026-08-28", data: null, dataUpdatedAt: now, isInvalidated: false },
-      { date: "2026-08-29", data: undefined, dataUpdatedAt: 0, isInvalidated: false },
+      { date: "2026-08-28", data: null, dataUpdatedAt: now, isError: false, isInvalidated: false },
+      { date: "2026-08-29", data: undefined, dataUpdatedAt: 0, isError: false, isInvalidated: false },
       {
         date: "2026-08-30",
         data: presentSlot("2026-08-30"),
         dataUpdatedAt: invalidatedState!.dataUpdatedAt,
+        isError: false,
         isInvalidated: true,
       },
     ]);
   });
 
-  it("requires validation for any range with unloaded, invalidated, or one-hour-old slots", () => {
+  it("requires validation for any range with unloaded, invalidated, errored, or one-hour-old slots", () => {
     const freshSlots = [
       slot("2026-08-28", null),
       slot("2026-08-29", null),
@@ -111,6 +123,23 @@ describe("Day Log cache model", () => {
         now,
       ),
     ).toBe(true);
+    expect(
+      doesDayLogRangeNeedValidation(
+        range,
+        freshSlots.map((slot, index) => (index === 0 ? { ...slot, isError: true } : slot)),
+        now,
+      ),
+    ).toBe(true);
+  });
+
+  it("treats an errored slot as unverified even when its cached payload is still fresh", () => {
+    const freshPresent = slot("2026-09-03", presentSlot("2026-09-03"));
+    const freshEmpty = slot("2026-09-03", null);
+
+    expect(doesDayLogSlotNeedValidation(freshPresent, now)).toBe(false);
+    expect(doesDayLogSlotNeedValidation(freshEmpty, now)).toBe(false);
+    expect(doesDayLogSlotNeedValidation({ ...freshPresent, isError: true }, now)).toBe(true);
+    expect(doesDayLogSlotNeedValidation({ ...freshEmpty, isError: true }, now)).toBe(true);
   });
 
   it("accepts a complete fresh range of any supported length", () => {
@@ -183,6 +212,60 @@ describe("Day Log cache model", () => {
 
     expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toBeNull();
     expect(getDayLogSyncManifest(queryClient, accountId, syncRange)).toEqual({ "2026-09-03": null });
+  });
+
+  it("keeps an errored slot's payload but omits it from the sync manifest", () => {
+    const queryClient = new QueryClient();
+    const syncRange = { startDate: "2026-09-02", endDate: "2026-09-03" };
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-02"), null, { updatedAt: now });
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), presentSlot("2026-09-03"), {
+      updatedAt: now,
+    });
+    queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"), 7, { updatedAt: now });
+    markSlotQueryError(queryClient, "2026-09-03");
+
+    expect(
+      getDayLogsWithStalenessState(queryClient, accountId, {
+        startDate: "2026-09-03",
+        endDate: "2026-09-03",
+      }),
+    ).toEqual([
+      {
+        date: "2026-09-03",
+        data: presentSlot("2026-09-03"),
+        dataUpdatedAt: now,
+        isError: true,
+        isInvalidated: false,
+      },
+    ]);
+    expect(getDayLogSyncManifest(queryClient, accountId, syncRange)).toEqual({ "2026-09-02": null });
+  });
+
+  it("clears slot error status when an accepted sync writes the date", () => {
+    const queryClient = new QueryClient();
+    const syncRange = { startDate: "2026-09-03", endDate: "2026-09-03" };
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), presentSlot("2026-09-03"), {
+      updatedAt: now - 100,
+    });
+    markSlotQueryError(queryClient, "2026-09-03");
+
+    applyDayLogSyncResult(
+      queryClient,
+      accountId,
+      syncRange,
+      {
+        slots: [{ date: "2026-09-03", versionNumber: 8, dayLog: presentSlot("2026-09-03") }],
+      },
+      now,
+    );
+
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))).toEqual(
+      expect.objectContaining({
+        data: presentSlot("2026-09-03"),
+        dataUpdatedAt: now,
+        status: "success",
+      }),
+    );
   });
 
   it("retains a present slot version through persisted cache restoration", () => {
