@@ -38,18 +38,18 @@ function DashboardV2Content() {
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-        endDate: initialDataDateRange.endDate,
-        initialSevenDayData: cached,
-        twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
-          ? twentyEightDayData
-          : undefined,
-      })
+      endDate: initialDataDateRange.endDate,
+      initialSevenDayData: cached,
+      twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
+        ? twentyEightDayData
+        : undefined,
+    })
     : undefined;
 
   return (
     <DashboardV2Page
       error={syncResponse.error}
-      isPending={!viewModel && syncResponse.isPending}
+      isPending={!viewModel && (syncResponse.isPending || syncResponse.isFetching)}
       onChangeTabOpen={() => setShouldFetch28DayRange(true)}
       onRetry={() => {
         void syncResponse.refetch();
