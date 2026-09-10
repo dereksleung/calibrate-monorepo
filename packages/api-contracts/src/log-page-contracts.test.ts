@@ -9,6 +9,7 @@ import {
   DayLogRangeResponseSchema,
   DayLogSyncRequestSchema,
   DayLogSyncResponseSchema,
+  createDayLogSyncResponse,
   GetDayLogRangeRequestQuerySchema,
   UpdateDayLogWeightRequestBodySchema,
   UpdateDayLogWeightRequestRouteParamsSchema,
@@ -250,6 +251,12 @@ describe("log page response contracts", () => {
 });
 
 describe("day log sync contracts", () => {
+  it("builds a typed sync response for transport mocks", () => {
+    expect(createDayLogSyncResponse([{ date: "2026-08-12", dayLog: null, versionNumber: null }])).toEqual({
+      slots: [{ date: "2026-08-12", dayLog: null, versionNumber: null }],
+    });
+  });
+
   const presentDayLog = {
     id: "00000000-0000-0000-0000-000000000000",
     date: "2026-08-06",

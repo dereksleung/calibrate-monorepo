@@ -381,4 +381,33 @@ describe("dashboard live nutrition", () => {
     expect(screen.getByRole("dialog", { name: "Calories analytics" })).toBeTruthy();
     expect(screen.getByText("Live breakfast")).toBeTruthy();
   });
+
+  it("defers the twenty-eight-day sync until the Change analytics tab opens", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      const request = JSON.parse(init?.body as string) as { endDate: string; startDate: string };
+
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            slots: dayLogRangeResponse(
+              `/api/v1/daylogs?startDate=${request.startDate}&endDate=${request.endDate}`,
+              425,
+            ).days.map(({ date, dayLog }) => ({ date, dayLog, versionNumber: dayLog ? 1 : null })),
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+    });
+
+    renderDashboard();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open Calories analytics" }));
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("tab", { name: "Change" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const requestBody = JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string);
+    expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(28);
+  });
 });

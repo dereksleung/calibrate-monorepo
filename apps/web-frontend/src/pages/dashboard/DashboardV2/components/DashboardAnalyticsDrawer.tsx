@@ -14,11 +14,12 @@ import { NutrientAnalytics } from "./NutrientAnalytics.tsx";
 
 type DashboardAnalyticsDrawerProps = {
   model: NutrientAnalyticsModel | null;
+  onChangeTabOpen?: () => void;
   onClose: () => void;
   returnFocusRef: RefObject<HTMLElement | null>;
 };
 
-function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardAnalyticsDrawerProps) {
+function DashboardAnalyticsDrawer({ model, onChangeTabOpen, onClose, returnFocusRef }: DashboardAnalyticsDrawerProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -46,7 +47,7 @@ function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardA
               : "Nutrient contribution details."}
           </DrawerDescription>
         </DrawerHeader>
-        {model ? <NutrientAnalytics key={model.metric} model={model} /> : null}
+        {model ? <NutrientAnalytics key={model.metric} model={model} onChangeTabOpen={onChangeTabOpen} /> : null}
       </DrawerContent>
     </Drawer>
   );

@@ -265,6 +265,8 @@ Part of code review is dependency review:
 
 **Rule:** Prefer standard library and existing utilities over new dependencies. Every dependency is a liability.
 
+When reviewing a function that builds part of an API request body or headers, verify it reuses the relevant type exported by `packages/api-client` rather than recreating the shape locally.
+
 ## The Review Checklist
 
 ```markdown

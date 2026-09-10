@@ -6,6 +6,7 @@ import type { ApiTransport } from "../transport.js";
 import { dayLogRangeQueryKey } from "./get-day-log-range.js";
 import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
 import { invalidateDayLogQueries, saveFoodEntry } from "./save-food-entry.js";
+import { dayLogSyncQueryKeyPrefix } from "./sync-day-logs.js";
 
 describe("saveFoodEntry", () => {
   it("validates the selected day and posts a confirmed food entry", async () => {
@@ -78,6 +79,9 @@ describe("invalidateDayLogQueries", () => {
     const range = { startDate: "2026-05-12", endDate: date };
     queryClient.setQueryData(dayLogQueryKey(accountId, date), { private: "selected-day" });
     queryClient.setQueryData(dayLogRangeQueryKey(accountId, range), { private: "range" });
+    queryClient.setQueryData([...dayLogSyncQueryKeyPrefix(accountId), range.startDate, range.endDate], {
+      private: "sync",
+    });
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), { private: "cached-slot" });
     queryClient.setQueryData(dayLogSlotQueryKey(otherAccountId, date), { private: "other-account-slot" });
 
@@ -85,6 +89,9 @@ describe("invalidateDayLogQueries", () => {
 
     expect(queryClient.getQueryState(dayLogQueryKey(accountId, date))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(dayLogRangeQueryKey(accountId, range))?.isInvalidated).toBe(true);
+    expect(
+      queryClient.getQueryState([...dayLogSyncQueryKeyPrefix(accountId), range.startDate, range.endDate])?.isInvalidated,
+    ).toBe(true);
     expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, date))).toBeUndefined();
     expect(queryClient.getQueryData(dayLogSlotQueryKey(otherAccountId, date))).toEqual({
       private: "other-account-slot",

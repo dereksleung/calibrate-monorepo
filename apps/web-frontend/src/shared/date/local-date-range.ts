@@ -9,9 +9,17 @@ export type LocalDateRange = {
 };
 
 export function getRollingSevenDayDateRange(now = new Date()): LocalDateRange {
+  return getRollingDateRange(7, now);
+}
+
+export function getRollingTwentyEightDayDateRange(now = new Date()): LocalDateRange {
+  return getRollingDateRange(28, now);
+}
+
+function getRollingDateRange(dayCount: number, now: Date): LocalDateRange {
   const endDate = formatLocalDate(now);
   const start = new Date(now);
-  start.setDate(start.getDate() - 6);
+  start.setDate(start.getDate() - (dayCount - 1));
 
   return { startDate: formatLocalDate(start), endDate };
 }

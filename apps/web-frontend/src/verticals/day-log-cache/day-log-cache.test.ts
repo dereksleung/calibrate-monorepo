@@ -6,11 +6,12 @@ import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   composeDayLogRangeFromSlots,
   applyDayLogSyncResult,
+  dateRange,
   getDayLogSyncManifest,
   dayLogSlotQueryKey,
   dayLogSlotVersionQueryKey,
   doesDayLogSlotNeedValidation,
-  doesDashboardRangeNeedValidation,
+  doesDayLogRangeNeedValidation,
   prunePersistedDayLogClient,
   type CachedDayLog,
   type DayLogSlotSnapshot,
@@ -70,7 +71,7 @@ describe("Day Log cache model", () => {
     expect(result.isComplete).toBe(false);
   });
 
-  it("requires Dashboard validation for unloaded, invalidated, or one-hour-old slots", () => {
+  it("requires validation for any range with unloaded, invalidated, or one-hour-old slots", () => {
     const freshSlots = [
       slot("2026-08-28", null),
       slot("2026-08-29", null),
@@ -81,22 +82,31 @@ describe("Day Log cache model", () => {
       slot("2026-09-03", presentSlot("2026-09-03")),
     ];
 
-    expect(doesDashboardRangeNeedValidation(freshSlots, now)).toBe(false);
-    expect(doesDashboardRangeNeedValidation(freshSlots.slice(1), now)).toBe(true);
+    expect(doesDayLogRangeNeedValidation(range, freshSlots, now)).toBe(false);
+    expect(doesDayLogRangeNeedValidation(range, freshSlots.slice(1), now)).toBe(true);
     expect(
-      doesDashboardRangeNeedValidation(
+      doesDayLogRangeNeedValidation(
+        range,
         freshSlots.map((slot, index) => (index === 0 ? { ...slot, isInvalidated: true } : slot)),
         now,
       ),
     ).toBe(true);
     expect(
-      doesDashboardRangeNeedValidation(
+      doesDayLogRangeNeedValidation(
+        range,
         freshSlots.map((slot, index) =>
           index === 0 ? { ...slot, dataUpdatedAt: now - DAY_LOG_VALIDATION_FRESHNESS_MS } : slot,
         ),
         now,
       ),
     ).toBe(true);
+  });
+
+  it("accepts a complete fresh range of any supported length", () => {
+    const syncRange = { startDate: "2026-08-04", endDate: "2026-09-03" };
+    const freshSlots = dateRange(syncRange.startDate, syncRange.endDate).map((date) => slot(date, null));
+
+    expect(doesDayLogRangeNeedValidation(syncRange, freshSlots, now)).toBe(false);
   });
 
   it("uses TanStack timestamps and invalidation for a selected slot's validation eligibility", async () => {
