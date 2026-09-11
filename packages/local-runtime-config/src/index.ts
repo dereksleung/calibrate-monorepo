@@ -22,3 +22,12 @@ export {
   type DemoSetupResult,
 } from "./demo-catalog-setup.js";
 export { runLocalDemoReset } from "./local-demo-reset.js";
+export { DEMO_RUNTIME_DEFAULTS } from "./demo-catalog-setup.js";
+export {
+  DEMO_FRONTEND_URL,
+  DEMO_SETUP_REQUIRED_MESSAGE,
+  runDemoDev,
+  runLocalDemoDev,
+  type DemoDevOptions,
+  type DemoDevProcessStarter,
+} from "./local-demo-dev.js";
