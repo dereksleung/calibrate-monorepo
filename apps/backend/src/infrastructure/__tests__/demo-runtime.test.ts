@@ -149,7 +149,6 @@ describe("prepareDemoRuntime", () => {
 
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
-
   it("fails closed when generated configuration is missing", async () => {
     const directory = await createTemporaryDirectory();
     process.env.CALIBRATE_DEMO = "1";
