@@ -37,12 +37,12 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-      endDate: initialDataDateRange.endDate,
-      initialSevenDayData: cached,
-      twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
-        ? twentyEightDayData
-        : undefined,
-    })
+        endDate: initialDataDateRange.endDate,
+        initialSevenDayData: cached,
+        twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
+          ? twentyEightDayData
+          : undefined,
+      })
     : undefined;
 
   return (
