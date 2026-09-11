@@ -33,6 +33,7 @@ describe("DayLogServiceImpl", () => {
       findLogsByDateRangeAndUserId: vi.fn(),
       findOrCreateByDateAndUserId: vi.fn(),
       addFoodEntry: vi.fn(),
+      createWithFoodEntry: vi.fn(),
       countDayLogsByUserId: vi.fn(),
     } as any;
     mockDayLogSyncQuery = {
@@ -164,17 +165,17 @@ describe("DayLogServiceImpl", () => {
   });
 
   describe("addFoodEntry", () => {
-    it("returns the persisted food entry with the updated parent version", async () => {
+    it("returns the persisted food entry id with the updated parent version", async () => {
       const foodEntryInput = { ...buildFoodEntryResponse(), iconName: null };
       const persistedResult = {
-        foodEntry: buildFoodEntry({ id: "entry-1", dayLogId: mockDayLog.id }),
-        dayLogVersionNumber: 2,
+        foodEntryId: "entry-1",
+        versionNumber: 2,
       };
       mockUserRepository.findById.mockResolvedValue(
         User.create({ email: "user@example.com", passwordHash: "hash" }),
       );
       mockDayLogRepository.countDayLogsByUserId.mockResolvedValue(1);
-      mockDayLogRepository.findOrCreateByDateAndUserId.mockResolvedValue(mockDayLog);
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(mockDayLog);
       mockDayLogRepository.addFoodEntry.mockResolvedValue(persistedResult);
 
       await expect(
@@ -184,6 +185,37 @@ describe("DayLogServiceImpl", () => {
           foodEntry: foodEntryInput,
         }),
       ).resolves.toEqual(persistedResult);
+      expect(mockDayLogRepository.findOrCreateByDateAndUserId).not.toHaveBeenCalled();
+      expect(mockDayLogRepository.createWithFoodEntry).not.toHaveBeenCalled();
+    });
+
+    it("creates a missing day log with the first food entry at version 1", async () => {
+      const foodEntryInput = { ...buildFoodEntryResponse(), iconName: null };
+      const persistedResult = {
+        foodEntryId: "entry-1",
+        versionNumber: 1,
+      };
+      mockUserRepository.findById.mockResolvedValue(
+        User.create({ email: "user@example.com", passwordHash: "hash" }),
+      );
+      mockDayLogRepository.countDayLogsByUserId.mockResolvedValue(1);
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(null);
+      mockDayLogRepository.createWithFoodEntry.mockResolvedValue(persistedResult);
+
+      await expect(
+        dayLogService.addFoodEntry({
+          userId: "user-1",
+          date: "2026-02-22",
+          foodEntry: foodEntryInput,
+        }),
+      ).resolves.toEqual(persistedResult);
+      expect(mockDayLogRepository.addFoodEntry).not.toHaveBeenCalled();
+      expect(mockDayLogRepository.createWithFoodEntry).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "user-1",
+          dayLog: expect.objectContaining({ versionNumber: 1 }),
+        }),
+      );
     });
   });
 });

@@ -1,6 +1,10 @@
-import type { CreateFoodEntryRequest, MealNameEnumType } from "@calibrate/api-contracts";
-
 import { Button } from "#/shared/components/base/Button.tsx";
+import {
+  normalizeFoodEntryForStorage,
+  normalizeFoodEntryQuantity,
+  type CreateFoodEntryRequest,
+  type MealNameEnumType,
+} from "@calibrate/api-contracts";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -26,11 +30,12 @@ const meals: Array<{ value: MealNameEnumType; label: string }> = [
 export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: ConfirmFoodProps) {
   const { food } = confirmation;
   const units = useMemo(() => getFoodUnitOptions(food), [food]);
-  const [quantity, setQuantity] = useState(String(food.quantityServing));
+  const [quantity, setQuantity] = useState(String(normalizeFoodEntryQuantity(food.quantityServing)));
   const [unit, setUnit] = useState(units[0]?.unit ?? food.servingLabel);
   const [meal, setMeal] = useState<MealNameEnumType>(confirmation.preselectedMeal ?? "BREAKFAST");
   const [quantityError, setQuantityError] = useState<string | null>(null);
-  const chosenQuantity = Number(quantity);
+  const enteredQuantity = Number(quantity);
+  const chosenQuantity = normalizeFoodEntryQuantity(enteredQuantity);
   const nutrition = useMemo(
     () => scaleFoodNutrition(food, chosenQuantity, unit),
     [chosenQuantity, food, unit],
@@ -38,26 +43,32 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!Number.isFinite(chosenQuantity) || chosenQuantity <= 0) {
+    if (!Number.isFinite(enteredQuantity) || enteredQuantity <= 0) {
       setQuantityError("Enter an amount greater than 0.");
+      return;
+    }
+    if (chosenQuantity !== enteredQuantity) {
+      setQuantityError("Use no more than two decimal places.");
       return;
     }
 
     setQuantityError(null);
-    onSave({
-      name: food.name,
-      brand: food.brand ?? null,
-      meal,
-      chosenQuantity,
-      chosenUnit: unit,
-      ...nutrition,
-      quantityServing: food.quantityServing,
-      servingLabel: food.servingLabel,
-      quantityMass: food.quantityMass,
-      massUnit: food.massUnit,
-      quantityVolume: food.quantityVolume,
-      volumeUnit: food.volumeUnit,
-    });
+    onSave(
+      normalizeFoodEntryForStorage({
+        name: food.name,
+        brand: food.brand ?? null,
+        meal,
+        chosenQuantity,
+        chosenUnit: unit,
+        ...nutrition,
+        quantityServing: food.quantityServing,
+        servingLabel: food.servingLabel,
+        quantityMass: food.quantityMass,
+        massUnit: food.massUnit,
+        quantityVolume: food.quantityVolume,
+        volumeUnit: food.volumeUnit,
+      }),
+    );
   }
 
   return (
@@ -114,7 +125,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
                       type="number"
                       inputMode="decimal"
                       min="0"
-                      step="any"
+                      step="0.01"
                       value={quantity}
                       onChange={(event) => setQuantity(event.target.value)}
                       aria-invalid={Boolean(quantityError)}

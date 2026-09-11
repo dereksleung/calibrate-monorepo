@@ -360,33 +360,9 @@ describe("DayLogController", () => {
         date: "2026-02-22",
       } as unknown as CreateFoodEntryRequestRouteParams,
     } as unknown as Request<CreateFoodEntryRequestRouteParams>;
-    const createdFoodEntry = buildFoodEntry({
-      dayLogId: "123",
-      meal: MealNameEnum.BREAKFAST,
-      name: "Scrambled Eggs",
-      brand: null,
-      iconName: null,
-      chosenQuantity: 2,
-      chosenUnit: "pieces",
-      quantityServing: 1,
-      servingLabel: "serving",
-      quantityMass: null,
-      massUnit: null,
-      quantityVolume: null,
-      volumeUnit: null,
-      calories: 180,
-      totalFatGrams: 12,
-      saturatedFatGrams: 4,
-      cholesterolMg: 370,
-      sodiumMg: 140,
-      totalCarbohydrateGrams: 2,
-      fiberGrams: 0,
-      sugarGrams: 1,
-      proteinGrams: 14,
-    });
     mockDayLogService.addFoodEntry.mockResolvedValue({
-      foodEntry: createdFoodEntry,
-      dayLogVersionNumber: 2,
+      foodEntryId: "entry-1",
+      versionNumber: 2,
     });
 
     const res = {
@@ -403,27 +379,43 @@ describe("DayLogController", () => {
     });
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
-      foodEntry: buildFoodEntryResponse({
-        id: createdFoodEntry.id,
-        meal: MealNameEnum.BREAKFAST,
-        name: "Scrambled Eggs",
-        brand: null,
-        calories: 180,
-        totalFatGrams: 12,
-        saturatedFatGrams: 4,
-        cholesterolMg: 370,
-        sodiumMg: 140,
-        totalCarbohydrateGrams: 2,
-        fiberGrams: 0,
-        sugarGrams: 1,
-        proteinGrams: 14,
-        chosenQuantity: 2,
-        chosenUnit: "pieces",
-        quantityServing: 1,
-        servingLabel: "serving",
-      }),
-      dayLogVersionNumber: 2,
+      foodEntryId: "entry-1",
+      versionNumber: 2,
     });
+  });
+
+  it("does not forward a client versionNumber as a write precondition", async () => {
+    const req = {
+      auth: {
+        userId: "user-1",
+      },
+      body: {
+        ...mockCreateFoodEntryRequestBody,
+        versionNumber: 1,
+      },
+      params: {
+        date: "2026-02-22",
+      } as unknown as CreateFoodEntryRequestRouteParams,
+    } as unknown as Request<CreateFoodEntryRequestRouteParams>;
+    mockDayLogService.addFoodEntry.mockResolvedValue({
+      foodEntryId: "entry-1",
+      versionNumber: 5,
+    });
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    } as any;
+
+    await dayLogController.createFoodEntry(req, res);
+
+    expect(mockDayLogService.addFoodEntry).toHaveBeenCalledWith({
+      userId: "user-1",
+      date: "2026-02-22",
+      foodEntry: mockCreateFoodEntryServiceInput,
+    });
+    expect(mockDayLogService.addFoodEntry.mock.calls[0]?.[0]).not.toHaveProperty("versionNumber");
+    expect(mockDayLogService.addFoodEntry.mock.calls[0]?.[0].foodEntry).not.toHaveProperty("versionNumber");
+    expect(res.status).toHaveBeenCalledWith(201);
   });
 
   it("should return 400 when date param is invalid", async () => {

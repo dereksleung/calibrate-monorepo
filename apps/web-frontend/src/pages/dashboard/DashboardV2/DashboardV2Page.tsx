@@ -278,7 +278,13 @@ function DashboardLoadError({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
-function DashboardV2Page({ error = null, isPending = false, onChangeTabOpen, onRetry, viewModel }: DashboardV2PageProps) {
+function DashboardV2Page({
+  error = null,
+  isPending = false,
+  onChangeTabOpen,
+  onRetry,
+  viewModel,
+}: DashboardV2PageProps) {
   const [selectedMetric, setSelectedMetric] = useState<DashboardNutritionMetric | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const selectedModel = viewModel && selectedMetric ? viewModel.analytics[selectedMetric] : null;

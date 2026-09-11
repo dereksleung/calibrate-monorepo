@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 
 import type {
   AddFoodEntryResult,
+  CreateDayLogWithFoodEntryInput,
   FindDayLogByDateAndUserInput,
   FindDayLogsByDateRangeAndUserInput,
   FindOrCreateDayLogByDateAndUserInput,
@@ -105,8 +106,44 @@ export class PostgresDayLogRepository implements IDayLogRepository, IDayLogSyncQ
       }
 
       return {
-        foodEntry: this.mapRowToFoodEntry(foodEntryRow),
-        dayLogVersionNumber: updated.version_number,
+        foodEntryId: foodEntryRow.id,
+        versionNumber: updated.version_number,
+      };
+    });
+  }
+
+  async createWithFoodEntry({
+    userId,
+    dayLog,
+    foodEntry,
+  }: CreateDayLogWithFoodEntryInput): Promise<AddFoodEntryResult> {
+    return this.databaseClient.transaction().execute(async (trx) => {
+      const insertedDayLog = await trx
+        .insertInto("day_logs")
+        .values({
+          id: dayLog.id,
+          date: dayLog.date.toString(),
+          user_id: userId,
+          weight: dayLog.weight,
+          version_number: 1,
+        })
+        .returning("version_number")
+        .executeTakeFirst();
+      if (!insertedDayLog) throw new Error("Failed to create day log");
+
+      const foodEntryRow = await trx
+        .insertInto("food_entries")
+        .values({
+          ...this.mapFoodEntryToRow(foodEntry),
+          day_log_id: dayLog.id,
+        })
+        .returning("id")
+        .executeTakeFirst();
+      if (!foodEntryRow) throw new Error("Failed to add food entry");
+
+      return {
+        foodEntryId: foodEntryRow.id,
+        versionNumber: insertedDayLog.version_number,
       };
     });
   }

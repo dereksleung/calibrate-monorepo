@@ -105,6 +105,20 @@ describe("log page request contracts", () => {
     expect(result.quantityVolume).toBeNull();
     expect(result.volumeUnit).toBeNull();
   });
+
+  it("does not keep a client versionNumber on addFoodEntry requests", () => {
+    const { sourceLabel: _sourceLabel, ...baseFoodEntry } = baseFoodResult;
+
+    const result = CreateFoodEntryRequestSchema.parse({
+      ...baseFoodEntry,
+      meal: "LUNCH",
+      chosenQuantity: 1,
+      chosenUnit: "serving",
+      versionNumber: 4,
+    });
+
+    expect(result).not.toHaveProperty("versionNumber");
+  });
 });
 
 describe("log page response contracts", () => {
@@ -136,35 +150,51 @@ describe("log page response contracts", () => {
     expect(DayLogRangeResponseSchema.parse(validRangeResponse)).toEqual(validRangeResponse);
   });
 
-  it("accepts a created food entry with its updated parent Day Log version", () => {
+  it("accepts a created food entry success body with only the server id and Day Log version", () => {
     const response = {
-      foodEntry: {
-        id: "entry-1",
-        meal: "LUNCH",
-        name: "Greek yogurt",
-        brand: "Calibrate Kitchen",
-        calories: 150,
-        totalFatGrams: 4,
-        saturatedFatGrams: 2,
-        cholesterolMg: 10,
-        sodiumMg: 65,
-        totalCarbohydrateGrams: 8,
-        fiberGrams: 0,
-        sugarGrams: 6,
-        proteinGrams: 18,
-        chosenQuantity: 1,
-        chosenUnit: "serving",
-        quantityServing: 1,
-        servingLabel: "serving",
-        quantityMass: null,
-        massUnit: null,
-        quantityVolume: null,
-        volumeUnit: null,
-      },
-      dayLogVersionNumber: 2,
+      foodEntryId: "entry-1",
+      versionNumber: 2,
     };
 
     expect(CreateFoodEntryResponseSchema.parse(response)).toEqual(response);
+  });
+
+  it("rejects a create success body that echoes the Food Entry or a dayLogId", () => {
+    expect(() =>
+      CreateFoodEntryResponseSchema.parse({
+        foodEntry: {
+          id: "entry-1",
+          meal: "LUNCH",
+          name: "Greek yogurt",
+          brand: "Calibrate Kitchen",
+          calories: 150,
+          totalFatGrams: 4,
+          saturatedFatGrams: 2,
+          cholesterolMg: 10,
+          sodiumMg: 65,
+          totalCarbohydrateGrams: 8,
+          fiberGrams: 0,
+          sugarGrams: 6,
+          proteinGrams: 18,
+          chosenQuantity: 1,
+          chosenUnit: "serving",
+          quantityServing: 1,
+          servingLabel: "serving",
+          quantityMass: null,
+          massUnit: null,
+          quantityVolume: null,
+          volumeUnit: null,
+        },
+        dayLogVersionNumber: 2,
+      }),
+    ).toThrow();
+    expect(() =>
+      CreateFoodEntryResponseSchema.parse({
+        foodEntryId: "entry-1",
+        versionNumber: 2,
+        dayLogId: "00000000-0000-0000-0000-000000000000",
+      }),
+    ).toThrow();
   });
 
   it("rejects date slots that are out of order, duplicated, or do not match the range", () => {

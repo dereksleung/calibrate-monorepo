@@ -19,7 +19,12 @@ type DashboardAnalyticsDrawerProps = {
   returnFocusRef: RefObject<HTMLElement | null>;
 };
 
-function DashboardAnalyticsDrawer({ model, onChangeTabOpen, onClose, returnFocusRef }: DashboardAnalyticsDrawerProps) {
+function DashboardAnalyticsDrawer({
+  model,
+  onChangeTabOpen,
+  onClose,
+  returnFocusRef,
+}: DashboardAnalyticsDrawerProps) {
   const isMobile = useIsMobile();
 
   return (
@@ -47,7 +52,9 @@ function DashboardAnalyticsDrawer({ model, onChangeTabOpen, onClose, returnFocus
               : "Nutrient contribution details."}
           </DrawerDescription>
         </DrawerHeader>
-        {model ? <NutrientAnalytics key={model.metric} model={model} onChangeTabOpen={onChangeTabOpen} /> : null}
+        {model ? (
+          <NutrientAnalytics key={model.metric} model={model} onChangeTabOpen={onChangeTabOpen} />
+        ) : null}
       </DrawerContent>
     </Drawer>
   );
