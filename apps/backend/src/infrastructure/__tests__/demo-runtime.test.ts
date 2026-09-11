@@ -120,15 +120,6 @@ describe("prepareDemoRuntime", () => {
     await expect(prepareDemoRuntime(directory)).rejects.toThrow("cannot run in production");
   });
 
-  it("refuses a non-loopback WebAuthn origin", async () => {
-    const directory = await createTemporaryDirectory();
-    process.env.CALIBRATE_DEMO = "1";
-    process.env.NODE_ENV = "development";
-    process.env.WEBAUTHN_ORIGIN = "http://example.test";
-
-    await expect(prepareDemoRuntime(directory)).rejects.toThrow("loopback HTTP WebAuthn origin");
-  });
-
   it("replaces inherited dotenv ciphertext with demo-safe process values", async () => {
     const directory = await createTemporaryDirectory();
     await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
@@ -145,6 +136,18 @@ describe("prepareDemoRuntime", () => {
     expect(getRuntimeEnvironmentValue("TRUST_PROXY_HOPS")).toBe("0");
     expect(getRuntimeEnvironmentValue("EMAIL_SERVICE_CREDENTIAL")).toBe("");
     expect(dotenvGet).not.toHaveBeenCalled();
+  });
+
+  it("replaces an encrypted normal-runtime WebAuthn origin with the demo-safe origin", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "encrypted-normal-runtime-value";
+
+    await prepareDemoRuntime(directory);
+
+    expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
 
   it("fails closed when generated configuration is missing", async () => {

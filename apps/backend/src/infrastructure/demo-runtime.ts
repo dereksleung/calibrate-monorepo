@@ -40,8 +40,6 @@ export async function prepareDemoRuntime(directory = process.cwd()): Promise<Loc
     DB_PASSWORD: configuration.otpHmacKey,
     DB_PORT: DEMO_DATABASE_PORT,
     DB_USER: DEMO_DATABASE_USER,
-    EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT: "1000",
-    TRUST_PROXY_HOPS: "0",
     WEBAUTHN_ORIGIN: "http://localhost:3000",
   };
   for (const [name, value] of Object.entries(environment)) {

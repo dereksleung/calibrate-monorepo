@@ -13,7 +13,10 @@ export {
   DEMO_DATABASE_NAME,
   DEMO_DATABASE_PORT,
   DEMO_DATABASE_USER,
+  DEMO_RUNTIME_DEFAULTS,
+  createDemoEnvironment,
   getDemoDockerProjectName,
+  runDemoCommand,
   runDemoReset,
   runDemoSetup,
   type DemoCommand,
@@ -21,8 +24,6 @@ export {
   type DemoSetupOptions,
   type DemoSetupResult,
 } from "./demo-catalog-setup.js";
-export { runLocalDemoReset } from "./local-demo-reset.js";
-export { DEMO_RUNTIME_DEFAULTS } from "./demo-catalog-setup.js";
 export {
   DEMO_FRONTEND_URL,
   DEMO_SETUP_REQUIRED_MESSAGE,
@@ -31,3 +32,4 @@ export {
   type DemoDevOptions,
   type DemoDevProcessStarter,
 } from "./local-demo-dev.js";
+export { runLocalDemoReset } from "./local-demo-reset.js";
