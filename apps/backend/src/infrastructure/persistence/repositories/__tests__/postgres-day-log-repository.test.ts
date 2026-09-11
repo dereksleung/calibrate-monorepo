@@ -1,3 +1,4 @@
+import { DayLog } from "@domain/entities/day-log.js";
 import { buildFoodEntry } from "@factories/food-entry.js";
 import { types } from "pg";
 import { describe, expect, it, vi } from "vitest";
@@ -99,8 +100,66 @@ describe("PostgresDayLogRepository.addFoodEntry", () => {
     expect(insertedValues).toMatchObject({ id: "food-entry-1", day_log_id: "day-log-1" });
     expect(updatedDayLogId).toBe("day-log-1");
     expect(returnedColumns).toBe("version_number");
-    expect(result.foodEntry.id).toBe("food-entry-1");
-    expect(result.dayLogVersionNumber).toBe(2);
+    expect(result.foodEntryId).toBe("food-entry-1");
+    expect(result.versionNumber).toBe(2);
+  });
+});
+
+describe("PostgresDayLogRepository.createWithFoodEntry", () => {
+  it("inserts the day log at version 1 with the first food entry in one write", async () => {
+    let insertedDayLog: Record<string, unknown> | undefined;
+    let insertedFoodEntry: Record<string, unknown> | undefined;
+    const databaseClient = {
+      transaction: () => ({
+        execute: async (work: (trx: Record<string, unknown>) => Promise<unknown>) =>
+          work({
+            insertInto: (table: string) => ({
+              values: (values: Record<string, unknown>) => {
+                if (table === "day_logs") {
+                  insertedDayLog = values;
+                  return {
+                    returning: () => ({
+                      executeTakeFirst: async () => ({ version_number: 1 }),
+                    }),
+                  };
+                }
+                insertedFoodEntry = values;
+                return {
+                  returning: () => ({
+                    executeTakeFirst: async () => ({ id: values.id }),
+                  }),
+                };
+              },
+            }),
+          }),
+      }),
+    };
+    const repository = new PostgresDayLogRepository(databaseClient as never);
+    const dayLog = DayLog.reconstitute({
+      id: "day-log-1",
+      date: Temporal.PlainDate.from("2026-08-06"),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+      versionNumber: 1,
+    });
+    const foodEntry = buildFoodEntry({ id: "food-entry-1", dayLogId: "day-log-1" });
+
+    const result = await repository.createWithFoodEntry({
+      userId: "user-1",
+      dayLog,
+      foodEntry,
+    });
+
+    expect(insertedDayLog).toMatchObject({
+      id: "day-log-1",
+      user_id: "user-1",
+      version_number: 1,
+    });
+    expect(insertedFoodEntry).toMatchObject({ id: "food-entry-1", day_log_id: "day-log-1" });
+    expect(result).toEqual({ foodEntryId: "food-entry-1", versionNumber: 1 });
   });
 });
 

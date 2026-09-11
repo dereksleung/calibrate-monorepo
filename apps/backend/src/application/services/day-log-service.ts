@@ -65,8 +65,8 @@ export interface AddFoodEntryInput {
 }
 
 export interface AddFoodEntryResult {
-  foodEntry: FoodEntry;
-  dayLogVersionNumber: number;
+  foodEntryId: string;
+  versionNumber: number;
 }
 
 export interface IDayLogService {
@@ -129,24 +129,36 @@ export class DayLogServiceImpl implements IDayLogService {
       throw new BusinessLogicError("User has reached the maximum number of day logs before subscribing");
     }
 
-    const dayLog = await this.dayLogRepository.findOrCreateByDateAndUserId({
+    const existing = await this.dayLogRepository.findLogByDateAndUserId({
       date,
       userId,
     });
 
-    // Create a new food entry domain entity, applying the domain's validation rules
+    if (existing) {
+      const newFoodEntry = FoodEntry.create({
+        ...foodEntry,
+        dayLogId: existing.id,
+      });
+      const entry = existing.addFoodEntry(newFoodEntry);
+      return this.dayLogRepository.addFoodEntry(existing.id, entry);
+    }
+
+    const dayLogId = crypto.randomUUID();
+    const dayLog = DayLog.reconstitute({
+      id: dayLogId,
+      date: Temporal.PlainDate.from(date),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+      versionNumber: 1,
+    });
     const newFoodEntry = FoodEntry.create({
       ...foodEntry,
-      dayLogId: dayLog.id,
+      dayLogId,
     });
-
-    // Apply domain aggregate's business rules - each day log has a maximum of 25 food entries per meal
     const entry = dayLog.addFoodEntry(newFoodEntry);
-    const persisted = await this.dayLogRepository.addFoodEntry(dayLog.id, entry);
-
-    return {
-      foodEntry: persisted.foodEntry,
-      dayLogVersionNumber: persisted.dayLogVersionNumber,
-    };
+    return this.dayLogRepository.createWithFoodEntry({ userId, dayLog, foodEntry: entry });
   }
 }

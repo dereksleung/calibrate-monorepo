@@ -4,7 +4,15 @@ import {
   dayLogSlotQueryKey as createDayLogSlotQueryKey,
   type DayLogSyncRequest,
 } from "@calibrate/api-client";
-import { DayLogResponseSchema, type DayLogSyncResponse, type DayLogResponse } from "@calibrate/api-contracts";
+import {
+  DayLogResponseSchema,
+  type CreateFoodEntryRequest,
+  type CreateFoodEntryResponse,
+  type DayLogResponse,
+  type DayLogSyncResponse,
+  type FoodEntryResponse,
+  type MealNameEnumType,
+} from "@calibrate/api-contracts";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
@@ -172,6 +180,80 @@ export function applyDayLogSyncResult(
       });
     }
   }
+}
+
+const MEAL_SLOT_BY_NAME = {
+  BREAKFAST: "breakfast",
+  LUNCH: "lunch",
+  DINNER: "dinner",
+  SNACKS: "snacks",
+} as const satisfies Record<MealNameEnumType, "breakfast" | "lunch" | "dinner" | "snacks">;
+
+type PresentDayLog = Exclude<DayLogResponse, null>;
+
+function emptyPresentDayLog(date: string): PresentDayLog {
+  return {
+    id: crypto.randomUUID(),
+    date,
+    breakfast: [],
+    lunch: [],
+    dinner: [],
+    snacks: [],
+    weight: null,
+  };
+}
+
+function withCreatedFoodEntry(
+  dayLog: PresentDayLog,
+  created: CreateFoodEntryRequest,
+  foodEntryId: string,
+): PresentDayLog {
+  const slot = MEAL_SLOT_BY_NAME[created.meal];
+  const foodEntry: FoodEntryResponse = { ...created, id: foodEntryId };
+  return {
+    ...dayLog,
+    [slot]: [...(dayLog[slot] ?? []), foodEntry],
+  };
+}
+
+function isCompletePredecessor(
+  cached: DayLogSlotResult,
+  cachedVersion: number | undefined,
+  versionNumber: number,
+): boolean {
+  if (cached === null) return versionNumber === 1;
+  if (cached === undefined) return false;
+  return cachedVersion !== undefined && cachedVersion + 1 === versionNumber;
+}
+
+/**
+ * Stamps the server Food Entry ID onto the create payload and writes that
+ * entry into the date slot. A complete predecessor raises `versionNumber`
+ * without sync; any other slot stays locally acknowledged but unverified.
+ */
+export async function applyFoodEntryCreateToDayLogCache(
+  queryClient: QueryClient,
+  accountId: string,
+  date: string,
+  created: CreateFoodEntryRequest,
+  result: CreateFoodEntryResponse,
+  now = Date.now(),
+): Promise<{ needsSingleDateSync: boolean }> {
+  const slotKey = dayLogSlotQueryKey(accountId, date);
+  const versionKey = dayLogSlotVersionQueryKey(accountId, date);
+  const cached = queryClient.getQueryData<CachedDayLog>(slotKey);
+  const cachedVersion = queryClient.getQueryData<number>(versionKey);
+  const next = withCreatedFoodEntry(cached ?? emptyPresentDayLog(date), created, result.foodEntryId);
+
+  queryClient.setQueryData(slotKey, next, { updatedAt: now });
+
+  if (isCompletePredecessor(cached, cachedVersion, result.versionNumber)) {
+    queryClient.setQueryData(versionKey, result.versionNumber, { updatedAt: now });
+    return { needsSingleDateSync: false };
+  }
+
+  await queryClient.invalidateQueries({ queryKey: slotKey });
+  return { needsSingleDateSync: true };
 }
 
 function isIsoDate(value: unknown): value is string {

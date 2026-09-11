@@ -1,3 +1,4 @@
+import { DayLog } from "@domain/entities/day-log.js";
 import { buildFoodEntry } from "@factories/food-entry.js";
 import { randomUUID } from "node:crypto";
 
@@ -77,8 +78,8 @@ describe("PostgresDayLogRepository day log sync", () => {
       buildFoodEntry({ id: randomUUID(), dayLogId: dayLog.id, name: "Oats" }),
     );
 
-    expect(result.foodEntry.name).toBe("Oats");
-    expect(result.dayLogVersionNumber).toBe(2);
+    expect(result.foodEntryId).toBeDefined();
+    expect(result.versionNumber).toBe(2);
 
     const persisted = await databaseClient
       .selectFrom("day_logs")
@@ -87,6 +88,35 @@ describe("PostgresDayLogRepository day log sync", () => {
       .executeTakeFirstOrThrow();
 
     expect(persisted.version_number).toBe(2);
+  });
+
+  it("persists a new day log and its first food entry at version 1", async () => {
+    const userId = await insertUser(databaseClient, "owner@example.com");
+    const dayLogId = randomUUID();
+    const foodEntryId = randomUUID();
+    const dayLog = DayLog.reconstitute({
+      id: dayLogId,
+      date: Temporal.PlainDate.from("2026-08-06"),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+      versionNumber: 1,
+    });
+    const foodEntry = buildFoodEntry({ id: foodEntryId, dayLogId, name: "Oats" });
+
+    const result = await repository.createWithFoodEntry({ userId, dayLog, foodEntry });
+
+    expect(result).toEqual({ foodEntryId, versionNumber: 1 });
+
+    const persisted = await databaseClient
+      .selectFrom("day_logs")
+      .select(["version_number"])
+      .where("id", "=", dayLogId)
+      .executeTakeFirstOrThrow();
+
+    expect(persisted.version_number).toBe(1);
   });
 
   it("backfills omitted version numbers to 1", async () => {

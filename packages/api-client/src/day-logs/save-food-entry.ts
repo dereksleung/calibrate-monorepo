@@ -1,23 +1,19 @@
 import {
   CreateFoodEntryRequestRouteParamsSchema,
   CreateFoodEntryRequestSchema,
-  FoodEntryResponseSchema,
+  CreateFoodEntryResponseSchema,
   type CreateFoodEntryRequest,
-  type FoodEntryResponse,
+  type CreateFoodEntryResponse,
 } from "@calibrate/api-contracts";
-import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
 import type { ApiTransport } from "../transport.js";
-
-import { dayLogRangeQueryKeyPrefix } from "./get-day-log-range.js";
-import { dayLogQueryKey, dayLogSlotQueryKey } from "./get-day-log.js";
-import { dayLogSyncQueryKeyPrefix } from "./sync-day-logs.js";
 
 export function saveFoodEntry(
   transport: ApiTransport,
   date: string,
   input: CreateFoodEntryRequest,
-): Promise<FoodEntryResponse> {
+): Promise<CreateFoodEntryResponse> {
   const validDate = CreateFoodEntryRequestRouteParamsSchema.parse({ date }).date;
   const body = CreateFoodEntryRequestSchema.parse(input);
 
@@ -25,7 +21,7 @@ export function saveFoodEntry(
     path: `/daylogs/${validDate}/food-entries`,
     method: "POST",
     body,
-    responseBodySchema: FoodEntryResponseSchema,
+    responseBodySchema: CreateFoodEntryResponseSchema,
   });
 }
 
@@ -35,24 +31,14 @@ export function getSaveFoodEntryMutationOptions(transport: ApiTransport, date: s
   };
 }
 
-/** Portable save hook. It refreshes the selected day and cached dashboard ranges after a successful entry creation. */
+/** Portable save hook. Cache patching belongs to the app's Day Log date-slot cache. */
 export function useSaveFoodEntry(
   transport: ApiTransport,
-  accountId: string,
   date: string,
-  options?: Omit<UseMutationOptions<FoodEntryResponse, Error, CreateFoodEntryRequest>, "mutationFn">,
+  options?: Omit<UseMutationOptions<CreateFoodEntryResponse, Error, CreateFoodEntryRequest>, "mutationFn">,
 ) {
-  const queryClient = useQueryClient();
-  const { onSuccess, ...mutationOptions } = options ?? {};
   return useMutation({
     ...getSaveFoodEntryMutationOptions(transport, date),
-    ...mutationOptions,
-    onSuccess: async (entry, variables, context, mutation) => {
-      await queryClient.invalidateQueries({ queryKey: dayLogSlotQueryKey(accountId, date) });
-      await queryClient.invalidateQueries({ queryKey: dayLogQueryKey(accountId, date) });
-      await queryClient.invalidateQueries({ queryKey: dayLogRangeQueryKeyPrefix(accountId) });
-      await queryClient.invalidateQueries({ queryKey: dayLogSyncQueryKeyPrefix(accountId) });
-      await onSuccess?.(entry, variables, context, mutation);
-    },
+    ...options,
   });
 }

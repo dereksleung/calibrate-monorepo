@@ -21,7 +21,6 @@ import { validate } from "@validation/validation-helpers.js";
 import { Request, Response } from "express";
 
 import { DayLogResponseMapper } from "../mappers/day-log-response-mapper.js";
-import { FoodEntryResponseMapper } from "../mappers/food-entry-response-mapper.js";
 
 /**
  * The controller has one main job - go between HTTP, and my application.
@@ -205,8 +204,8 @@ export class DayLogController {
         date: validatedDate?.data.date,
       });
       const response: CreateFoodEntryResponse = {
-        foodEntry: FoodEntryResponseMapper.toResponse(result.foodEntry),
-        dayLogVersionNumber: result.dayLogVersionNumber,
+        foodEntryId: result.foodEntryId,
+        versionNumber: result.versionNumber,
       };
       res.status(201).json(response);
     } catch (error) {
