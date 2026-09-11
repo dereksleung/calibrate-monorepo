@@ -183,7 +183,7 @@ Required safety, because this mutates a gitignored secret file in the real check
 - If `.env.keys` is already absent (CI, evaluator clone), skip the rename and still run the fallback assertions. The relocate step is how this repo with keys simulates that clone; CI is already in that state.
 - After restore, assert `.env.keys` is back at the original path when the test started with it present.
 
-This belongs in the fast suite (`*.test.ts`), not Docker/integration, because it is testing credential *selection*, not Compose.
+This belongs in the fast suite (`*.test.ts`), not Docker/integration, because it is testing credential _selection_, not Compose.
 
 ## Feasibility caveats
 
