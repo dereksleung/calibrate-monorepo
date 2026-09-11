@@ -53,6 +53,7 @@ export function useAuthenticatedSession(): AuthenticatedSessionResponse | undefi
   const { data } = useQuery({
     queryKey: authenticatedSessionQueryKey,
     queryFn: skipToken,
+    gcTime: Infinity,
     staleTime: Infinity,
   });
   return data as AuthenticatedSessionResponse | undefined;

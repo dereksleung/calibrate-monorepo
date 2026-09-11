@@ -12,17 +12,16 @@ import { useSyncDayLogsForDateRange } from "./useSyncDayLogsForDateRange.ts";
 
 export function DashboardV2Container() {
   const isRestoring = useIsRestoring();
+  const session = useAuthenticatedSession();
 
-  if (isRestoring) {
-    return <DashboardV2Page isPending={isRestoring} />;
+  if (isRestoring || !session) {
+    return <DashboardV2Page isPending />;
   }
 
-  return <DashboardV2Content />;
+  return <DashboardV2Content accountId={session.user.id} />;
 }
 
-function DashboardV2Content() {
-  const session = useAuthenticatedSession();
-  const accountId = session!.user.id;
+function DashboardV2Content({ accountId }: { accountId: string }) {
   const initialDataDateRange = getRollingSevenDayDateRange();
   const deeperAnalyticsDateRange = getRollingTwentyEightDayDateRange();
   const [shouldFetch28DayRange, setShouldFetch28DayRange] = useState(false);

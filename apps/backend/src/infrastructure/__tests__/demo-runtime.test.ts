@@ -120,6 +120,33 @@ describe("prepareDemoRuntime", () => {
     await expect(prepareDemoRuntime(directory)).rejects.toThrow("cannot run in production");
   });
 
+  it("refuses a non-loopback WebAuthn origin", async () => {
+    const directory = await createTemporaryDirectory();
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "http://example.test";
+
+    await expect(prepareDemoRuntime(directory)).rejects.toThrow("loopback HTTP WebAuthn origin");
+  });
+
+  it("replaces inherited dotenv ciphertext with demo-safe process values", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "http://localhost:3000";
+    process.env.EMAIL_SERVICE_CREDENTIAL = "encrypted:developer-credential";
+    process.env.EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT = "encrypted:not-an-integer";
+    process.env.TRUST_PROXY_HOPS = "encrypted:not-an-integer";
+
+    await prepareDemoRuntime(directory);
+
+    expect(getRuntimeEnvironmentValue("EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT")).toBe("1000");
+    expect(getRuntimeEnvironmentValue("TRUST_PROXY_HOPS")).toBe("0");
+    expect(getRuntimeEnvironmentValue("EMAIL_SERVICE_CREDENTIAL")).toBe("");
+    expect(dotenvGet).not.toHaveBeenCalled();
+  });
+
   it("fails closed when generated configuration is missing", async () => {
     const directory = await createTemporaryDirectory();
     process.env.CALIBRATE_DEMO = "1";

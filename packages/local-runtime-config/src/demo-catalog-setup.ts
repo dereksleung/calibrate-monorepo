@@ -4,6 +4,7 @@ import path from "node:path";
 
 import {
   ensureLocalRuntimeConfiguration,
+  localRuntimeConfigurationToProcessEnv,
   type LocalRuntimeConfiguration,
 } from "./local-runtime-configuration.js";
 
@@ -11,6 +12,17 @@ export const DEMO_DATABASE_HOST = "127.0.0.1";
 export const DEMO_DATABASE_NAME = "calibrate_demo";
 export const DEMO_DATABASE_PORT = "5433";
 export const DEMO_DATABASE_USER = "calibrate_demo";
+export const DEMO_FRONTEND_ORIGIN = "http://localhost:3000";
+export const DEMO_BACKEND_ORIGIN = "http://localhost:3001";
+export const DEMO_VITE_API_BASE_URL = `${DEMO_BACKEND_ORIGIN}/api/v1`;
+export const DEMO_BACKEND_PORT = "3001";
+export const DEMO_RUNTIME_DEFAULTS = {
+  EMAIL_SERVICE_CREDENTIAL: "",
+  EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT: "1000",
+  FOODDATA_CENTRAL_API_KEY: "",
+  TRUST_PROXY_HOPS: "0",
+  WEBAUTHN_RP_ID: "localhost",
+} as const;
 
 export type DemoCommand = {
   command: string;
@@ -42,7 +54,7 @@ export function getDemoDockerProjectName(directory: string): string {
 export async function runDemoSetup({
   directory,
   output = console.log,
-  runCommand = runProcess,
+  runCommand = runDemoCommand,
 }: DemoSetupOptions): Promise<DemoSetupResult> {
   const configuration = await ensureLocalRuntimeConfiguration(directory);
   const dockerProjectName = getDemoDockerProjectName(directory);
@@ -76,7 +88,7 @@ export async function runDemoSetup({
 export async function runDemoReset({
   directory,
   output = console.log,
-  runCommand = runProcess,
+  runCommand = runDemoCommand,
 }: DemoSetupOptions): Promise<DemoSetupResult> {
   const configuration = await ensureLocalRuntimeConfiguration(directory);
   const dockerProjectName = getDemoDockerProjectName(directory);
@@ -91,19 +103,25 @@ export async function runDemoReset({
   return runDemoSetup({ directory, output, runCommand });
 }
 
-function createDemoEnvironment(configuration: LocalRuntimeConfiguration): NodeJS.ProcessEnv {
+export function createDemoEnvironment(configuration: LocalRuntimeConfiguration): NodeJS.ProcessEnv {
   return {
     ...process.env,
+    ...localRuntimeConfigurationToProcessEnv(configuration),
+    ...DEMO_RUNTIME_DEFAULTS,
     CALIBRATE_DEMO: "1",
+    CORS_ORIGIN: DEMO_FRONTEND_ORIGIN,
     DB_HOST: DEMO_DATABASE_HOST,
     DB_NAME: DEMO_DATABASE_NAME,
     DB_PASSWORD: configuration.otpHmacKey,
     DB_PORT: DEMO_DATABASE_PORT,
     DB_USER: DEMO_DATABASE_USER,
+    PORT: DEMO_BACKEND_PORT,
+    VITE_API_BASE_URL: DEMO_VITE_API_BASE_URL,
+    WEBAUTHN_ORIGIN: DEMO_FRONTEND_ORIGIN,
   };
 }
 
-async function runProcess({ command, args, cwd, environment }: DemoCommand): Promise<void> {
+export async function runDemoCommand({ command, args, cwd, environment }: DemoCommand): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, { cwd, env: environment, stdio: "inherit" });
     child.once("error", reject);

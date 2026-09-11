@@ -114,34 +114,40 @@ Will use the backend to explore/practice various backend topics.
 
 - shadcn/ui is useful here for helping build battle-tested, accessible, polished UI quickly while still allowing keeping ownership over styling.
 
-# Setup for Running Locally
+# Run local demo
+
+This is the evaluator path. It does not require private keys, the gitignored `.env.keys` file used by dotenvx to decrypt .env files, a FoodData Central API key, or email service provider credentials.
+
+**Prerequisites**
+
+- Node.js 26, matching [`.tool-versions`](.tool-versions)
+- Docker Desktop (PostgreSQL runs in Docker; a host database install is not required)
+
+From a fresh clone:
+
+```bash
+npm ci
+npx nx run @calibrate/local-runtime-config:demo-setup
+npx nx run @calibrate/local-runtime-config:demo-dev
+```
+
+`demo-dev` prints the local URL. Open it and choose **Start local test session**. The default address is [http://localhost:3000/calibrate-monorepo/signup-login](http://localhost:3000/calibrate-monorepo/signup-login). Host port 5433 must be free so Docker can start the demo PostgreSQL service.
+
+The Demo catalog is pinned USDA Foundation Foods from the 2026-04-30 FoodData Central foundation-foods JSON release. Search misses outside that set are expected. Demo mode never calls FoodData Central or sends real email.
+
+`demo-setup` is idempotent: it writes or reuses gitignored `.local.env`, starts PostgreSQL, applies migrations, and seeds the catalog. To recreate the Demo database while keeping that generated configuration:
+
+```bash
+npx nx run @calibrate/local-runtime-config:demo-reset
+```
+
+# Developing locally
 
 ## Common
 
 1. Run `npm ci` in the project root.
 
-Set up or reuse the local Demo catalog with:
-
-```bash
-npx nx run @calibrate/local-runtime-config:demo-setup
-```
-
-This writes or reuses the gitignored `.local.env` file in the repository root,
-generating fresh, non-production Ed25519 and HMAC values without reading
-`.env.keys` or normal Dotenvx configuration. It then starts PostgreSQL, applies
-migrations, and idempotently seeds the Foundation Foods Demo catalog. The
-command prints the generated data-quality report path.
-
-Demo setup uses the `calibrate_demo` database on the Calibrate PostgreSQL
-service at `127.0.0.1:5433`. Host port 5433 must be free so Docker Compose can
-start the demo PostgreSQL service.
-
-Normal reruns preserve the Demo database. To intentionally recreate its
-PostgreSQL volume and reseed the catalog while preserving `.local.env`, run:
-
-```bash
-npx nx run @calibrate/local-runtime-config:demo-reset
-```
+Evaluators should follow [Run local demo](#run-local-demo) instead of the worktree and Dotenvx setup below.
 
 ## Git worktrees (shared Postgres)
 

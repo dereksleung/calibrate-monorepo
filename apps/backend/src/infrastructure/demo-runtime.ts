@@ -3,6 +3,7 @@ import {
   DEMO_DATABASE_NAME,
   DEMO_DATABASE_PORT,
   DEMO_DATABASE_USER,
+  DEMO_RUNTIME_DEFAULTS,
   LOCAL_RUNTIME_ENV_FILE_NAME,
   localRuntimeConfigurationToProcessEnv,
   readLocalRuntimeConfiguration,
@@ -33,6 +34,7 @@ export async function prepareDemoRuntime(directory = process.cwd()): Promise<Loc
 
   const environment = {
     ...localRuntimeConfigurationToProcessEnv(configuration),
+    ...DEMO_RUNTIME_DEFAULTS,
     DB_HOST: DEMO_DATABASE_HOST,
     DB_NAME: DEMO_DATABASE_NAME,
     DB_PASSWORD: configuration.otpHmacKey,
