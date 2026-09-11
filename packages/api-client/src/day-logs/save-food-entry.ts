@@ -2,6 +2,7 @@ import {
   CreateFoodEntryRequestRouteParamsSchema,
   CreateFoodEntryRequestSchema,
   CreateFoodEntryResponseSchema,
+  normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
   type CreateFoodEntryResponse,
 } from "@calibrate/api-contracts";
@@ -15,7 +16,7 @@ export function saveFoodEntry(
   input: CreateFoodEntryRequest,
 ): Promise<CreateFoodEntryResponse> {
   const validDate = CreateFoodEntryRequestRouteParamsSchema.parse({ date }).date;
-  const body = CreateFoodEntryRequestSchema.parse(input);
+  const body = normalizeFoodEntryForStorage(CreateFoodEntryRequestSchema.parse(input));
 
   return transport.request({
     path: `/daylogs/${validDate}/food-entries`,
