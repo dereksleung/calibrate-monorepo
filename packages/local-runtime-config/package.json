@@ -43,15 +43,6 @@
           "command": "tsx src/local-demo-reset.ts"
         }
       },
-      "demo-dev": {
-        "executor": "nx:run-commands",
-        "continuous": true,
-        "cache": false,
-        "options": {
-          "cwd": "packages/local-runtime-config",
-          "command": "tsx src/local-demo-dev.ts"
-        }
-      },
       "test": {
         "executor": "nx:run-commands",
         "cache": true,
