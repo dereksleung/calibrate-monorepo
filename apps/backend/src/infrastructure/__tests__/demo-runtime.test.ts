@@ -137,7 +137,6 @@ describe("prepareDemoRuntime", () => {
     expect(getRuntimeEnvironmentValue("EMAIL_SERVICE_CREDENTIAL")).toBe("");
     expect(dotenvGet).not.toHaveBeenCalled();
   });
-
   it("replaces an encrypted normal-runtime WebAuthn origin with the demo-safe origin", async () => {
     const directory = await createTemporaryDirectory();
     await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
