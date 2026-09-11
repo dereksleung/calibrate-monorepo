@@ -120,11 +120,11 @@ describe("local runtime configuration", () => {
     await writeFile(ignoredKeysPath, "DOTENV_PRIVATE_KEY=must-not-be-required\n");
     delete process.env.DOTENV_PRIVATE_KEY;
 
-    const generated = await runLocalDemoSetup(directory);
+    const generated = await runLocalDemoSetup(directory, { runCommand: async () => {} });
     const persisted = await readLocalRuntimeConfiguration(directory);
 
-    expect(persisted).toEqual(generated);
-    assertUsableByBackendConsumers(generated);
+    expect(persisted).toEqual(generated.configuration);
+    assertUsableByBackendConsumers(generated.configuration);
     await expect(readFile(ignoredKeysPath, "utf8")).resolves.toBe(
       "DOTENV_PRIVATE_KEY=must-not-be-required\n",
     );

@@ -18,6 +18,14 @@
           "command": "tsx src/local-demo-setup.ts"
         }
       },
+      "demo-reset": {
+        "executor": "nx:run-commands",
+        "cache": false,
+        "options": {
+          "cwd": "packages/local-runtime-config",
+          "command": "tsx src/local-demo-reset.ts"
+        }
+      },
       "test": {
         "executor": "nx:run-commands",
         "cache": true,

@@ -18,6 +18,7 @@ import {
 } from "@calibrate/local-runtime-config";
 
 import { getBackendListenHost, prepareDemoRuntime } from "../demo-runtime.js";
+import { loadDatabaseConnectionConfigFromEnvironment } from "../persistence/database-environment.js";
 import { getRuntimeEnvironmentValue } from "../runtime-environment.js";
 import { JoseAccessTokenService } from "../security/jose-access-token-service.js";
 
@@ -64,9 +65,42 @@ describe("prepareDemoRuntime", () => {
     expect(localRuntimeConfigurationToProcessEnv(configuration).JWT_ISSUER).toBe("calibrate-local");
     expect(getRuntimeEnvironmentValue("JWT_ISSUER")).toBe("calibrate-local");
     expect(getRuntimeEnvironmentValue("JWT_PRIVATE_KEY_PEM")).toBe(generated.jwtPrivateKeyPem);
+    expect(loadDatabaseConnectionConfigFromEnvironment()).toEqual({
+      database: "calibrate_demo",
+      host: "127.0.0.1",
+      maxConnections: 10,
+      password: generated.otpHmacKey,
+      port: 5433,
+      user: "calibrate_demo",
+    });
     expect(await tokenService.verify(issued.token)).toEqual({ userId: "demo-user" });
     expect(dotenvGet).not.toHaveBeenCalled();
     expect(getBackendListenHost()).toBe("127.0.0.1");
+  });
+
+  it("replaces encrypted normal-runtime limits with demo-safe defaults", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "http://localhost:3000";
+    process.env.EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT = "encrypted-normal-runtime-value";
+    process.env.TRUST_PROXY_HOPS = "encrypted-normal-runtime-value";
+
+    await prepareDemoRuntime(directory);
+    await expect(import("../container.js")).resolves.toHaveProperty("Container");
+  });
+
+  it("replaces an encrypted normal-runtime WebAuthn origin with the demo-safe origin", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.WEBAUTHN_ORIGIN = "encrypted-normal-runtime-value";
+
+    await prepareDemoRuntime(directory);
+
+    expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
 
   it("is an explicit selection rather than an implicit fallback", async () => {
@@ -84,15 +118,6 @@ describe("prepareDemoRuntime", () => {
     process.env.WEBAUTHN_ORIGIN = "http://localhost:3000";
 
     await expect(prepareDemoRuntime(directory)).rejects.toThrow("cannot run in production");
-  });
-
-  it("refuses a non-loopback WebAuthn origin", async () => {
-    const directory = await createTemporaryDirectory();
-    process.env.CALIBRATE_DEMO = "1";
-    process.env.NODE_ENV = "development";
-    process.env.WEBAUTHN_ORIGIN = "http://example.test";
-
-    await expect(prepareDemoRuntime(directory)).rejects.toThrow("loopback HTTP WebAuthn origin");
   });
 
   it("fails closed when generated configuration is missing", async () => {
