@@ -82,9 +82,11 @@ type DayLogSlotResult = CachedDayLog | NotYetLoaded;
 
 ### Food Entry write behavior
 
-- Successful Food Entry creation returns the created entry, parent `dayLogId`, `previousVersionNumber` (`null` only for known absence becoming a new Day Log), and `versionNumber`.
-- The client patches a Day Log slot only if its cached predecessor version exactly equals `previousVersionNumber`. It updates the entry and version without issuing `sync`.
-- If the slot is absent or version-mismatched, keep a locally acknowledged UI result and invalidate that slot. A later ordinary eligible sync retrieves truth; do not promote a partial stale cache to the new revision or globally invalidate every Day Log range.
+- `addFoodEntry` does not take a client `versionNumber`. The request is the client's wish to add that Food Entry. The server always appends it through the Day Log aggregate-root write and advances the server-owned `versionNumber` it currently has, even when the client's cache is behind. The version is never a write precondition.
+- Create writes add one Food Entry at a time. The client does not track a queue of unconfirmed entries and does not send a client-only Food Entry ID. If the request fails, the user stays on that Food Entry's page.
+- The aggregate-root write does not calculate a mutation delta. A successful create response body is only `{ foodEntryId, versionNumber }`. It does not echo the Food Entry. Error responses and their status mapping stay unchanged.
+- The client patches a cached date slot by placing the returned server `foodEntryId` on the Food Entry from that create attempt. When the cached slot is a complete predecessor (cached version plus one equals the returned `versionNumber`, or Known-empty becoming version 1), raise the cached Day Log `versionNumber` to the returned value and do not issue `sync`.
+- If the slot is absent or version-mismatched, keep the locally acknowledged UI result, invalidate that slot, and sync only that date. Do not globally invalidate every Day Log range.
 
 ## Implementation boundaries
 
@@ -97,7 +99,7 @@ type DayLogSlotResult = CachedDayLog | NotYetLoaded;
 
 - **Sync protocol:** 31-date bound, malformed manifest rejection, authenticated account isolation, narrow unchanged `204` with no body, sparse `200` changed/unloaded slots, `no-store` headers, coherent projection/snapshot, and aggregate-write version advancement.
 - **Persistence and privacy:** actual IndexedDB browser coverage for server-gate-first restoration, account scoping, unavailable/corrupt storage fallback, successful versus failed logout, missed BroadcastChannel delivery, resume/focus fallback, and persist/restore races against a revocation fence.
-- **Client behavior:** Known-empty versus Empty versus NotYetLoaded; per-slot `dataUpdatedAt` and invalidation behavior; dashboard reuse; Sunday calendar/DST/year boundaries; Upcoming future cells; historical scroll silence; historic selection `D-6..D`; neighbor selection fresh skip; cache-first offline/error states; local write patch and mismatch-to-invalidation behavior.
+- **Client behavior:** Known-empty versus Empty versus NotYetLoaded; per-slot `dataUpdatedAt` and invalidation behavior; dashboard reuse; Sunday calendar/DST/year boundaries; Upcoming future cells; historical scroll silence; historic selection `D-6..D`; neighbor selection fresh skip; cache-first offline/error states; local write patch of the single in-flight create; success-body `{ foodEntryId, versionNumber }` with unchanged error responses; matching patch that raises slot `versionNumber` without sync; version-mismatch/unloaded single-date reconciliation; failed create remaining on the Food Entry page.
 - **Analytics:** no 28-day request before drawer opening; cache-first partial coverage; 28-date stale sync; Total from seven dates; Change from 14-plus-14 only after complete confirmation; no partial data silently represented as known empty.
 - **Measurement:** privacy-safe cache-restore and usable-view timings, projection versus aggregate work, request/response bytes, `204` ratio, and sync reason. Never emit food, Day Log, user-session, or token content. Use deterministic behavioral assertions rather than timing thresholds in CI.
 
