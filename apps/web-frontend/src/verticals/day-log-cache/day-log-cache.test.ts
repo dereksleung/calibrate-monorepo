@@ -436,24 +436,25 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
       now + 1,
     );
 
-    expect(queryClient.getQueryData<Exclude<CachedDayLog, null>>(dayLogSlotQueryKey(accountId, "2026-09-03")))
-      .toMatchObject({
-        lunch: [
-          expect.objectContaining({
-            chosenQuantity: 0.33,
-            calories: 73.9,
-            totalFatGrams: 4.2,
-            saturatedFatGrams: 0.6,
-            cholesterolMg: 0,
-            sodiumMg: 33,
-            totalCarbohydrateGrams: 1.1,
-            fiberGrams: 0.3,
-            sugarGrams: 0.3,
-            proteinGrams: 8,
-            quantityServing: 1.23,
-          }),
-        ],
-      });
+    expect(
+      queryClient.getQueryData<Exclude<CachedDayLog, null>>(dayLogSlotQueryKey(accountId, "2026-09-03")),
+    ).toMatchObject({
+      lunch: [
+        expect.objectContaining({
+          chosenQuantity: 0.33,
+          calories: 73.9,
+          totalFatGrams: 4.2,
+          saturatedFatGrams: 0.6,
+          cholesterolMg: 0,
+          sodiumMg: 33,
+          totalCarbohydrateGrams: 1.1,
+          fiberGrams: 0.3,
+          sugarGrams: 0.3,
+          proteinGrams: 8,
+          quantityServing: 1.23,
+        }),
+      ],
+    });
   });
 
   it("keeps a mismatched slot locally acknowledged and marks it unverified", async () => {

@@ -245,7 +245,11 @@ export async function applyFoodEntryCreateToDayLogCache(
   const cached = queryClient.getQueryData<CachedDayLog>(slotKey);
   const cachedVersion = queryClient.getQueryData<number>(versionKey);
   const normalizedCreated = normalizeFoodEntryForStorage(created);
-  const next = withCreatedFoodEntry(cached ?? emptyPresentDayLog(date), normalizedCreated, result.foodEntryId);
+  const next = withCreatedFoodEntry(
+    cached ?? emptyPresentDayLog(date),
+    normalizedCreated,
+    result.foodEntryId,
+  );
 
   queryClient.setQueryData(slotKey, next, { updatedAt: now });
 

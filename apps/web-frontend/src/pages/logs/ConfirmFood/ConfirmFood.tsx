@@ -1,11 +1,10 @@
+import { Button } from "#/shared/components/base/Button.tsx";
 import {
   normalizeFoodEntryForStorage,
   normalizeFoodEntryQuantity,
   type CreateFoodEntryRequest,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
-
-import { Button } from "#/shared/components/base/Button.tsx";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -54,20 +53,22 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
     }
 
     setQuantityError(null);
-    onSave(normalizeFoodEntryForStorage({
-      name: food.name,
-      brand: food.brand ?? null,
-      meal,
-      chosenQuantity,
-      chosenUnit: unit,
-      ...nutrition,
-      quantityServing: food.quantityServing,
-      servingLabel: food.servingLabel,
-      quantityMass: food.quantityMass,
-      massUnit: food.massUnit,
-      quantityVolume: food.quantityVolume,
-      volumeUnit: food.volumeUnit,
-    }));
+    onSave(
+      normalizeFoodEntryForStorage({
+        name: food.name,
+        brand: food.brand ?? null,
+        meal,
+        chosenQuantity,
+        chosenUnit: unit,
+        ...nutrition,
+        quantityServing: food.quantityServing,
+        servingLabel: food.servingLabel,
+        quantityMass: food.quantityMass,
+        massUnit: food.massUnit,
+        quantityVolume: food.quantityVolume,
+        volumeUnit: food.volumeUnit,
+      }),
+    );
   }
 
   return (
