@@ -69,6 +69,37 @@ describe("ConfirmFood", () => {
     );
   });
 
+  it("uses storage precision for the displayed and submitted nutrition", () => {
+    const onSave = vi.fn();
+    render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0.33" } });
+
+    expect(within(screen.getByRole("region", { name: "Nutrition at a glance" })).getByText("7.9g")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chosenQuantity: 0.33,
+        calories: 73.3,
+        totalFatGrams: 4.2,
+        proteinGrams: 7.9,
+      }),
+    );
+  });
+
+  it("rejects quantities with more than two decimal places", () => {
+    const onSave = vi.fn();
+    render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);
+
+    fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0.333" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Done" }).closest("form")!);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("no more than two decimal places");
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
   it("offers only complete catalog quantity and unit pairs, then scales using the selected unit", () => {
     const onSave = vi.fn();
     render(

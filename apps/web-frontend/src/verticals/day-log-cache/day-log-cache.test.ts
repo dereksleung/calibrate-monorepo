@@ -410,6 +410,52 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
     expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(false);
   });
 
+  it("stores a create payload at the server's numeric precision before skipping sync", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), null, { updatedAt: now });
+
+    await applyFoodEntryCreateToDayLogCache(
+      queryClient,
+      accountId,
+      "2026-09-03",
+      {
+        ...createdLunch,
+        chosenQuantity: 0.333,
+        calories: 73.926,
+        totalFatGrams: 4.191,
+        saturatedFatGrams: 0.594,
+        cholesterolMg: 0.333,
+        sodiumMg: 33.3,
+        totalCarbohydrateGrams: 1.066,
+        fiberGrams: 0.333,
+        sugarGrams: 0.333,
+        proteinGrams: 7.959,
+        quantityServing: 1.234,
+      },
+      { foodEntryId: "entry-1", versionNumber: 1 },
+      now + 1,
+    );
+
+    expect(queryClient.getQueryData<Exclude<CachedDayLog, null>>(dayLogSlotQueryKey(accountId, "2026-09-03")))
+      .toMatchObject({
+        lunch: [
+          expect.objectContaining({
+            chosenQuantity: 0.33,
+            calories: 73.9,
+            totalFatGrams: 4.2,
+            saturatedFatGrams: 0.6,
+            cholesterolMg: 0,
+            sodiumMg: 33,
+            totalCarbohydrateGrams: 1.1,
+            fiberGrams: 0.3,
+            sugarGrams: 0.3,
+            proteinGrams: 8,
+            quantityServing: 1.23,
+          }),
+        ],
+      });
+  });
+
   it("keeps a mismatched slot locally acknowledged and marks it unverified", async () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), presentSlot("2026-09-03"), {

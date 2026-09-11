@@ -1,3 +1,9 @@
+import {
+  normalizeFoodEntryNutrition,
+  normalizeFoodEntryQuantity,
+  type CreateFoodEntryRequest,
+} from "@calibrate/api-contracts";
+
 import type { SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
 
 export type FoodUnitOption = {
@@ -19,11 +25,12 @@ export type ScaledFoodNutrition = Pick<
 >;
 
 function createUnitOption(quantity: number | null, unit: string | null): FoodUnitOption | null {
-  if (!Number.isFinite(quantity) || quantity === null || quantity <= 0 || !unit?.trim()) {
+  const normalizedQuantity = quantity === null ? null : normalizeFoodEntryQuantity(quantity);
+  if (!Number.isFinite(normalizedQuantity) || normalizedQuantity === null || normalizedQuantity <= 0 || !unit?.trim()) {
     return null;
   }
 
-  return { unit: unit.trim(), baseQuantity: quantity };
+  return { unit: unit.trim(), baseQuantity: normalizedQuantity };
 }
 
 /** Returns only catalog units that have a matching, positive reference quantity. */
@@ -61,7 +68,7 @@ export function scaleFoodNutrition(
       ? chosenQuantity / selectedUnit.baseQuantity
       : 0;
 
-  return {
+  return normalizeFoodEntryNutrition({
     calories: food.calories * scale,
     totalFatGrams: food.totalFatGrams * scale,
     saturatedFatGrams: scaleNullableNutrition(food.saturatedFatGrams, scale),
@@ -71,5 +78,5 @@ export function scaleFoodNutrition(
     fiberGrams: scaleNullableNutrition(food.fiberGrams, scale),
     sugarGrams: scaleNullableNutrition(food.sugarGrams, scale),
     proteinGrams: food.proteinGrams * scale,
-  };
+  } satisfies Pick<CreateFoodEntryRequest, keyof ScaledFoodNutrition>);
 }

@@ -6,6 +6,7 @@ import {
 } from "@calibrate/api-client";
 import {
   DayLogResponseSchema,
+  normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
   type CreateFoodEntryResponse,
   type DayLogResponse,
@@ -243,7 +244,8 @@ export async function applyFoodEntryCreateToDayLogCache(
   const versionKey = dayLogSlotVersionQueryKey(accountId, date);
   const cached = queryClient.getQueryData<CachedDayLog>(slotKey);
   const cachedVersion = queryClient.getQueryData<number>(versionKey);
-  const next = withCreatedFoodEntry(cached ?? emptyPresentDayLog(date), created, result.foodEntryId);
+  const normalizedCreated = normalizeFoodEntryForStorage(created);
+  const next = withCreatedFoodEntry(cached ?? emptyPresentDayLog(date), normalizedCreated, result.foodEntryId);
 
   queryClient.setQueryData(slotKey, next, { updatedAt: now });
 
