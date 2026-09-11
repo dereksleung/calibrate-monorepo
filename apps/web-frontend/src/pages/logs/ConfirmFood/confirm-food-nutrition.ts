@@ -26,7 +26,12 @@ export type ScaledFoodNutrition = Pick<
 
 function createUnitOption(quantity: number | null, unit: string | null): FoodUnitOption | null {
   const normalizedQuantity = quantity === null ? null : normalizeFoodEntryQuantity(quantity);
-  if (!Number.isFinite(normalizedQuantity) || normalizedQuantity === null || normalizedQuantity <= 0 || !unit?.trim()) {
+  if (
+    !Number.isFinite(normalizedQuantity) ||
+    normalizedQuantity === null ||
+    normalizedQuantity <= 0 ||
+    !unit?.trim()
+  ) {
     return null;
   }
 

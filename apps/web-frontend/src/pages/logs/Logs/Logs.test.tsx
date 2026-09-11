@@ -74,8 +74,8 @@ beforeEach(() => {
             ]),
           ),
           {
-          status: 200,
-          headers: { "content-type": "application/json" },
+            status: 200,
+            headers: { "content-type": "application/json" },
           },
         ),
       );

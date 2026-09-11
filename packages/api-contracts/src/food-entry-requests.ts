@@ -6,7 +6,9 @@ import {
   MealNameSchema,
 } from "./common/food-entry-base.js";
 
-export const CommonFoodEntryFieldsSchema = FoodEntryBaseSchema.extend(FoodEntryChosenFieldsSchema.shape).extend({
+export const CommonFoodEntryFieldsSchema = FoodEntryBaseSchema.extend(
+  FoodEntryChosenFieldsSchema.shape,
+).extend({
   meal: MealNameSchema,
 });
 
@@ -75,7 +77,10 @@ export function normalizeFoodEntryForStorage(entry: CreateFoodEntryRequest): Cre
     ...normalizeFoodEntryNutrition(entry),
     quantityServing: normalizeFoodEntryQuantity(entry.quantityServing),
     quantityMass: normalizeNullableFoodEntryNumber(entry.quantityMass, FOOD_ENTRY_QUANTITY_FRACTION_DIGITS),
-    quantityVolume: normalizeNullableFoodEntryNumber(entry.quantityVolume, FOOD_ENTRY_QUANTITY_FRACTION_DIGITS),
+    quantityVolume: normalizeNullableFoodEntryNumber(
+      entry.quantityVolume,
+      FOOD_ENTRY_QUANTITY_FRACTION_DIGITS,
+    ),
   };
 }
 

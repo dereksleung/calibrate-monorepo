@@ -75,7 +75,9 @@ describe("ConfirmFood", () => {
 
     fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0.33" } });
 
-    expect(within(screen.getByRole("region", { name: "Nutrition at a glance" })).getByText("7.9g")).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Nutrition at a glance" })).getByText("7.9g"),
+    ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
@@ -96,7 +98,7 @@ describe("ConfirmFood", () => {
     fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0.333" } });
     fireEvent.submit(screen.getByRole("button", { name: "Done" }).closest("form")!);
 
-    expect(screen.getByRole("alert")).toHaveTextContent("no more than two decimal places");
+    expect(screen.getByRole("alert").textContent).toContain("no more than two decimal places");
     expect(onSave).not.toHaveBeenCalled();
   });
 
