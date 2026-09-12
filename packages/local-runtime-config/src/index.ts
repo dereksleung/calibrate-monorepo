@@ -44,3 +44,32 @@ export {
   type ReadDotenvValue,
   type ResolvePostgresRoleOptions,
 } from "./postgres-role.js";
+export {
+  isTcpPortOpen,
+  shouldStartComposePostgres,
+  waitForPostgresReady,
+  type PostgresReadinessOptions,
+  type PostgresReadinessProbe,
+} from "./postgres-health.js";
+export {
+  SHARED_BOOTSTRAP_DATABASE,
+  SHARED_COMPOSE_PROJECT_NAME,
+  SHARED_DATABASE_HOST,
+  SHARED_DATABASE_PORT,
+  SHARED_POSTGRES_ROLE_MISMATCH_MESSAGE,
+  connectSharedPostgresAdmin,
+  createDatabaseIfMissing,
+  createSharedPostgresComposeEnvironment,
+  dropDatabaseIfExists,
+  ensureCalibrateSharedPostgres,
+  isPostgresDuplicateDatabaseError,
+  isPostgresInvalidPasswordError,
+  quotePostgresIdentifier,
+  type ConnectSharedPostgresAdmin,
+  type EnsureSharedPostgresOptions,
+  type SharedPostgresAdminClient,
+  type SharedPostgresAdminQuery,
+  type SharedPostgresAdminResult,
+  type SharedPostgresCommand,
+  type SharedPostgresOptions,
+} from "./shared-postgres.js";
