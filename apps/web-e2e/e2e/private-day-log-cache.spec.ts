@@ -805,6 +805,46 @@ test("keeps an ambiguous logout durable and fail-closed without navigating", asy
   expect(await readStoreValue(page, DAY_LOG_CACHE_SNAPSHOT_STORE, accountId)).toBeTruthy();
 });
 
+test("does not navigate when the fence-committed write aborts after generation advancement", async ({
+  page,
+}) => {
+  await page.addInitScript(
+    ({ lifecycleStore }) => {
+      const originalPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function putWithFenceCommitAbort(value, key) {
+        const request = originalPut.call(this, value, key);
+        if (
+          this.name === lifecycleStore &&
+          value &&
+          typeof value === "object" &&
+          "phase" in value &&
+          value.phase === "fence-committed"
+        ) {
+          queueMicrotask(() => this.transaction.abort());
+        }
+        return request;
+      };
+    },
+    { lifecycleStore: DAY_LOG_CACHE_LIFECYCLE_STORE },
+  );
+  await startLocalTestSession(page);
+  const accountId = await getConfirmedAccountId(page);
+  await waitForSnapshot(page, accountId);
+  const generation = await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId);
+
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("button", { name: "Log out" }).click();
+
+  await expect(page.getByRole("alert")).toContainText("secure cache cleanup needs to recover");
+  await expect(page).not.toHaveURL(/signup-login/);
+  expect(
+    await readStoreValue<{ phase: string }>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, `__logout__:${accountId}`),
+  ).toMatchObject({ phase: "server-logout-confirmed" });
+  expect(await readStoreValue<number>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, accountId)).toBe(
+    (generation ?? 0) + 1,
+  );
+});
+
 test("retries a fresh generation transaction without double-advancing after a lost response", async ({
   page,
 }) => {
