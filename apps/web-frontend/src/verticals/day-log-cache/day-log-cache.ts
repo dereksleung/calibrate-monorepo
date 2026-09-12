@@ -228,9 +228,13 @@ function isCompletePredecessor(
 }
 
 /**
- * Stamps the server Food Entry ID onto the create payload and writes that
- * entry into the date slot. A complete predecessor raises `versionNumber`
- * without sync; any other slot stays locally acknowledged but unverified.
+ * Helps cut API requests from queryClient.invalidateQueries, and server outbound egress.
+ * Allows the server response for creating a food entry to be very minimal.
+ * On a success, stamps the server Food Entry ID onto the create payload and writes that
+ * entry into the date slot. If the existing day log version number is the direct predecessor
+ * of what the server returns, it raises `versionNumber`
+ * without sync; otherwise it treats the change as locally acknowledged but unverified,
+ * and invalidates the day log slot for syncing with the latest server state.
  */
 export async function applyFoodEntryCreateToDayLogCache(
   queryClient: QueryClient,
