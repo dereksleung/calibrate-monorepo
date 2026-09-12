@@ -835,7 +835,7 @@ test("does not navigate when the fence-committed write aborts after generation a
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("button", { name: "Log out" }).click();
 
-  await expect(page.getByRole("alert")).toContainText("secure cache cleanup needs to recover");
+  await expect(page.getByRole("alert")).toContainText("couldn't finish protecting");
   await expect(page).not.toHaveURL(/signup-login/);
   expect(
     await readStoreValue<{ phase: string }>(page, DAY_LOG_CACHE_LIFECYCLE_STORE, `__logout__:${accountId}`),

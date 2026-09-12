@@ -282,6 +282,52 @@ describe("Header", () => {
       expect(queryClient.getQueryData(privateQueryKey)).toBeDefined();
       expect(router.state.location.pathname).toBe("/");
     });
+
+    it("stays on the page and does not claim cleanup when the fence cannot commit", async () => {
+      mockCompleteDayLogCacheLogout.mockResolvedValueOnce({
+        serverLogoutConfirmed: true,
+        fenceCommitted: false,
+        cleanupPending: true,
+      });
+      const { queryClient, router } = await renderHeader("/", { authenticated: true });
+      const privateQueryKey = ["dayLogs", authenticatedSession.user.id, "slot", "2026-07-10"];
+      queryClient.setQueryData(privateQueryKey, { status: "known-empty" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("alert").textContent).toContain("couldn't finish protecting"),
+      );
+      expect(screen.getByRole("alert").textContent).toContain("Logout was confirmed");
+      expect(screen.getByRole("alert").textContent).not.toContain("cleanup");
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeDefined();
+      expect(queryClient.getQueryData(privateQueryKey)).toBeUndefined();
+      expect(router.state.location.pathname).toBe("/");
+      expect(mockBroadcastDayLogCacheRevocation).not.toHaveBeenCalled();
+    });
+
+    it("does not claim logout was confirmed when the confirmed marker cannot be saved", async () => {
+      mockCompleteDayLogCacheLogout.mockResolvedValueOnce({
+        serverLogoutConfirmed: false,
+        fenceCommitted: false,
+        cleanupPending: true,
+      });
+      const { queryClient, router } = await renderHeader("/", { authenticated: true });
+      const privateQueryKey = ["dayLogs", authenticatedSession.user.id, "slot", "2026-07-10"];
+      queryClient.setQueryData(privateQueryKey, { status: "known-empty" });
+
+      fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+      fireEvent.click(await screen.findByRole("button", { name: "Log out" }));
+
+      await waitFor(() =>
+        expect(screen.getByRole("alert").textContent).toContain("couldn't save the confirmed logout"),
+      );
+      expect(screen.getByRole("alert").textContent).not.toContain("Logout was confirmed");
+      expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toBeDefined();
+      expect(queryClient.getQueryData(privateQueryKey)).toBeDefined();
+      expect(router.state.location.pathname).toBe("/");
+    });
   });
 
   describe("mobile", () => {

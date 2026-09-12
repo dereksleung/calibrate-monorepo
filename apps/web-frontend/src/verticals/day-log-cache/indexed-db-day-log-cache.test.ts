@@ -432,4 +432,30 @@ describe("completeDayLogCacheLogout", () => {
     });
     expect(await readLifecycle(`__logout__:${accountId}`)).toBeUndefined();
   });
+
+  it("reports already-resolved cleanup as success when the logout record is gone", async () => {
+    await writeLifecycle([[accountId, 2]]);
+
+    await expect(completeDayLogCacheLogout(accountId, operationId)).resolves.toEqual({
+      serverLogoutConfirmed: true,
+      fenceCommitted: true,
+      cleanupPending: false,
+    });
+  });
+
+  it("does not treat a different operation's logout record as already resolved", async () => {
+    await writeLifecycle([
+      [accountId, 2],
+      [`__logout__:${accountId}`, logoutRecord({ operationId: "other-operation" })],
+    ]);
+
+    await expect(completeDayLogCacheLogout(accountId, operationId)).resolves.toMatchObject({
+      serverLogoutConfirmed: false,
+      fenceCommitted: false,
+      cleanupPending: true,
+    });
+    expect(await readLifecycle(`__logout__:${accountId}`)).toMatchObject({
+      operationId: "other-operation",
+    });
+  });
 });
