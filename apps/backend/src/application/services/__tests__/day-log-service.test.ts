@@ -194,6 +194,7 @@ describe("DayLogServiceImpl", () => {
       const persistedResult = {
         foodEntryId: "entry-1",
         versionNumber: 1,
+        createdDayLogId: "day-log-1",
       };
       mockUserRepository.findById.mockResolvedValue(
         User.create({ email: "user@example.com", passwordHash: "hash" }),

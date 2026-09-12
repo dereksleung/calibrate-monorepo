@@ -159,7 +159,11 @@ describe("PostgresDayLogRepository.createWithFoodEntry", () => {
       version_number: 1,
     });
     expect(insertedFoodEntry).toMatchObject({ id: "food-entry-1", day_log_id: "day-log-1" });
-    expect(result).toEqual({ foodEntryId: "food-entry-1", versionNumber: 1 });
+    expect(result).toEqual({
+      foodEntryId: "food-entry-1",
+      versionNumber: 1,
+      createdDayLogId: "day-log-1",
+    });
   });
 });
 

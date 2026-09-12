@@ -20,6 +20,7 @@ export interface FindOrCreateDayLogByDateAndUserInput {
 export interface AddFoodEntryResult {
   foodEntryId: string;
   versionNumber: number;
+  createdDayLogId?: string;
 }
 
 export interface CreateDayLogWithFoodEntryInput {

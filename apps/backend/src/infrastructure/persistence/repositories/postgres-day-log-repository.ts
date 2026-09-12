@@ -144,6 +144,7 @@ export class PostgresDayLogRepository implements IDayLogRepository, IDayLogSyncQ
       return {
         foodEntryId: foodEntryRow.id,
         versionNumber: insertedDayLog.version_number,
+        createdDayLogId: dayLog.id,
       };
     });
   }

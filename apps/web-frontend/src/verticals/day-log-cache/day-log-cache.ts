@@ -192,9 +192,9 @@ const MEAL_SLOT_BY_NAME = {
 
 type PresentDayLog = Exclude<DayLogResponse, null>;
 
-function emptyPresentDayLog(date: string): PresentDayLog {
+function emptyPresentDayLog(date: string, dayLogId?: string): PresentDayLog {
   return {
-    id: crypto.randomUUID(),
+    id: dayLogId ?? crypto.randomUUID(),
     date,
     breakfast: [],
     lunch: [],
@@ -246,7 +246,7 @@ export async function applyFoodEntryCreateToDayLogCache(
   const cachedVersion = queryClient.getQueryData<number>(versionKey);
   const normalizedCreated = normalizeFoodEntryForStorage(created);
   const next = withCreatedFoodEntry(
-    cached ?? emptyPresentDayLog(date),
+    cached ?? emptyPresentDayLog(date, result.createdDayLogId),
     normalizedCreated,
     result.foodEntryId,
   );

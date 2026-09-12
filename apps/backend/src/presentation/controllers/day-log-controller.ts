@@ -206,6 +206,7 @@ export class DayLogController {
       const response: CreateFoodEntryResponse = {
         foodEntryId: result.foodEntryId,
         versionNumber: result.versionNumber,
+        ...(result.createdDayLogId ? { createdDayLogId: result.createdDayLogId } : {}),
       };
       res.status(201).json(response);
     } catch (error) {
