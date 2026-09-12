@@ -557,7 +557,7 @@ async function advanceGenerationToTarget(
   return undefined;
 }
 
-async function commitFence(
+export async function commitFence(
   accountId: string,
   operationId: string,
   targetGeneration: number,
@@ -566,26 +566,35 @@ async function commitFence(
     const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const [existing, currentAccount] = await Promise.all([
+    const [existing, currentAccount, storedGeneration] = await Promise.all([
       requestResult(lifecycle.get(logoutRecordKey(accountId))),
       requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+      requestResult(lifecycle.get(accountId)),
     ]);
-    const matches =
+    let committed = false;
+    if (
       isLogoutRecord(existing) &&
       existing.accountId === accountId &&
       existing.operationId === operationId &&
-      existing.targetGeneration === targetGeneration;
-    if (matches) {
-      lifecycle.put(
-        { ...existing, phase: "fence-committed" } satisfies LogoutRecord,
-        logoutRecordKey(accountId),
-      );
-      if (readCurrentConfirmedAccount(currentAccount) === accountId) {
+      existing.targetGeneration === targetGeneration &&
+      isGeneration(storedGeneration) &&
+      storedGeneration >= targetGeneration
+    ) {
+      if (existing.phase === "server-logout-confirmed") {
+        lifecycle.put(
+          { ...existing, phase: "fence-committed" } satisfies LogoutRecord,
+          logoutRecordKey(accountId),
+        );
+        committed = true;
+      } else if (existing.phase === "fence-committed" || existing.phase === "cleanup-pending") {
+        committed = true;
+      }
+      if (committed && readCurrentConfirmedAccount(currentAccount) === accountId) {
         lifecycle.delete(LAST_CONFIRMED_ACCOUNT_KEY);
       }
     }
     await completed;
-    return matches;
+    return committed;
   });
 }
 
@@ -618,7 +627,7 @@ async function markCleanupPending(accountId: string, operationId: string): Promi
   });
 }
 
-async function cleanUpLogoutRecord(accountId: string, operationId: string): Promise<boolean> {
+async function removeStoredDayLogsSnapshot(accountId: string, operationId: string): Promise<boolean> {
   return withDatabase(async (database) => {
     const transaction = database.transaction(
       [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
@@ -658,12 +667,14 @@ export async function completeDayLogCacheLogout(
   if (generation === undefined) {
     return { serverLogoutConfirmed: true, fenceCommitted: false, cleanupPending: true };
   }
+  let fenceCommitted = false;
   try {
-    if (!(await commitFence(accountId, operationId, record.targetGeneration))) {
+    fenceCommitted = await commitFence(accountId, operationId, record.targetGeneration);
+    if (!fenceCommitted) {
       return { serverLogoutConfirmed: true, fenceCommitted: false, cleanupPending: true };
     }
     const cleanupRecord = await markCleanupPending(accountId, operationId);
-    const cleaned = cleanupRecord ? await cleanUpLogoutRecord(accountId, operationId) : false;
+    const cleaned = cleanupRecord ? await removeStoredDayLogsSnapshot(accountId, operationId) : false;
     return {
       serverLogoutConfirmed: true,
       fenceCommitted: true,
@@ -673,9 +684,9 @@ export async function completeDayLogCacheLogout(
   } catch {
     return {
       serverLogoutConfirmed: true,
-      fenceCommitted: true,
+      fenceCommitted,
       cleanupPending: true,
-      revocation: { accountId, generation },
+      revocation: fenceCommitted ? { accountId, generation } : undefined,
     };
   }
 }
