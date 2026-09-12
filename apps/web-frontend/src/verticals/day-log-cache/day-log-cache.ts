@@ -217,7 +217,7 @@ function withCreatedFoodEntry(
   };
 }
 
-function isCompletePredecessor(
+function isPredecessor(
   cached: DayLogSlotResult,
   cachedVersion: number | undefined,
   versionNumber: number,
@@ -257,7 +257,7 @@ export async function applyFoodEntryCreateToDayLogCache(
 
   queryClient.setQueryData(slotKey, next, { updatedAt: now });
 
-  if (isCompletePredecessor(cached, cachedVersion, result.versionNumber)) {
+  if (isPredecessor(cached, cachedVersion, result.versionNumber)) {
     queryClient.setQueryData(versionKey, result.versionNumber, { updatedAt: now });
     return { needsSingleDateSync: false };
   }
