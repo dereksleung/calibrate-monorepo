@@ -125,7 +125,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
                       type="number"
                       inputMode="decimal"
                       min="0"
-                      step="0.01"
+                      step="any"
                       value={quantity}
                       onChange={(event) => setQuantity(event.target.value)}
                       aria-invalid={Boolean(quantityError)}
