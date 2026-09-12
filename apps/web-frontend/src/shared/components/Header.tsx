@@ -111,8 +111,14 @@ export default function Header() {
       }
       const completion = await completeDayLogCacheLogout(accountId, record.operationId);
       if (!completion.fenceCommitted) {
-        if (completion.serverLogoutConfirmed) await clearPrivateDayLogMemory(queryClient, accountId);
-        setLogoutError("Logout was confirmed, but secure cache cleanup needs to recover before continuing.");
+        if (completion.serverLogoutConfirmed) {
+          await clearPrivateDayLogMemory(queryClient, accountId);
+          setLogoutError(
+            "Logout was confirmed, but we couldn't finish protecting your private Day Log data. Please try again.",
+          );
+        } else {
+          setLogoutError("We couldn't save the confirmed logout on this device. Please try again.");
+        }
         return;
       }
       broadcastDayLogCacheRevocation(completion.revocation);

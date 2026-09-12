@@ -496,7 +496,7 @@ export async function clearPendingDayLogCacheLogout(
 async function recordServerLogoutConfirmed(
   accountId: string,
   operationId: string,
-): Promise<LogoutRecord | undefined> {
+): Promise<LogoutRecord | "already-resolved" | undefined> {
   return withDatabase(async (database) => {
     const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE, "readwrite");
     const completed = transactionComplete(transaction);
@@ -505,6 +505,10 @@ async function recordServerLogoutConfirmed(
       requestResult(lifecycle.get(logoutRecordKey(accountId))),
       requestResult(lifecycle.get(accountId)),
     ]);
+    if (existing === undefined) {
+      await completed;
+      return "already-resolved";
+    }
     if (
       !isLogoutRecord(existing) ||
       existing.accountId !== accountId ||
@@ -654,11 +658,14 @@ export async function completeDayLogCacheLogout(
   accountId: string,
   operationId: string,
 ): Promise<DayLogCacheLogoutCompletion> {
-  let record: LogoutRecord | undefined;
+  let record: LogoutRecord | "already-resolved" | undefined;
   try {
     record = await recordServerLogoutConfirmed(accountId, operationId);
   } catch {
     return { serverLogoutConfirmed: false, fenceCommitted: false, cleanupPending: true };
+  }
+  if (record === "already-resolved") {
+    return { serverLogoutConfirmed: true, fenceCommitted: true, cleanupPending: false };
   }
   if (!record || record.targetGeneration === undefined) {
     return { serverLogoutConfirmed: false, fenceCommitted: false, cleanupPending: true };
