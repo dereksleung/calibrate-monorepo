@@ -14,7 +14,8 @@
     "apps/web-frontend/src/routeTree.gen.ts",
     "apps/backend/data",
     ".agents",
-    ".claude"
+    ".claude",
+    "*.md"
   ],
   "sortImports": {
     "groups": [
