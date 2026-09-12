@@ -18,6 +18,7 @@ export const CreateFoodEntryResponseSchema = z
   .object({
     foodEntryId: z.string().min(1),
     versionNumber: DayLogVersionNumberSchema,
+    createdDayLogId: z.string().min(1).optional(),
   })
   .strict();
 

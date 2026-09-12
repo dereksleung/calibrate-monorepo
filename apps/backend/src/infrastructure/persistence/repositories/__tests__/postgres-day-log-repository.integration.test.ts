@@ -108,7 +108,7 @@ describe("PostgresDayLogRepository day log sync", () => {
 
     const result = await repository.createWithFoodEntry({ userId, dayLog, foodEntry });
 
-    expect(result).toEqual({ foodEntryId, versionNumber: 1 });
+    expect(result).toEqual({ foodEntryId, versionNumber: 1, createdDayLogId: dayLogId });
 
     const persisted = await databaseClient
       .selectFrom("day_logs")

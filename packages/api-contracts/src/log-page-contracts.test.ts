@@ -159,6 +159,16 @@ describe("log page response contracts", () => {
     expect(CreateFoodEntryResponseSchema.parse(response)).toEqual(response);
   });
 
+  it("accepts an optional createdDayLogId when the first food entry creates the parent day log", () => {
+    const response = {
+      foodEntryId: "entry-1",
+      versionNumber: 1,
+      createdDayLogId: "00000000-0000-0000-0000-000000000000",
+    };
+
+    expect(CreateFoodEntryResponseSchema.parse(response)).toEqual(response);
+  });
+
   it("rejects a create success body that echoes the Food Entry or a dayLogId", () => {
     expect(() =>
       CreateFoodEntryResponseSchema.parse({

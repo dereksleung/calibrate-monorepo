@@ -389,7 +389,11 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
       accountId,
       "2026-09-03",
       createdLunch,
-      { foodEntryId: "entry-1", versionNumber: 1 },
+      {
+        foodEntryId: "entry-1",
+        versionNumber: 1,
+        createdDayLogId: "00000000-0000-0000-0000-000000000001",
+      },
       now + 1,
     );
 
@@ -398,6 +402,7 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
       dayLogSlotQueryKey(accountId, "2026-09-03"),
     );
     expect(patched).toMatchObject({
+      id: "00000000-0000-0000-0000-000000000001",
       date: "2026-09-03",
       lunch: [{ ...createdLunch, id: "entry-1" }],
       breakfast: [],
@@ -405,7 +410,6 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
       snacks: [],
       weight: null,
     });
-    expect(patched?.id).toEqual(expect.stringMatching(/^[0-9a-f-]{36}$/i));
     expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBe(1);
     expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(false);
   });

@@ -67,6 +67,7 @@ export interface AddFoodEntryInput {
 export interface AddFoodEntryResult {
   foodEntryId: string;
   versionNumber: number;
+  createdDayLogId?: string;
 }
 
 export interface IDayLogService {
