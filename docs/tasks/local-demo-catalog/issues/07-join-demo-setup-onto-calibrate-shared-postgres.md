@@ -26,6 +26,9 @@ todos:
 isProject: false
 ---
 
+**Type:** task
+**Status:** claimed
+
 # Join demo-setup onto calibrate-shared Postgres
 
 ## Verdict
