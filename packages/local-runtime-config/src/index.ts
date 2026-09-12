@@ -33,3 +33,14 @@ export {
   type DemoDevProcessStarter,
 } from "./local-demo-dev.js";
 export { runLocalDemoReset } from "./local-demo-reset.js";
+export {
+  MACHINE_LOCAL_POSTGRES_USER,
+  MACHINE_LOCAL_ROLE_FILE_NAME,
+  createReadDotenvValue,
+  getDefaultMachineLocalRoleFilePath,
+  resolvePostgresRole,
+  type PostgresRole,
+  type PostgresRoleSource,
+  type ReadDotenvValue,
+  type ResolvePostgresRoleOptions,
+} from "./postgres-role.js";
