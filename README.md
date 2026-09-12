@@ -124,6 +124,7 @@ This is the evaluator path. It does not require private keys, the gitignored `.e
 
 - Node.js 26, matching [`.tool-versions`](.tool-versions)
 - Docker Desktop (PostgreSQL runs in Docker; a host database install is not required)
+- Host port 5433 must be free so Docker can start the demo PostgreSQL service.
 
 From a fresh clone:
 
@@ -133,7 +134,7 @@ npx nx run @calibrate/local-runtime-config:demo-setup
 npx nx run @calibrate/local-runtime-config:demo-dev
 ```
 
-`demo-dev` prints the local URL. Open it and choose **Start local test session**. The default address is [http://localhost:3000/calibrate-monorepo/signup-login](http://localhost:3000/calibrate-monorepo/signup-login). Host port 5433 must be free so Docker can start the demo PostgreSQL service.
+`demo-dev` prints the local URL. Open it and choose **Start local test session**. The default address is [http://localhost:3000/calibrate-monorepo/signup-login](http://localhost:3000/calibrate-monorepo/signup-login).
 
 The Demo catalog is pinned USDA Foundation Foods from the 2026-04-30 FoodData Central foundation-foods JSON release. Search misses outside that set are expected. Demo mode never calls FoodData Central or sends real email.
 
