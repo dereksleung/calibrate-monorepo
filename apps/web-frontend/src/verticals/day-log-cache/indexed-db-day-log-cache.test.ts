@@ -1,17 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DAY_LOG_CACHE_BUSTER } from "./day-log-cache.ts";
 import {
   DAY_LOG_CACHE_DATABASE_NAME,
   DAY_LOG_CACHE_LIFECYCLE_STORE,
   DAY_LOG_CACHE_SNAPSHOT_STORE,
+  acquireDayLogCacheLease,
   commitFence,
   completeDayLogCacheLogout,
+  confirmDayLogCacheAccount,
   type LogoutRecord,
+  removeStoredDayLogsSnapshot,
 } from "./indexed-db-day-log-cache.ts";
 
 const LAST_CONFIRMED_ACCOUNT_KEY = "__last-confirmed-account__";
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
+const otherAccountId = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 const operationId = "logout-operation";
+const persistedClient = {
+  buster: DAY_LOG_CACHE_BUSTER,
+  timestamp: 1,
+  clientState: { mutations: [], queries: [] },
+};
 
 type StoreMap = Map<IDBValidKey, unknown>;
 
@@ -67,6 +77,16 @@ class MemoryObjectStore {
   delete(key: IDBValidKey) {
     return this.transaction.enqueue(() => {
       this.data.delete(key);
+    });
+  }
+
+  getAllKeys() {
+    return this.transaction.enqueue(() => [...this.data.keys()]);
+  }
+
+  clear() {
+    return this.transaction.enqueue(() => {
+      this.data.clear();
     });
   }
 }
@@ -275,6 +295,31 @@ async function writeLifecycle(entries: Array<[string, unknown]>) {
   database.close();
 }
 
+async function writeSnapshot(accountKey: string, generation: number) {
+  const database = await openDatabase();
+  const transaction = database.transaction(DAY_LOG_CACHE_SNAPSHOT_STORE);
+  transaction
+    .objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE)
+    .put({ accountId: accountKey, generation, persistedClient }, accountKey);
+  await transactionComplete(transaction);
+  database.close();
+}
+
+async function readSnapshot(accountKey: string) {
+  const database = await openDatabase();
+  const transaction = database.transaction(DAY_LOG_CACHE_SNAPSHOT_STORE);
+  const request = transaction.objectStore(DAY_LOG_CACHE_SNAPSHOT_STORE).get(accountKey);
+  const value = await new Promise<unknown>((resolve, reject) => {
+    request.addEventListener("success", () => resolve(request.result), { once: true });
+    request.addEventListener("error", () => reject(request.error ?? new Error("IndexedDB request failed")), {
+      once: true,
+    });
+  });
+  await transactionComplete(transaction);
+  database.close();
+  return value;
+}
+
 async function readLifecycle(key: string) {
   const database = await openDatabase();
   const transaction = database.transaction(DAY_LOG_CACHE_LIFECYCLE_STORE);
@@ -457,5 +502,98 @@ describe("completeDayLogCacheLogout", () => {
     expect(await readLifecycle(`__logout__:${accountId}`)).toMatchObject({
       operationId: "other-operation",
     });
+  });
+});
+
+describe("removeStoredDayLogsSnapshot", () => {
+  it("treats an already-missing snapshot as successful cleanup", async () => {
+    await writeLifecycle([
+      [accountId, 2],
+      [`__logout__:${accountId}`, logoutRecord({ phase: "cleanup-pending" })],
+    ]);
+
+    await expect(removeStoredDayLogsSnapshot(accountId, operationId)).resolves.toBe(true);
+
+    expect(await readLifecycle(`__logout__:${accountId}`)).toBeUndefined();
+    expect(await readSnapshot(accountId)).toBeUndefined();
+  });
+
+  it("treats an already-missing logout record as successful cleanup without deleting a later snapshot", async () => {
+    await writeLifecycle([[accountId, 2]]);
+    await writeSnapshot(accountId, 2);
+
+    await expect(removeStoredDayLogsSnapshot(accountId, operationId)).resolves.toBe(true);
+
+    expect(await readSnapshot(accountId)).toMatchObject({ accountId, generation: 2 });
+  });
+
+  it("does not resolve a different operation's cleanup-pending record", async () => {
+    const record = logoutRecord({ phase: "cleanup-pending", operationId: "other-operation" });
+    await writeLifecycle([
+      [accountId, 2],
+      [`__logout__:${accountId}`, record],
+    ]);
+    await writeSnapshot(accountId, 2);
+
+    await expect(removeStoredDayLogsSnapshot(accountId, operationId)).resolves.toBe(false);
+
+    expect(await readLifecycle(`__logout__:${accountId}`)).toEqual(record);
+    expect(await readSnapshot(accountId)).toMatchObject({ accountId, generation: 2 });
+  });
+});
+
+describe("confirmDayLogCacheAccount", () => {
+  it("clears leftover snapshots and claims current when logging back into a cleanup-pending account", async () => {
+    await writeLifecycle([
+      [accountId, 2],
+      [`__logout__:${accountId}`, logoutRecord({ phase: "cleanup-pending" })],
+    ]);
+    await writeSnapshot(accountId, 2);
+
+    await expect(confirmDayLogCacheAccount(accountId, undefined)).resolves.toEqual({
+      accepted: true,
+      revocations: [],
+    });
+
+    expect(await readLifecycle(LAST_CONFIRMED_ACCOUNT_KEY)).toBe(accountId);
+    expect(await readLifecycle(`__logout__:${accountId}`)).toBeUndefined();
+    expect(await readSnapshot(accountId)).toBeUndefined();
+  });
+
+  it("still marks a different account current without clearing another account's cleanup-pending record", async () => {
+    const record = logoutRecord({ phase: "cleanup-pending" });
+    await writeLifecycle([
+      [accountId, 2],
+      [otherAccountId, 1],
+      [`__logout__:${accountId}`, record],
+    ]);
+    await writeSnapshot(accountId, 2);
+
+    await expect(confirmDayLogCacheAccount(otherAccountId, undefined, true)).resolves.toEqual({
+      accepted: true,
+      revocations: [{ accountId, generation: 3 }],
+    });
+
+    expect(await readLifecycle(LAST_CONFIRMED_ACCOUNT_KEY)).toBe(otherAccountId);
+    expect(await readLifecycle(`__logout__:${accountId}`)).toEqual(record);
+    expect(await readLifecycle(accountId)).toBe(3);
+    expect(await readSnapshot(accountId)).toBeUndefined();
+  });
+});
+
+describe("acquireDayLogCacheLease", () => {
+  it("acquires a current lease after login resolves leftover cleanup-pending", async () => {
+    await writeLifecycle([
+      [accountId, 2],
+      [`__logout__:${accountId}`, logoutRecord({ phase: "cleanup-pending" })],
+    ]);
+    await writeSnapshot(accountId, 2);
+
+    await confirmDayLogCacheAccount(accountId, undefined);
+    const lease = await acquireDayLogCacheLease(accountId);
+
+    expect(await readLifecycle(LAST_CONFIRMED_ACCOUNT_KEY)).toBe(accountId);
+    await expect(lease.isCurrent()).resolves.toBe(true);
+    await expect(lease.restoreClient()).resolves.toBeUndefined();
   });
 });

@@ -240,7 +240,10 @@ async function confirmDurableAccount(
     );
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
-    const storedCurrentAccount = await requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY));
+    const [storedCurrentAccount, storedLogoutRecord] = await Promise.all([
+      requestResult(lifecycle.get(LAST_CONFIRMED_ACCOUNT_KEY)),
+      requestResult(lifecycle.get(logoutRecordKey(accountId))),
+    ]);
     const currentAccountId = readCurrentConfirmedAccount(storedCurrentAccount);
     if (
       currentAccountId !== undefined &&
@@ -274,6 +277,10 @@ async function confirmDurableAccount(
       lifecycle.put(generation, storedAccountId);
       snapshots.delete(storedAccountId);
       revocations.push({ accountId: storedAccountId, generation });
+    }
+    if (isLeaseRevokedByLogoutRecord(storedLogoutRecord, accountId)) {
+      snapshots.clear();
+      lifecycle.delete(logoutRecordKey(accountId));
     }
     lifecycle.put(accountId, LAST_CONFIRMED_ACCOUNT_KEY);
     await completed;
@@ -631,7 +638,7 @@ async function markCleanupPending(accountId: string, operationId: string): Promi
   });
 }
 
-async function removeStoredDayLogsSnapshot(accountId: string, operationId: string): Promise<boolean> {
+export async function removeStoredDayLogsSnapshot(accountId: string, operationId: string): Promise<boolean> {
   return withDatabase(async (database) => {
     const transaction = database.transaction(
       [DAY_LOG_CACHE_LIFECYCLE_STORE, DAY_LOG_CACHE_SNAPSHOT_STORE],
@@ -640,6 +647,10 @@ async function removeStoredDayLogsSnapshot(accountId: string, operationId: strin
     const completed = transactionComplete(transaction);
     const lifecycle = transaction.objectStore(DAY_LOG_CACHE_LIFECYCLE_STORE);
     const existing = await requestResult(lifecycle.get(logoutRecordKey(accountId)));
+    if (existing === undefined) {
+      await completed;
+      return true;
+    }
     const matches =
       isLogoutRecord(existing) &&
       existing.accountId === accountId &&
@@ -680,8 +691,8 @@ export async function completeDayLogCacheLogout(
     if (!fenceCommitted) {
       return { serverLogoutConfirmed: true, fenceCommitted: false, cleanupPending: true };
     }
-    const cleanupRecord = await markCleanupPending(accountId, operationId);
-    const cleaned = cleanupRecord ? await removeStoredDayLogsSnapshot(accountId, operationId) : false;
+    await markCleanupPending(accountId, operationId);
+    const cleaned = await removeStoredDayLogsSnapshot(accountId, operationId);
     return {
       serverLogoutConfirmed: true,
       fenceCommitted: true,
