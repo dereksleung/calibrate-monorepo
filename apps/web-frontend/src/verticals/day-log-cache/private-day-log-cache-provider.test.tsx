@@ -12,23 +12,23 @@ import {
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { DayLogCacheLease } from "./indexed-db-day-log-cache.ts";
+import type { DayLogCacheAccess } from "./indexed-db-day-log-cache.ts";
 
 import { DAY_LOG_CACHE_BUSTER, dayLogSlotQueryKey, type CachedDayLog } from "./day-log-cache.ts";
 import { PrivateDayLogCacheProvider } from "./private-day-log-cache-provider.tsx";
 
-const { acquireDayLogCacheLease } = vi.hoisted(() => ({ acquireDayLogCacheLease: vi.fn() }));
+const { acquireDayLogCacheAccess } = vi.hoisted(() => ({ acquireDayLogCacheAccess: vi.fn() }));
 
 vi.mock("./indexed-db-day-log-cache.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./indexed-db-day-log-cache.ts")>()),
-  acquireDayLogCacheLease,
+  acquireDayLogCacheAccess,
 }));
 
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
 const slotDate = "2026-09-03";
 const slot: CachedDayLog = null;
 
-function createLease(overrides: Partial<DayLogCacheLease> = {}): DayLogCacheLease {
+function createCacheAccess(overrides: Partial<DayLogCacheAccess> = {}): DayLogCacheAccess {
   return {
     accountId,
     generation: 4,
@@ -87,22 +87,22 @@ afterEach(() => {
 });
 
 describe("PrivateDayLogCacheProvider", () => {
-  it("does not mount private descendants before a fenced lease exists", async () => {
-    let resolveLease!: (lease: DayLogCacheLease) => void;
-    acquireDayLogCacheLease.mockReturnValue(
-      new Promise<DayLogCacheLease>((resolve) => {
-        resolveLease = resolve;
+  it("does not mount private descendants before fenced cache access exists", async () => {
+    let resolveCacheAccess!: (cacheAccess: DayLogCacheAccess) => void;
+    acquireDayLogCacheAccess.mockReturnValue(
+      new Promise<DayLogCacheAccess>((resolve) => {
+        resolveCacheAccess = resolve;
       }),
     );
 
     renderProvider(new QueryClient({ defaultOptions: { queries: { retry: false } } }));
 
     expect(screen.queryByText("waiting")).toBeNull();
-    resolveLease(createLease());
+    resolveCacheAccess(createCacheAccess());
     expect(await screen.findByText("unavailable")).toBeTruthy();
   });
 
-  it("keeps private descendants gated until the lease is current", async () => {
+  it("keeps private descendants gated until cache access is current", async () => {
     let resolveCurrent!: (value: boolean) => void;
     const isCurrent = vi.fn(
       () =>
@@ -110,7 +110,7 @@ describe("PrivateDayLogCacheProvider", () => {
           resolveCurrent = resolve;
         }),
     );
-    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    acquireDayLogCacheAccess.mockResolvedValue(createCacheAccess({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
@@ -139,7 +139,7 @@ describe("PrivateDayLogCacheProvider", () => {
           resolveFinalCheck = resolve;
         }),
       );
-    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    acquireDayLogCacheAccess.mockResolvedValue(createCacheAccess({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
     const router = renderProvider(queryClient);
@@ -158,8 +158,8 @@ describe("PrivateDayLogCacheProvider", () => {
   it("restores the fenced cache before descendant queries may fetch", async () => {
     const storedClient = new QueryClient();
     storedClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
-    acquireDayLogCacheLease.mockResolvedValue(
-      createLease({
+    acquireDayLogCacheAccess.mockResolvedValue(
+      createCacheAccess({
         restoreClient: vi.fn().mockResolvedValue({
           buster: DAY_LOG_CACHE_BUSTER,
           timestamp: Date.now(),
@@ -174,8 +174,8 @@ describe("PrivateDayLogCacheProvider", () => {
   });
 
   it("falls back to online queries when IndexedDB is unavailable", async () => {
-    acquireDayLogCacheLease.mockResolvedValue(
-      createLease({ restoreClient: vi.fn().mockResolvedValue(undefined) }),
+    acquireDayLogCacheAccess.mockResolvedValue(
+      createCacheAccess({ restoreClient: vi.fn().mockResolvedValue(undefined) }),
     );
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
@@ -188,7 +188,7 @@ describe("PrivateDayLogCacheProvider", () => {
 
   it("purges private memory and navigates before reuse when a durable fence changes", async () => {
     const isCurrent = vi.fn().mockResolvedValueOnce(true).mockResolvedValue(false);
-    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    acquireDayLogCacheAccess.mockResolvedValue(createCacheAccess({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, slotDate), slot);
@@ -232,7 +232,7 @@ describe("PrivateDayLogCacheProvider", () => {
       .mockResolvedValueOnce(true)
       .mockResolvedValueOnce(true)
       .mockResolvedValue(false);
-    acquireDayLogCacheLease.mockResolvedValue(createLease({ isCurrent }));
+    acquireDayLogCacheAccess.mockResolvedValue(createCacheAccess({ isCurrent }));
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     queryClient.setQueryData(authenticatedSessionQueryKey, { user: { id: accountId } });
     renderProvider(queryClient);

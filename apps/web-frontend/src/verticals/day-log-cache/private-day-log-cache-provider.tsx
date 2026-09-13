@@ -13,8 +13,8 @@ import {
 } from "./day-log-cache.ts";
 import {
   DAY_LOG_CACHE_BROADCAST_CHANNEL,
-  acquireDayLogCacheLease,
-  type DayLogCacheLease,
+  acquireDayLogCacheAccess,
+  type DayLogCacheAccess,
   type DayLogCacheRevocation,
 } from "./indexed-db-day-log-cache.ts";
 
@@ -38,13 +38,13 @@ function isRevocation(value: unknown): value is DayLogCacheRevocation & { type: 
   );
 }
 
-function HydratedLeaseBoundary({
+function HydratedCacheAccessGate({
   children,
-  lease,
+  cacheAccess,
   onFenceFailure,
 }: {
   children: React.ReactNode;
-  lease: DayLogCacheLease;
+  cacheAccess: DayLogCacheAccess;
   onFenceFailure: () => Promise<void>;
 }) {
   const isRestoring = useIsRestoring();
@@ -54,7 +54,7 @@ function HydratedLeaseBoundary({
     if (isRestoring) return;
     let active = true;
     setIsCurrent(false);
-    void lease
+    void cacheAccess
       .isCurrent()
       .catch(() => false)
       .then((current) => {
@@ -68,25 +68,25 @@ function HydratedLeaseBoundary({
     return () => {
       active = false;
     };
-  }, [isRestoring, lease, onFenceFailure]);
+  }, [isRestoring, cacheAccess, onFenceFailure]);
 
   if (!isCurrent) return null;
   return <>{children}</>;
 }
 
-function LeasePersistenceBoundary({
+function CacheAccessLifecycleGate({
   accountId,
   children,
-  lease,
+  cacheAccess,
 }: {
   accountId: string;
   children: React.ReactNode;
-  lease: DayLogCacheLease;
+  cacheAccess: DayLogCacheAccess;
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [revoked, setRevoked] = useState(false);
-  const [leaseReady, setLeaseReady] = useState(false);
+  const [cacheAccessReady, setCacheAccessReady] = useState(false);
   const activeRef = useRef(false);
   const hydrationStartedRef = useRef(false);
   const revocationStartedRef = useRef(false);
@@ -121,7 +121,7 @@ function LeasePersistenceBoundary({
     activeRef.current = true;
 
     const checkFence = async () => {
-      if (!(await lease.isCurrent().catch(() => false))) await purgeRevokedSession();
+      if (!(await cacheAccess.isCurrent().catch(() => false))) await purgeRevokedSession();
     };
 
     const startLifecycleChecks = () => {
@@ -146,7 +146,7 @@ function LeasePersistenceBoundary({
             if (
               isRevocation(event.data) &&
               event.data.accountId === accountId &&
-              event.data.generation > lease.generation
+              event.data.generation > cacheAccess.generation
             ) {
               void purgeRevokedSession();
             }
@@ -166,7 +166,7 @@ function LeasePersistenceBoundary({
     };
 
     startLifecycleChecks();
-    void lease
+    void cacheAccess
       .isCurrent()
       .catch(() => false)
       .then(async (current) => {
@@ -176,7 +176,7 @@ function LeasePersistenceBoundary({
           return;
         }
         hydrationStartedRef.current = true;
-        setLeaseReady(true);
+        setCacheAccessReady(true);
       });
 
     return () => {
@@ -185,9 +185,9 @@ function LeasePersistenceBoundary({
       stopLifecycleChecksRef.current = undefined;
       stopLifecycleChecks?.();
     };
-  }, [accountId, lease, purgeRevokedSession]);
+  }, [accountId, cacheAccess, purgeRevokedSession]);
 
-  if (revoked || !leaseReady) return null;
+  if (revoked || !cacheAccessReady) return null;
 
   return (
     <PersistQueryClientProvider
@@ -202,12 +202,12 @@ function LeasePersistenceBoundary({
             isPersistableDayLogQueryData(query.queryKey, query.state.data, accountId),
         },
         maxAge: DAY_LOG_CACHE_RETENTION_MS,
-        persister: lease,
+        persister: cacheAccess,
       }}
     >
-      <HydratedLeaseBoundary lease={lease} onFenceFailure={purgeRevokedSession}>
+      <HydratedCacheAccessGate cacheAccess={cacheAccess} onFenceFailure={purgeRevokedSession}>
         {children}
-      </HydratedLeaseBoundary>
+      </HydratedCacheAccessGate>
     </PersistQueryClientProvider>
   );
 }
@@ -219,16 +219,16 @@ export function PrivateDayLogCacheProvider({
   accountId: string;
   children: React.ReactNode;
 }) {
-  const [lease, setLease] = useState<DayLogCacheLease>();
+  const [cacheAccess, setCacheAccess] = useState<DayLogCacheAccess>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
-    setLease(undefined);
-    void acquireDayLogCacheLease(accountId).then(async (acquiredLease) => {
+    setCacheAccess(undefined);
+    void acquireDayLogCacheAccess(accountId).then(async (acquiredCacheAccess) => {
       if (!active) return;
-      const isCurrent = await acquiredLease.isCurrent().catch(() => false);
+      const isCurrent = await acquiredCacheAccess.isCurrent().catch(() => false);
       if (!active) return;
       if (!isCurrent) {
         await clearPrivateDayLogMemory(queryClient);
@@ -240,21 +240,25 @@ export function PrivateDayLogCacheProvider({
       // explicit pruning owns retention for this narrowly scoped query family.
       queryClient.setQueryDefaults(dayLogSlotQueryKeyPrefix(accountId), { gcTime: Infinity });
       queryClient.setQueryDefaults(dayLogSlotVersionQueryKeyPrefix(accountId), { gcTime: Infinity });
-      setLease(acquiredLease);
+      setCacheAccess(acquiredCacheAccess);
     });
     return () => {
       active = false;
     };
   }, [accountId, navigate, queryClient]);
 
-  // Do not mount private descendants before a fenced lease exists. Mounting them
-  // here and again inside the lease boundary would discard route-local state and
+  // Do not mount private descendants before a fenced cache access exists. Mounting them
+  // here and again inside the cache-access gate would discard route-local state and
   // briefly expose private query consumers before restoration can be fenced.
-  if (!lease) return null;
+  if (!cacheAccess) return null;
 
   return (
-    <LeasePersistenceBoundary key={`${accountId}:${lease.generation}`} accountId={accountId} lease={lease}>
+    <CacheAccessLifecycleGate
+      key={`${accountId}:${cacheAccess.generation}`}
+      accountId={accountId}
+      cacheAccess={cacheAccess}
+    >
       {children}
-    </LeasePersistenceBoundary>
+    </CacheAccessLifecycleGate>
   );
 }

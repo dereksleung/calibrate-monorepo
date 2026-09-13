@@ -1,4 +1,4 @@
-/** IndexedDB store helpers shared by the lease and logout modules. Do not import from app callers. */
+/** IndexedDB store helpers shared by the cache-access and logout modules. Do not import from app callers. */
 
 export const DAY_LOG_CACHE_DATABASE_NAME = "calibrate-private-day-log-cache";
 export const DAY_LOG_CACHE_SNAPSHOT_STORE = "persistedClients";

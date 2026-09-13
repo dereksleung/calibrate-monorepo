@@ -10,7 +10,7 @@ import {
   writeLifecycle,
   writeSnapshot,
 } from "./indexed-db-day-log-cache-memory.ts";
-import { acquireDayLogCacheLease, confirmDayLogCacheAccount } from "./indexed-db-day-log-cache.ts";
+import { acquireDayLogCacheAccess, confirmDayLogCacheAccount } from "./indexed-db-day-log-cache.ts";
 
 const LAST_CONFIRMED_ACCOUNT_KEY = "__last-confirmed-account__";
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
@@ -79,8 +79,8 @@ describe("confirmDayLogCacheAccount", () => {
   });
 });
 
-describe("acquireDayLogCacheLease", () => {
-  it("acquires a current lease after login resolves leftover cleanup-pending", async () => {
+describe("acquireDayLogCacheAccess", () => {
+  it("acquires current cache access after login resolves leftover cleanup-pending", async () => {
     await writeLifecycle([
       [accountId, 2],
       [`__logout__:${accountId}`, logoutRecord({ phase: "cleanup-pending" })],
@@ -88,10 +88,10 @@ describe("acquireDayLogCacheLease", () => {
     await writeSnapshot(accountId, 2, persistedClient);
 
     await confirmDayLogCacheAccount(accountId, undefined);
-    const lease = await acquireDayLogCacheLease(accountId);
+    const cacheAccess = await acquireDayLogCacheAccess(accountId);
 
     expect(await readLifecycle(LAST_CONFIRMED_ACCOUNT_KEY)).toBe(accountId);
-    await expect(lease.isCurrent()).resolves.toBe(true);
-    await expect(lease.restoreClient()).resolves.toBeUndefined();
+    await expect(cacheAccess.isCurrent()).resolves.toBe(true);
+    await expect(cacheAccess.restoreClient()).resolves.toBeUndefined();
   });
 });

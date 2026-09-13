@@ -33,7 +33,7 @@ type SnapshotRecord = {
   persistedClient: PersistedDayLogClient;
 };
 
-export type DayLogCacheLease = {
+export type DayLogCacheAccess = {
   accountId: string;
   generation: number;
   isCurrent: () => Promise<boolean>;
@@ -55,7 +55,7 @@ function isCacheBlockedByLogoutRecord(value: unknown, accountId: string): boolea
   return value.phase !== "resolved";
 }
 
-function isLeaseRevokedByLogoutRecord(value: unknown, accountId: string): boolean {
+function isCacheAccessRevokedByLogoutRecord(value: unknown, accountId: string): boolean {
   if (value === undefined) return false;
   if (!isLogoutRecord(value) || value.accountId !== accountId) {
     throw new Error("IndexedDB cache logout record is corrupt");
@@ -73,7 +73,7 @@ function isSnapshotRecord(value: unknown): value is SnapshotRecord {
   );
 }
 
-async function acquireDurableLease(accountId: string): Promise<{
+async function acquireDurableCacheAccess(accountId: string): Promise<{
   generation: number;
 }> {
   return withDatabase(async (database) => {
@@ -158,7 +158,7 @@ async function confirmDurableAccount(
       snapshots.delete(storedAccountId);
       revocations.push({ accountId: storedAccountId, generation });
     }
-    if (isLeaseRevokedByLogoutRecord(storedLogoutRecord, accountId)) {
+    if (isCacheAccessRevokedByLogoutRecord(storedLogoutRecord, accountId)) {
       snapshots.clear();
       lifecycle.delete(logoutRecordKey(accountId));
     }
@@ -183,7 +183,7 @@ export async function confirmDayLogCacheAccount(
   }
 }
 
-function createNoOpLease(accountId: string): DayLogCacheLease {
+function createNoOpCacheAccess(accountId: string): DayLogCacheAccess {
   return {
     accountId,
     generation: 0,
@@ -194,12 +194,12 @@ function createNoOpLease(accountId: string): DayLogCacheLease {
   };
 }
 
-export async function acquireDayLogCacheLease(accountId: string): Promise<DayLogCacheLease> {
-  let acquisition: Awaited<ReturnType<typeof acquireDurableLease>>;
+export async function acquireDayLogCacheAccess(accountId: string): Promise<DayLogCacheAccess> {
+  let acquisition: Awaited<ReturnType<typeof acquireDurableCacheAccess>>;
   try {
-    acquisition = await acquireDurableLease(accountId);
+    acquisition = await acquireDurableCacheAccess(accountId);
   } catch {
-    return createNoOpLease(accountId);
+    return createNoOpCacheAccess(accountId);
   }
   const { generation } = acquisition;
 
@@ -221,7 +221,7 @@ export async function acquireDayLogCacheLease(accountId: string): Promise<DayLog
           return (
             storedGeneration === generation &&
             readCurrentConfirmedAccount(storedConfirmedAccount) === accountId &&
-            !isLeaseRevokedByLogoutRecord(storedLogoutRecord, accountId)
+            !isCacheAccessRevokedByLogoutRecord(storedLogoutRecord, accountId)
           );
         });
       } catch {

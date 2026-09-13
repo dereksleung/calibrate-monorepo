@@ -16,7 +16,7 @@ import { authenticatedSessionQueryKey, setAuthenticatedSession } from "./authent
 import { SessionRestorationGate } from "./session-restoration-gate.tsx";
 
 const {
-  acquireDayLogCacheLease,
+  acquireDayLogCacheAccess,
   broadcastDayLogCacheRevocation,
   confirmDayLogCacheAccount,
   getCurrentSession,
@@ -24,7 +24,7 @@ const {
   revokeDayLogCache,
   revokeLastConfirmedDayLogCache,
 } = vi.hoisted(() => ({
-  acquireDayLogCacheLease: vi.fn(),
+  acquireDayLogCacheAccess: vi.fn(),
   broadcastDayLogCacheRevocation: vi.fn(),
   confirmDayLogCacheAccount: vi.fn(),
   getCurrentSession: vi.fn(),
@@ -41,7 +41,7 @@ vi.mock("@calibrate/api-client", async (importOriginal) => ({
 
 vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
-  acquireDayLogCacheLease,
+  acquireDayLogCacheAccess,
   confirmDayLogCacheAccount,
 }));
 
@@ -94,7 +94,7 @@ function renderGate(options?: { authenticated?: boolean }) {
 }
 
 beforeEach(() => {
-  acquireDayLogCacheLease.mockResolvedValue({
+  acquireDayLogCacheAccess.mockResolvedValue({
     accountId: session.user.id,
     generation: 0,
     isCurrent: vi.fn().mockResolvedValue(true),
@@ -126,11 +126,11 @@ describe("SessionRestorationGate", () => {
     renderGate();
 
     expect(screen.queryByText("private dashboard")).toBeNull();
-    expect(acquireDayLogCacheLease).not.toHaveBeenCalled();
+    expect(acquireDayLogCacheAccess).not.toHaveBeenCalled();
     confirmSession(session);
 
     expect(await screen.findByText("private dashboard")).toBeTruthy();
-    await waitFor(() => expect(acquireDayLogCacheLease).toHaveBeenCalledWith(session.user.id));
+    await waitFor(() => expect(acquireDayLogCacheAccess).toHaveBeenCalledWith(session.user.id));
   });
 
   it("fences the previous account before exposing a newly confirmed account", async () => {
@@ -169,7 +169,7 @@ describe("SessionRestorationGate", () => {
       accountId: session.user.id,
       generation: 2,
     });
-    expect(acquireDayLogCacheLease).toHaveBeenCalledWith(nextSession.user.id);
+    expect(acquireDayLogCacheAccess).toHaveBeenCalledWith(nextSession.user.id);
   });
 
   it("revokes the last confirmed cache only after session loss is conclusively confirmed", async () => {
