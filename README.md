@@ -216,7 +216,7 @@ This is the evaluator path. It does not require private keys, the gitignored `.e
 
 - Node.js 26, matching [`.tool-versions`](.tool-versions)
 - Docker Desktop (PostgreSQL runs in Docker; a host database install is not required)
-- Host port 5433 must be free so Docker can start the demo PostgreSQL service.
+- Host port 5433 must be free so Docker can start the shared PostgreSQL service (`COMPOSE_PROJECT_NAME=calibrate-shared`). If an old `calibrate-demo-*` project still binds that port, stop it first.
 
 From a fresh clone:
 
@@ -230,11 +230,13 @@ npx nx run @calibrate/local-runtime-config:demo-dev
 
 The Demo catalog is pinned USDA Foundation Foods from the 2026-04-30 FoodData Central foundation-foods JSON release. Search misses outside that set are expected. Demo mode never calls FoodData Central or sends real email.
 
-`demo-setup` is idempotent: it writes or reuses gitignored `.local.env`, starts PostgreSQL, applies migrations, and seeds the catalog. To recreate the Demo database while keeping that generated configuration:
+`demo-setup` is idempotent: it writes or reuses gitignored `.local.env`, starts the shared Compose Postgres on `127.0.0.1:5433` when that port is closed, creates `calibrate_demo` if needed, applies migrations, and seeds the catalog. It prefers decryptable dotenvx `DB_USER` / `DB_PASSWORD` when `.env.keys` is present, otherwise it uses a machine-local role in `~/.calibrate/shared-postgres.env`. To recreate only the Demo database while keeping that generated configuration and every other database on the shared cluster:
 
 ```bash
 npx nx run @calibrate/local-runtime-config:demo-reset
 ```
+
+If Postgres rejects the resolved role because the volume was initialized with different credentials, recreate the volume explicitly with `docker compose -p calibrate-shared down --volumes`, then rerun `demo-setup`. Do not run that volume teardown as a routine reset.
 
 # Developing locally
 
@@ -256,16 +258,14 @@ npx nx run workspace:worktree-setup
 
 Setup is idempotent. It will:
 
-- copy `.env.keys` from the primary checkout when this worktree does not have it yet
+- copy `.env.keys` from the primary checkout when this worktree does not have it yet, then continue without keys if none exist
+- resolve the shared Postgres role from decryptable dotenvx `DB_USER` / `DB_PASSWORD` when possible, otherwise `~/.calibrate/shared-postgres.env`
 - start the shared Postgres container only when `127.0.0.1:5433` is not already accepting connections (`COMPOSE_PROJECT_NAME=calibrate-shared`)
 - create and migrate this worktree's database
 - write gitignored `.worktree-dev.json` with the chosen ports and origins
-- print copy-paste `backend:dev` and `web:dev` commands with the required env overrides
+- print copy-paste commands: `backend:dev` / `web:dev` when dotenvx is available, or `backend:demo` with the machine-local role when it is not
 
-If no dotenvx key is available in this worktree, the primary checkout, or
-`DOTENV_PRIVATE_KEY`, setup stops without provisioning anything. Setup does not
-start Vite or Express; run the printed commands in separate terminals. Host
-processes always talk to Postgres at `DB_HOST=127.0.0.1` and `DB_PORT=5433`.
+Setup does not start Vite or Express; run the printed commands in separate terminals. Host processes always talk to Postgres at `DB_HOST=127.0.0.1` and `DB_PORT=5433`. Evaluator worktrees without `.env.keys` still get a per-worktree `calibrate_wt_*` database and demo-mode printed commands.
 
 The selected adjacent frontend/backend port pair is claimed in
 `~/.calibrate/worktree-ports` by worktree path and reused when it is still
@@ -277,13 +277,18 @@ When you are done with a linked worktree database:
 npx nx run workspace:worktree-teardown -- --database calibrate_wt_<slug>_<hash>
 ```
 
-Teardown drops only this linked worktree's `calibrate_wt_*` database, deletes
+Teardown drops only this worktree's `calibrate_wt_*` database, deletes
 this worktree's `.worktree-dev.json`, and leaves the shared Postgres container
-running. It refuses the primary `.env` database, `postgres`, `template0`,
-`template1`, and databases belonging to another worktree. Do not run `docker
-compose down` for worktree cleanup.
+running. It refuses `calibrate_demo`, the decryptable primary `.env` `DB_NAME`
+when that value is available, `postgres`, `template0`, `template1`, and
+databases belonging to another worktree. Do not run `docker compose down` for
+worktree cleanup.
 
-The primary checkout keeps the `DB_NAME` from `.env`. Linked worktrees use `calibrate_wt_<slug>_<hash>` so same-named folders on different paths cannot collide.
+The primary checkout keeps the decryptable `DB_NAME` from `.env` when dotenvx
+can read it. Without decryptable `DB_NAME`, the primary checkout also uses
+`calibrate_wt_<slug>_<hash>`. Linked worktrees always use
+`calibrate_wt_<slug>_<hash>` so same-named folders on different paths cannot
+collide.
 
 ## Backend
 

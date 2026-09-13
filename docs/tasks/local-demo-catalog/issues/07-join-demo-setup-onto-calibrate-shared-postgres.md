@@ -4,30 +4,30 @@ overview: "Joining demo-setup onto `calibrate-shared` is feasible. The shared cl
 todos:
   - id: resolve-postgres-role
     content: Add resolvePostgresRole() that prefers dotenvx DB_USER/DB_PASSWORD when decryptable, else ~/.calibrate/shared-postgres.env
-    status: pending
+    status: completed
   - id: shared-ensure-helper
     content: Extract ensure-calibrate-shared-postgres + create-database-if-missing for both demo-setup and worktree-setup
-    status: pending
+    status: completed
   - id: demo-on-shared-cluster
     content: Point runDemoSetup at calibrate-shared, create calibrate_demo, stop using otpHmacKey as DB password, use the same role resolver
-    status: pending
+    status: completed
   - id: safe-demo-reset
     content: Change demo-reset to drop/recreate only calibrate_demo; never compose down --volumes on the shared project
-    status: pending
+    status: completed
   - id: worktree-dotenvx-first
     content: Worktree setup/teardown and printed backend:dev prefer dotenvx DB role; fall back to machine-local without requiring .env.keys
-    status: pending
+    status: completed
   - id: no-keys-fallback-test
     content: Add a test that relocates repo .env.keys with fs.rename, asserts the machine-local role path, and restores the file in finally
-    status: pending
+    status: completed
   - id: docs-adr-migration
     content: Update ADR-0004, README, and document evaluator worktrees plus existing-volume recreate when roles disagree
-    status: pending
+    status: completed
 isProject: false
 ---
 
 **Type:** task
-**Status:** claimed
+**Status:** resolved
 
 # Join demo-setup onto calibrate-shared Postgres
 
@@ -191,3 +191,8 @@ This belongs in the fast suite (`*.test.ts`), not Docker/integration, because it
 ## Feasibility caveats
 
 This join reduces paths for **persistent local Docker Postgres**. It does not make hiring-manager setup and developer worktree setup the same command: evaluators still generate `.local.env` and seed `calibrate_demo`; you still use dotenvx for app secrets and for a production-like `backend:dev`. The shared part is “resolve the cluster role, ensure `calibrate-shared`, create/migrate this database.”
+
+## Answer
+
+Demo setup and worktree setup now share Compose project `calibrate-shared` on `127.0.0.1:5433`. `resolvePostgresRole()` prefers decryptable dotenvx `DB_USER` / `DB_PASSWORD` and otherwise uses `~/.calibrate/shared-postgres.env`. Demo creates `calibrate_demo` instead of hashing a `calibrate-demo-*` project or using `otpHmacKey` as the cluster password. `demo-reset` drops only `calibrate_demo`. Worktree setup continues without `.env.keys`, and printed commands switch to `backend:demo` when dotenvx is unavailable.
+
