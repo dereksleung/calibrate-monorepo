@@ -6,11 +6,12 @@ import {
   type CreateFoodEntryRequest,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
-import { ArrowLeft, ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { FoodConfirmationState } from "../food-confirmation-state.ts";
 
+import { ConfirmFoodUnitSelect } from "./components/ConfirmFoodUnitSelect.tsx";
 import { DailyGoalProgress, NutritionAtGlance, NutritionFacts } from "./components/FoodNutritionPanels.tsx";
 import { getFoodUnitOptions, scaleFoodNutrition } from "./confirm-food-nutrition.ts";
 
@@ -35,12 +36,22 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
   const [unit, setUnit] = useState(units[0]?.unit ?? food.servingLabel);
   const [meal, setMeal] = useState<MealNameEnumType>(confirmation.preselectedMeal ?? "BREAKFAST");
   const [quantityError, setQuantityError] = useState<string | null>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
   const enteredQuantity = Number(quantity);
   const chosenQuantity = normalizeFoodEntryQuantity(enteredQuantity);
   const nutrition = useMemo(
     () => scaleFoodNutrition(food, chosenQuantity, unit),
     [chosenQuantity, food, unit],
   );
+
+  useEffect(() => {
+    const input = quantityInputRef.current;
+    if (!input) {
+      return;
+    }
+
+    input.focus();
+  }, []);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -117,6 +128,8 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
                 {food.brand ? <p className="mt-1 text-sm text-on-surface-variant/75">{food.brand}</p> : null}
               </section>
 
+              <NutritionAtGlance nutrition={nutrition} />
+
               <section className="rounded-2xl bg-surface-container-lowest px-6 py-6 shadow-[0_18px_45px_-32px_rgba(26,28,28,0.42)]">
                 <div className="grid grid-cols-2 gap-4">
                   <label className="min-w-0" htmlFor="food-quantity">
@@ -124,6 +137,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
                       Quantity
                     </span>
                     <input
+                      ref={quantityInputRef}
                       id="food-quantity"
                       type="number"
                       inputMode="decimal"
@@ -140,23 +154,12 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
                     <span className="block text-[0.625rem] font-medium tracking-[0.12em] text-on-surface-variant/70 uppercase">
                       Unit
                     </span>
-                    <span className="relative mt-2 block">
-                      <select
+                    <span className="mt-2 block">
+                      <ConfirmFoodUnitSelect
                         id="serving-unit"
                         value={unit}
-                        onChange={(event) => setUnit(event.target.value)}
-                        className="h-12 w-full appearance-none rounded-xl bg-surface-container-low px-4 pr-10 text-base font-medium text-on-surface outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/30"
-                      >
-                        {units.map((option) => (
-                          <option key={option.unit} value={option.unit}>
-                            {option.unit}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown
-                        aria-hidden
-                        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-primary"
-                        strokeWidth={1.75}
+                        options={units}
+                        onValueChange={setUnit}
                       />
                     </span>
                   </label>
@@ -189,14 +192,9 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
               </section>
             </div>
 
-            <div className="space-y-4">
-              <NutritionAtGlance nutrition={nutrition} />
-              <DailyGoalProgress nutrition={nutrition} />
-            </div>
+            <DailyGoalProgress nutrition={nutrition} />
 
-            <div>
-              <NutritionFacts nutrition={nutrition} />
-            </div>
+            <NutritionFacts nutrition={nutrition} />
           </div>
         </div>
       </form>

@@ -43,6 +43,29 @@ describe("ConfirmFood", () => {
     );
   });
 
+  it("places nutrition at a glance above the quantity and meal card", () => {
+    render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={vi.fn()} />);
+
+    const foodName = screen.getByRole("heading", { name: "Organic Extra Firm Tofu" });
+    const nutritionAtGlance = screen.getByRole("region", { name: "Nutrition at a glance" });
+    const quantity = screen.getByLabelText("Quantity");
+    const dailyGoals = screen.getByRole("region", { name: "Percent of Daily Goals" });
+
+    expect(
+      foodName.compareDocumentPosition(nutritionAtGlance) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      nutritionAtGlance.compareDocumentPosition(quantity) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(quantity.compareDocumentPosition(dailyGoals) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("focuses the quantity input when the screen opens", () => {
+    render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={vi.fn()} />);
+
+    expect(document.activeElement).toBe(screen.getByLabelText("Quantity"));
+  });
+
   it("recalculates the displayed and submitted nutrition when the quantity changes", () => {
     const onSave = vi.fn();
     render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);
@@ -132,10 +155,18 @@ describe("ConfirmFood", () => {
       />,
     );
 
-    const unitSelect = screen.getByLabelText("Unit") as HTMLSelectElement;
-    expect(Array.from(unitSelect.options, (option) => option.value)).toEqual(["serving", "g", "cup"]);
+    const unitTrigger = screen.getByLabelText("Unit");
+    fireEvent.click(unitTrigger);
 
-    fireEvent.change(unitSelect, { target: { value: "g" } });
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "serving",
+      "g",
+      "cup",
+    ]);
+
+    const gramsOption = screen.getByRole("option", { name: "g" });
+    fireEvent.pointerDown(gramsOption);
+    fireEvent.click(gramsOption);
     fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "170" } });
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
 
@@ -167,8 +198,9 @@ describe("ConfirmFood", () => {
       />,
     );
 
-    const unitSelect = screen.getByLabelText("Unit") as HTMLSelectElement;
-    expect(Array.from(unitSelect.options, (option) => option.value)).toEqual(["serving"]);
+    fireEvent.click(screen.getByLabelText("Unit"));
+
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual(["serving"]);
   });
 
   it("shows the complete scaled nutrition fact list", () => {
