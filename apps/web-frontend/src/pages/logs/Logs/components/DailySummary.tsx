@@ -68,13 +68,15 @@ function MacroStat({
   );
 }
 
+const calorieLimitClassName = "text-xl font-light leading-none text-on-surface-variant/65";
+
 export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
   const caloriesRemaining = Math.max(DAILY_TARGETS.calories - totals.calories, 0);
 
   return (
     <section
       aria-labelledby="daily-summary-heading"
-      className="glass-card rounded-[2rem] px-3 py-5 md:rounded-2xl"
+      className="glass-card w-full rounded-[2rem] px-3 py-5 md:rounded-2xl"
     >
       <Typography
         id="daily-summary-heading"
@@ -87,39 +89,34 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
       </Typography>
 
       <div className="grid gap-8 md:gap-10">
-        <div className="flex flex-col">
-          <div className="flex justify-between gap-2">
+        <div className="grid grid-cols-[minmax(min-content,1fr)_auto] gap-x-4">
+          <Typography variant="labelSpaced" color="onSurface">
+            Eaten
+          </Typography>
+          <div className="flex items-center gap-2">
             <Typography variant="labelSpaced" color="onSurface">
-              Eaten
+              Weight
             </Typography>
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-end gap-2">
-                <Typography variant="labelSpaced" color="onSurface">
-                  Weight
-                </Typography>
-                <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} />
-              </div>
-            </div>
+            <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} />
           </div>
-          <div className="mt-3 flex gap-x-2">
-            <div className="flex flex-1 items-baseline">
+          <div className="col-span-2 mt-3 grid grid-cols-subgrid items-baseline">
+            <div className="flex items-baseline">
               <span className="font-heading text-4xl font-light leading-none text-on-surface md:text-6xl">
                 {Math.round(totals.calories).toLocaleString()}
               </span>
-              <span className="text-xl font-light leading-none text-on-surface-variant/65">
-                / {DAILY_TARGETS.calories.toLocaleString()}
-              </span>
-              <p className="hidden md:block ml-4 text-sm leading-none text-on-surface-variant/70">
+              <span className={calorieLimitClassName}>/ {DAILY_TARGETS.calories.toLocaleString()}</span>
+              <p className="ml-4 hidden text-sm leading-none text-on-surface-variant/70 md:block">
                 {caloriesRemaining.toLocaleString()} left
               </p>
             </div>
-            {weight ? (
-              <p className="text-xl font-light text-on-surface md:text-2xl">
-                {weight.toFixed(1)} <span className="text-base text-on-surface-variant/70">lb</span>
-              </p>
+            {weight != null ? (
+              <span className={cn(calorieLimitClassName, "text-right")}>
+                {weight.toFixed(1)}
+                <span className="sr-only"> pounds</span>
+              </span>
             ) : null}
           </div>
-          <div className="w-2/3 md:w-full">
+          <div className="col-span-2 w-2/3 md:w-full">
             <ProgressBar
               progress={progress.calories}
               color={MACRO_PROGRESS_COLORS.calories}
