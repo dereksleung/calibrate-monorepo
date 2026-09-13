@@ -1,7 +1,12 @@
-import { Container } from "@infrastructure/container.js";
-import { getBackendListenHost } from "@infrastructure/demo-runtime.js";
+import { getBackendListenHost, prepareDemoRuntime } from "@infrastructure/demo-runtime.js";
 
 import { createHttpApp } from "./create-http-app.js";
+
+if (process.env.CALIBRATE_DEMO === "1") {
+  await prepareDemoRuntime();
+}
+
+const { Container } = await import("@infrastructure/container.js");
 
 const PORT = process.env.PORT || 3001;
 const app = createHttpApp(new Container({}));

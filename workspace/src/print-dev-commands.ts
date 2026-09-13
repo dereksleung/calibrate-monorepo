@@ -61,7 +61,7 @@ export function formatBackendDevCommand(
     `PORT=${shellQuote(String(bindings.ports.backend))}`,
     `CORS_ORIGIN=${shellQuote(bindings.corsOrigin)}`,
     `WEBAUTHN_ORIGIN=${shellQuote(bindings.webauthnOrigin)}`,
-    "npx nx run backend:demo",
+    "npx nx run backend:dev",
   ].join(" ");
 }
 
@@ -74,12 +74,14 @@ export function formatWebDevCommand(
       "npx dotenvx run --overload",
       "--env CALIBRATE_E2E=",
       `--env VITE_API_BASE_URL=${shellQuote(bindings.viteApiBaseUrl)}`,
+      `--env ${shellQuote(dotenvEnvAssignment("API_PROXY_TARGET", bindings.backendUrl))}`,
       `-- npx nx run web:dev -- --port ${shellQuote(String(bindings.ports.frontend))}`,
     ].join(" ");
   }
 
   return [
     `VITE_API_BASE_URL=${shellQuote(bindings.viteApiBaseUrl)}`,
+    `API_PROXY_TARGET=${shellQuote(bindings.backendUrl)}`,
     `npx nx run web:dev -- --port ${shellQuote(String(bindings.ports.frontend))}`,
   ].join(" ");
 }

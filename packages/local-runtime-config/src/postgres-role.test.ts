@@ -106,6 +106,24 @@ describe("resolvePostgresRole", () => {
     expect(await readFile(roleFilePath, "utf8")).toContain(`DB_PASSWORD=${first.password}`);
   });
 
+  it("concurrently resolves the one machine-local role", async () => {
+    const directory = await createTemporaryDirectory();
+    const roleFilePath = path.join(directory, "shared-postgres.env");
+
+    const roles = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        resolvePostgresRole({
+          workspaceRoot,
+          roleFilePath,
+          readDotenvValue: () => null,
+        }),
+      ),
+    );
+
+    expect(new Set(roles.map((role) => role.password)).size).toBe(1);
+    expect(await readFile(roleFilePath, "utf8")).toContain(`DB_PASSWORD=${roles[0]?.password}`);
+  });
+
   it("uses the machine-local role when this checkout has no dotenvx private key", async () => {
     const directory = await createTemporaryDirectory();
     const roleFilePath = path.join(directory, "shared-postgres.env");

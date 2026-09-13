@@ -19,15 +19,25 @@ describe("print dev commands", () => {
       webauthnOrigin: "http://localhost:3010",
     };
 
-    expect(formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34")).toContain(
+    const backend = formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34", {
+      role: {
+        user: "dotenvx_user",
+        password: "dotenvx_password",
+        source: "dotenvx",
+      },
+    });
+
+    expect(backend).toContain(
       shellQuote(dotenvEnvAssignment("DB_NAME", "calibrate_wt_feature_ab12cd34")),
     );
-    expect(formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34")).toContain("PORT='3011'");
-    expect(formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34")).toContain(
-      "--env CALIBRATE_E2E=",
-    );
+    expect(backend).toContain("PORT='3011'");
+    expect(backend).toContain("--env CALIBRATE_E2E=");
+    expect(backend).not.toContain("dotenvx_user");
+    expect(backend).not.toContain("dotenvx_password");
     expect(formatWebDevCommand(bindings)).toContain("VITE_API_BASE_URL='/api/v1'");
-    expect(formatWebDevCommand(bindings)).toContain("API_PROXY_TARGET='http://localhost:3011'");
+    expect(formatWebDevCommand(bindings)).toContain(
+      shellQuote(dotenvEnvAssignment("API_PROXY_TARGET", "http://localhost:3011")),
+    );
     expect(formatWebDevCommand(bindings)).toContain("--env CALIBRATE_E2E=");
     expect(formatWebDevCommand(bindings)).toContain("--port '3010'");
   });
@@ -54,11 +64,13 @@ describe("print dev commands", () => {
     const web = formatWebDevCommand(bindings, { dotenvxAvailable: false });
 
     expect(backend).toContain("CALIBRATE_DEMO=1");
-    expect(backend).toContain("npx nx run backend:demo");
+    expect(backend).toContain("npx nx run backend:dev");
+    expect(backend).toContain("DB_NAME='calibrate_wt_feature_ab12cd34'");
     expect(backend).toContain("DB_USER='calibrate'");
     expect(backend).toContain("DB_PASSWORD='machine-local-password'");
     expect(backend).not.toContain("dotenvx");
     expect(web).toContain("VITE_API_BASE_URL='http://localhost:3011/api/v1'");
+    expect(web).toContain("API_PROXY_TARGET='http://localhost:3011'");
     expect(web).not.toContain("dotenvx");
   });
 

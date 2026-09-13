@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, link, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -59,18 +59,21 @@ export async function resolvePostgresRole({
     return { user, password, source: "dotenvx" };
   }
 
-  const existing = await readMachineLocalRoleFile(roleFilePath);
-  if (existing) {
-    return { ...existing, source: "machine-local" };
-  }
+  while (true) {
+    const existing = await readMachineLocalRoleFile(roleFilePath);
+    if (existing) {
+      return { ...existing, source: "machine-local" };
+    }
 
-  const generated: PostgresRole = {
-    user: MACHINE_LOCAL_POSTGRES_USER,
-    password: randomBytes(32).toString("base64url"),
-    source: "machine-local",
-  };
-  await writeMachineLocalRoleFile(roleFilePath, generated);
-  return generated;
+    const generated: PostgresRole = {
+      user: MACHINE_LOCAL_POSTGRES_USER,
+      password: randomBytes(32).toString("base64url"),
+      source: "machine-local",
+    };
+    if (await writeMachineLocalRoleFile(roleFilePath, generated)) {
+      return generated;
+    }
+  }
 }
 
 function decryptableDotenvValue(value: string | null | undefined): string | null {
@@ -97,8 +100,9 @@ async function readMachineLocalRoleFile(
 async function writeMachineLocalRoleFile(
   filePath: string,
   role: Pick<PostgresRole, "user" | "password">,
-): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
+): Promise<boolean> {
+  const directory = path.dirname(filePath);
+  await mkdir(directory, { recursive: true });
   const contents = [
     "# Calibrate machine-local shared Postgres role.",
     "# Unique to this machine. Do not commit or copy dotenvx secrets here.",
@@ -107,7 +111,25 @@ async function writeMachineLocalRoleFile(
     `DB_PASSWORD=${role.password}`,
     "",
   ].join("\n");
-  await writeFile(filePath, contents, { encoding: "utf8", mode: 0o600 });
+  const temporaryPath = path.join(
+    directory,
+    `.${path.basename(filePath)}.${randomBytes(16).toString("hex")}.tmp`,
+  );
+
+  await writeFile(temporaryPath, contents, { encoding: "utf8", flag: "wx", mode: 0o600 });
+  try {
+    await link(temporaryPath, filePath);
+    return true;
+  } catch (error: unknown) {
+    if (isFileAlreadyExistsError(error)) return false;
+    throw error;
+  } finally {
+    await rm(temporaryPath, { force: true });
+  }
+}
+
+function isFileAlreadyExistsError(error: unknown): boolean {
+  return Boolean(error && typeof error === "object" && "code" in error && error.code === "EEXIST");
 }
 
 function parseEnvAssignments(contents: string, filePath: string): Map<string, string> {

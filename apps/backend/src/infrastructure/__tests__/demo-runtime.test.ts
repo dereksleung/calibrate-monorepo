@@ -120,6 +120,23 @@ describe("prepareDemoRuntime", () => {
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
 
+  it("preserves worktree database and WebAuthn origins supplied to demo mode", async () => {
+    const directory = await createTemporaryDirectory();
+    await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
+    await writeDemoRoleFile(directory);
+    process.env.CALIBRATE_DEMO = "1";
+    process.env.NODE_ENV = "development";
+    process.env.DB_NAME = "calibrate_wt_feature_ab12cd34";
+    process.env.WEBAUTHN_ORIGIN = "http://localhost:3010";
+
+    await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
+
+    expect(loadDatabaseConnectionConfigFromEnvironment().database).toBe(
+      "calibrate_wt_feature_ab12cd34",
+    );
+    expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3010");
+  });
+
   it("is an explicit selection rather than an implicit fallback", async () => {
     delete process.env.CALIBRATE_DEMO;
 
