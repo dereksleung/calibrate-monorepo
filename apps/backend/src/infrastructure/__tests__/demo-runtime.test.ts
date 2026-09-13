@@ -15,6 +15,7 @@ import {
   generateLocalRuntimeConfiguration,
   localRuntimeConfigurationToProcessEnv,
   writeLocalRuntimeConfiguration,
+  type ResolvePostgresRoleOptions,
 } from "@calibrate/local-runtime-config";
 
 import { getBackendListenHost, prepareDemoRuntime } from "../demo-runtime.js";
@@ -39,19 +40,35 @@ async function createTemporaryDirectory(): Promise<string> {
   return directory;
 }
 
+function machineLocalRoleOptions(directory: string): Omit<ResolvePostgresRoleOptions, "workspaceRoot"> {
+  return {
+    roleFilePath: path.join(directory, "shared-postgres.env"),
+    readDotenvValue: () => null,
+  };
+}
+
+async function writeDemoRoleFile(directory: string): Promise<void> {
+  await writeFile(
+    path.join(directory, "shared-postgres.env"),
+    "DB_USER=calibrate\nDB_PASSWORD=demo-local-password\n",
+    "utf8",
+  );
+}
+
 describe("prepareDemoRuntime", () => {
   it("loads generated local configuration into process env without dotenvx or .env.keys", async () => {
     const directory = await createTemporaryDirectory();
     await writeFile(path.join(directory, ".env.keys"), "DOTENV_PRIVATE_KEY=must-not-be-required\n");
     const generated = generateLocalRuntimeConfiguration();
     await writeLocalRuntimeConfiguration(directory, generated);
+    await writeDemoRoleFile(directory);
     process.env.CALIBRATE_DEMO = "1";
     process.env.NODE_ENV = "development";
     process.env.WEBAUTHN_ORIGIN = "http://localhost:3000";
     process.env.DOTENV_PRIVATE_KEY = "must-not-be-used";
     dotenvGet.mockReturnValue("dotenv-private-key");
 
-    const configuration = await prepareDemoRuntime(directory);
+    const configuration = await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
     const tokenService = new JoseAccessTokenService({
       issuer: configuration.jwtIssuer,
       audience: configuration.jwtAudience,
@@ -69,9 +86,9 @@ describe("prepareDemoRuntime", () => {
       database: "calibrate_demo",
       host: "127.0.0.1",
       maxConnections: 10,
-      password: generated.otpHmacKey,
+      password: "demo-local-password",
       port: 5433,
-      user: "calibrate_demo",
+      user: "calibrate",
     });
     expect(await tokenService.verify(issued.token)).toEqual({ userId: "demo-user" });
     expect(dotenvGet).not.toHaveBeenCalled();
@@ -87,7 +104,7 @@ describe("prepareDemoRuntime", () => {
     process.env.EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT = "encrypted-normal-runtime-value";
     process.env.TRUST_PROXY_HOPS = "encrypted-normal-runtime-value";
 
-    await prepareDemoRuntime(directory);
+    await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
     await expect(import("../container.js")).resolves.toHaveProperty("Container");
   });
 
@@ -98,7 +115,7 @@ describe("prepareDemoRuntime", () => {
     process.env.NODE_ENV = "development";
     process.env.WEBAUTHN_ORIGIN = "encrypted-normal-runtime-value";
 
-    await prepareDemoRuntime(directory);
+    await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
 
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
@@ -130,7 +147,7 @@ describe("prepareDemoRuntime", () => {
     process.env.EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT = "encrypted:not-an-integer";
     process.env.TRUST_PROXY_HOPS = "encrypted:not-an-integer";
 
-    await prepareDemoRuntime(directory);
+    await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
 
     expect(getRuntimeEnvironmentValue("EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT")).toBe("1000");
     expect(getRuntimeEnvironmentValue("TRUST_PROXY_HOPS")).toBe("0");
