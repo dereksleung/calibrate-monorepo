@@ -2,6 +2,40 @@
 
 A calorie tracker application, because I've gotten into healthier eating, jogging, and calisthenics.
 
+## Table of Contents
+
+- [Solution Design Notes — Caching and Synchronization](#solution-design-notes--caching-and-synchronization)
+  - [Expected usage patterns](#expected-usage-patterns)
+  - [Persisted client-side cache](#persisted-client-side-cache)
+  - [Lightweight synchronization](#lightweight-synchronization)
+  - [Avoiding unnecessary refetches after writes](#avoiding-unnecessary-refetches-after-writes)
+  - [Why a one-hour freshness window?](#why-a-one-hour-freshness-window)
+- [Frontend Current State](#frontend-current-state)
+- [Screenshots](#screenshots)
+  - [Dashboard page](#dashboard-page)
+    - [Nutrient Analytics](#nutrient-analytics)
+  - [Daily Logs Page](#daily-logs-page)
+- [Experimenting with scaling myself with AI development flows - code may not be perfect](#experimenting-with-scaling-myself-with-ai-development-flows---code-may-not-be-perfect)
+- [Tech Stack](#tech-stack)
+  - [Why Nx?](#why-nx)
+  - [Backend](#backend)
+    - [Node.js/Express.js, not NestJS](#nodejsexpressjs-not-nestjs)
+    - [Kysely, a SQL query builder, rather than an ORM](#kysely-a-sql-query-builder-rather-than-an-orm)
+  - [Frontend](#frontend)
+- [Run local demo](#run-local-demo)
+- [Developing locally](#developing-locally)
+  - [Common](#common)
+  - [Git worktrees (shared Postgres)](#git-worktrees-shared-postgres)
+  - [Backend](#backend-1)
+    - [Run locally](#run-locally)
+    - [Seeding the Foundation Foods Demo catalog](#seeding-the-foundation-foods-demo-catalog)
+    - [Initial dotenv configuration](#initial-dotenv-configuration)
+    - [Testing signup locally without Brevo](#testing-signup-locally-without-brevo)
+    - [Inspecting authenticated pages locally without a passkey](#inspecting-authenticated-pages-locally-without-a-passkey)
+    - [Building the backend Docker image](#building-the-backend-docker-image)
+  - [Frontend](#frontend-1)
+    - [Running Frontend Locally](#running-frontend-locally)
+
 ## Solution Design Notes — Caching and Synchronization
 
 The application's data-access strategy is shaped by two main considerations:
