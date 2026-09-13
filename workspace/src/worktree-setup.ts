@@ -3,7 +3,6 @@ import {
   createDatabaseIfMissing,
   createReadDotenvValue,
   ensureCalibrateSharedPostgres,
-  ensureLocalRuntimeConfiguration,
   isPostgresDuplicateDatabaseError,
   resolvePostgresRole,
   SHARED_COMPOSE_PROJECT_NAME,
@@ -31,6 +30,7 @@ export { isPostgresDuplicateDatabaseError };
 export function createSetupEnvironment(environment: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const setupEnvironment = { ...environment };
   delete setupEnvironment.CALIBRATE_E2E;
+  delete setupEnvironment.CALIBRATE_DEMO;
   return setupEnvironment;
 }
 
@@ -45,10 +45,6 @@ export function resolveWorktreeDatabaseName({
 }): string {
   if (isPrimary && dotenvDbName) return dotenvDbName;
   return deriveLinkedWorktreeDatabaseName(worktreeRoot);
-}
-
-export function shouldEnsureLocalRuntimeConfiguration(role: PostgresRole): boolean {
-  return role.source === "machine-local";
 }
 
 async function runSharedPostgresCommand(command: SharedPostgresCommand): Promise<void> {
@@ -89,13 +85,12 @@ function runDotenvxMigrations(dbNameAssignment: string): void {
   );
 }
 
-function runDemoMigrations(dbName: string, role: PostgresRole): void {
+function runMachineLocalMigrations(dbName: string, role: PostgresRole): void {
   execFileSync(npxCommand, ["nx", "run", "backend:kysely", "migrate:latest"], {
     cwd: workspaceRoot,
     stdio: "inherit",
     env: {
       ...createSetupEnvironment(),
-      CALIBRATE_DEMO: "1",
       DB_HOST: SHARED_DATABASE_HOST,
       DB_PORT: String(SHARED_DATABASE_PORT),
       DB_NAME: dbName,
@@ -120,10 +115,6 @@ export async function runWorktreeSetup(): Promise<void> {
     dotenvDbName,
   });
 
-  if (shouldEnsureLocalRuntimeConfiguration(role)) {
-    await ensureLocalRuntimeConfiguration(workspaceRoot);
-  }
-
   await ensureCalibrateSharedPostgres({
     directory: workspaceRoot,
     role,
@@ -138,7 +129,7 @@ export async function runWorktreeSetup(): Promise<void> {
   if (role.source === "dotenvx") {
     runDotenvxMigrations(dotenvEnvAssignment("DB_NAME", dbName));
   } else {
-    runDemoMigrations(dbName, role);
+    runMachineLocalMigrations(dbName, role);
   }
 
   await writeWorktreeState(workspaceRoot, {

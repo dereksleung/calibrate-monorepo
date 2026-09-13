@@ -42,7 +42,7 @@ describe("print dev commands", () => {
     expect(formatWebDevCommand(bindings)).toContain("--port '3010'");
   });
 
-  it("prints demo runtime commands with the machine-local role when dotenvx is unavailable", () => {
+  it("prints normal development commands with the machine-local role when dotenvx is unavailable", () => {
     const bindings = {
       ports: { frontend: 3010, backend: 3011 },
       frontendUrl: "http://localhost:3010",
@@ -63,12 +63,12 @@ describe("print dev commands", () => {
     });
     const web = formatWebDevCommand(bindings, { dotenvxAvailable: false });
 
-    expect(backend).toContain("CALIBRATE_DEMO=1");
     expect(backend).toContain("npx nx run backend:dev");
     expect(backend).toContain("DB_NAME='calibrate_wt_feature_ab12cd34'");
     expect(backend).toContain("DB_USER='calibrate'");
     expect(backend).toContain("DB_PASSWORD='machine-local-password'");
     expect(backend).not.toContain("dotenvx");
+    expect(backend).not.toContain("CALIBRATE_DEMO");
     expect(web).toContain("VITE_API_BASE_URL='http://localhost:3011/api/v1'");
     expect(web).toContain("API_PROXY_TARGET='http://localhost:3011'");
     expect(web).not.toContain("dotenvx");

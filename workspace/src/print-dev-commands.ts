@@ -52,7 +52,6 @@ export function formatBackendDevCommand(
   }
 
   return [
-    "CALIBRATE_DEMO=1",
     `DB_HOST=${shellQuote(SHARED_DB_HOST)}`,
     `DB_PORT=${shellQuote(String(SHARED_DB_PORT))}`,
     `DB_NAME=${shellQuote(dbName)}`,

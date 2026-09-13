@@ -4,21 +4,23 @@ import {
   createSetupEnvironment,
   isPostgresDuplicateDatabaseError,
   resolveWorktreeDatabaseName,
-  shouldEnsureLocalRuntimeConfiguration,
 } from "./worktree-setup.js";
 
 describe("worktree setup environment", () => {
   it("removes inherited E2E mode without mutating the parent environment", () => {
     const environment = {
       CALIBRATE_E2E: "1",
+      CALIBRATE_DEMO: "1",
       DB_NAME: "calibrate_dev",
     };
 
     const setupEnvironment = createSetupEnvironment(environment);
 
     expect(setupEnvironment.CALIBRATE_E2E).toBeUndefined();
+    expect(setupEnvironment.CALIBRATE_DEMO).toBeUndefined();
     expect(setupEnvironment.DB_NAME).toBe("calibrate_dev");
     expect(environment.CALIBRATE_E2E).toBe("1");
+    expect(environment.CALIBRATE_DEMO).toBe("1");
   });
 
   it("recognizes PostgreSQL duplicate-database errors", () => {
@@ -52,22 +54,5 @@ describe("worktree setup environment", () => {
         dotenvDbName: "calibrate_dev",
       }),
     ).toMatch(/^calibrate_wt_/);
-  });
-
-  it("creates local runtime configuration when the resolved role is machine-local", () => {
-    expect(
-      shouldEnsureLocalRuntimeConfiguration({
-        user: "calibrate",
-        password: "machine-local-password",
-        source: "machine-local",
-      }),
-    ).toBe(true);
-    expect(
-      shouldEnsureLocalRuntimeConfiguration({
-        user: "dotenvx-user",
-        password: "dotenvx-password",
-        source: "dotenvx",
-      }),
-    ).toBe(false);
   });
 });
