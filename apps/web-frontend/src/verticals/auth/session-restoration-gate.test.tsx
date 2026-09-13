@@ -42,8 +42,12 @@ vi.mock("@calibrate/api-client", async (importOriginal) => ({
 vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
   acquireDayLogCacheLease,
-  broadcastDayLogCacheRevocation,
   confirmDayLogCacheAccount,
+}));
+
+vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts")>()),
+  broadcastDayLogCacheRevocation,
   revokeDayLogCache,
   revokeLastConfirmedDayLogCache,
 }));

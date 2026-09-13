@@ -60,8 +60,8 @@ vi.mock("#/verticals/auth/browser-passkey-authentication-adapter", () => ({
   startPasskeyAuthentication: mockStartPasskeyAuthentication,
 }));
 
-vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache")>()),
+vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache-logout", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache-logout")>()),
   getDayLogCacheLogoutRecoveryPending: mockGetDayLogCacheLogoutRecoveryPending,
   retryDayLogCacheLogoutRecovery: mockRetryDayLogCacheLogoutRecovery,
 }));

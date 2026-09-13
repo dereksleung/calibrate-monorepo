@@ -25,7 +25,7 @@ import {
   getDayLogCacheLogoutRecoveryPending,
   retryDayLogCacheLogoutRecovery,
   type LogoutRecord,
-} from "#/verticals/day-log-cache/indexed-db-day-log-cache";
+} from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
 import {
   ApiError,
   parsePasskeyAuthenticationError,

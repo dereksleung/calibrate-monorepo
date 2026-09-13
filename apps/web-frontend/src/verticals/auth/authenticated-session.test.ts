@@ -13,8 +13,11 @@ const { broadcastDayLogCacheRevocation, confirmDayLogCacheAccount } = vi.hoisted
 }));
 
 vi.mock("../day-log-cache/indexed-db-day-log-cache.ts", () => ({
-  broadcastDayLogCacheRevocation,
   confirmDayLogCacheAccount,
+}));
+
+vi.mock("../day-log-cache/indexed-db-day-log-cache-logout.ts", () => ({
+  broadcastDayLogCacheRevocation,
 }));
 
 const accountA = {

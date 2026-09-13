@@ -38,8 +38,8 @@ vi.mock("@calibrate/api-client", async (importOriginal) => ({
   deleteCurrentSession: mockDeleteCurrentSession,
 }));
 
-vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
+vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts")>()),
   beginDayLogCacheLogout: mockBeginDayLogCacheLogout,
   broadcastDayLogCacheRevocation: mockBroadcastDayLogCacheRevocation,
   completeDayLogCacheLogout: mockCompleteDayLogCacheLogout,

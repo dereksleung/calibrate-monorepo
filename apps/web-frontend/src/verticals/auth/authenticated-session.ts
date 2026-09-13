@@ -2,10 +2,8 @@ import type { AuthenticatedSessionResponse } from "@calibrate/api-contracts";
 
 import { skipToken, useQuery, type QueryClient } from "@tanstack/react-query";
 
-import {
-  broadcastDayLogCacheRevocation,
-  confirmDayLogCacheAccount,
-} from "../day-log-cache/indexed-db-day-log-cache.ts";
+import { broadcastDayLogCacheRevocation } from "../day-log-cache/indexed-db-day-log-cache-logout.ts";
+import { confirmDayLogCacheAccount } from "../day-log-cache/indexed-db-day-log-cache.ts";
 
 export const authenticatedSessionQueryKey = ["authenticatedSession"] as const;
 

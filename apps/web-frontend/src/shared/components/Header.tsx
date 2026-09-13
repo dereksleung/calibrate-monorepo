@@ -11,7 +11,7 @@ import {
   beginDayLogCacheLogout,
   clearPendingDayLogCacheLogout,
   completeDayLogCacheLogout,
-} from "#/verticals/day-log-cache/indexed-db-day-log-cache.ts";
+} from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts";
 import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider.tsx";
 import { ApiError, deleteCurrentSession } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";

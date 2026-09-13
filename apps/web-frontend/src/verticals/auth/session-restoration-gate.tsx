@@ -12,7 +12,7 @@ import {
   broadcastDayLogCacheRevocation,
   revokeDayLogCache,
   revokeLastConfirmedDayLogCache,
-} from "../day-log-cache/indexed-db-day-log-cache.ts";
+} from "../day-log-cache/indexed-db-day-log-cache-logout.ts";
 import {
   PrivateDayLogCacheProvider,
   clearPrivateDayLogMemory,
