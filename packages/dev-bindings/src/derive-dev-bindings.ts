@@ -17,7 +17,8 @@ export function deriveDevBindings(ports: DevPortPair): DevBindings {
     ports,
     frontendUrl,
     backendUrl,
-    viteApiBaseUrl: `${backendUrl}/api/v1`,
+    // Browser calls stay same-origin; Vite proxies `/api` to the backend in local dev.
+    viteApiBaseUrl: "/api/v1",
     corsOrigin: frontendUrl,
     webauthnOrigin: frontendUrl,
   };

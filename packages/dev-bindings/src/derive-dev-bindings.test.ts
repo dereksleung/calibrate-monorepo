@@ -10,7 +10,7 @@ describe("deriveDevBindings", () => {
       ports: { frontend: 3010, backend: 3011 },
       frontendUrl: "http://localhost:3010",
       backendUrl: "http://localhost:3011",
-      viteApiBaseUrl: "http://localhost:3011/api/v1",
+      viteApiBaseUrl: "/api/v1",
       corsOrigin: "http://localhost:3010",
       webauthnOrigin: "http://localhost:3010",
     });

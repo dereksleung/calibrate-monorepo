@@ -58,6 +58,7 @@ export default defineConfig({
           timeout: 120_000,
           cwd: workspaceRoot,
           env: {
+            API_PROXY_TARGET: bindings.backendUrl,
             E2E_FRONTEND_PORT: String(bindings.ports.frontend),
             VITE_API_BASE_URL: bindings.viteApiBaseUrl,
           },

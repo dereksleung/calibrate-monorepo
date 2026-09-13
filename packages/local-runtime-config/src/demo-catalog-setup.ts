@@ -14,7 +14,7 @@ export const DEMO_DATABASE_PORT = "5433";
 export const DEMO_DATABASE_USER = "calibrate_demo";
 export const DEMO_FRONTEND_ORIGIN = "http://localhost:3000";
 export const DEMO_BACKEND_ORIGIN = "http://localhost:3001";
-export const DEMO_VITE_API_BASE_URL = `${DEMO_BACKEND_ORIGIN}/api/v1`;
+export const DEMO_VITE_API_BASE_URL = "/api/v1";
 export const DEMO_BACKEND_PORT = "3001";
 export const DEMO_RUNTIME_DEFAULTS = {
   EMAIL_SERVICE_CREDENTIAL: "",
@@ -116,6 +116,7 @@ export function createDemoEnvironment(configuration: LocalRuntimeConfiguration):
     DB_PORT: DEMO_DATABASE_PORT,
     DB_USER: DEMO_DATABASE_USER,
     PORT: DEMO_BACKEND_PORT,
+    API_PROXY_TARGET: DEMO_BACKEND_ORIGIN,
     VITE_API_BASE_URL: DEMO_VITE_API_BASE_URL,
     WEBAUTHN_ORIGIN: DEMO_FRONTEND_ORIGIN,
   };

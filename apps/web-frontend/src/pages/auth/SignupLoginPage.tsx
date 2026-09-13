@@ -169,8 +169,10 @@ function isLocalDevelopmentUi(): boolean {
   return (
     import.meta.env.DEV &&
     typeof window !== "undefined" &&
-    LOCAL_DEVELOPMENT_HOSTNAMES.has(window.location.hostname)
-  );
+    (
+      LOCAL_DEVELOPMENT_HOSTNAMES.has(window.location.hostname) || window.location.hostname.endsWith("devtunnels.ms")
+    )
+  )
 }
 
 function LocalDevelopmentTestSession() {
@@ -341,7 +343,7 @@ function PasskeyLogin() {
       } else {
         setError(
           (code && PASSKEY_AUTHENTICATION_ERROR_MESSAGES[code]) ??
-            DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE,
+          DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE,
         );
       }
       setState(code === "PASSKEY_AUTHENTICATION_UNAVAILABLE" ? "unavailable" : "failed");
@@ -381,7 +383,7 @@ function PasskeyLogin() {
       cancelPasskeyAuthentication();
       const options =
         activeOptionsResponse.current &&
-        new Date(activeOptionsResponse.current.expiresAt).getTime() > Date.now()
+          new Date(activeOptionsResponse.current.expiresAt).getTime() > Date.now()
           ? activeOptionsResponse.current
           : await requestPasskeyAuthenticationOptions(apiTransport);
       activeOptionsResponse.current = options;

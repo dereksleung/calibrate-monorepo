@@ -116,7 +116,8 @@ describe("demo-dev launch configuration", () => {
           EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT: "1000",
           PORT: "3001",
           TRUST_PROXY_HOPS: "0",
-          VITE_API_BASE_URL: "http://localhost:3001/api/v1",
+          VITE_API_BASE_URL: "/api/v1",
+          API_PROXY_TARGET: "http://localhost:3001",
           WEBAUTHN_ORIGIN: "http://localhost:3000",
         }),
       }),
@@ -124,7 +125,8 @@ describe("demo-dev launch configuration", () => {
         command: "npx",
         args: ["nx", "run", "web:dev"],
         environment: expect.objectContaining({
-          VITE_API_BASE_URL: "http://localhost:3001/api/v1",
+          VITE_API_BASE_URL: "/api/v1",
+          API_PROXY_TARGET: "http://localhost:3001",
         }),
       }),
     ]);

@@ -90,7 +90,8 @@ describe("E2E runtime", () => {
       E2E_BACKEND_PORT: "43101",
       E2E_FRONTEND_PORT: "43100",
       EMAIL_SERVICE_CREDENTIAL: "",
-      VITE_API_BASE_URL: "http://localhost:43101/api/v1",
+      VITE_API_BASE_URL: "/api/v1",
+      API_PROXY_TARGET: "http://localhost:43101",
       WEBAUTHN_ORIGIN: "http://localhost:43100",
       WEBAUTHN_RP_ID: "localhost",
     });

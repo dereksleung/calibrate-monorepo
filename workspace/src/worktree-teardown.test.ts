@@ -60,7 +60,7 @@ describe("worktree teardown database arguments", () => {
           ports: { frontend: 3000, backend: 3001 },
           frontendUrl: "http://localhost:3000",
           backendUrl: "http://localhost:3001",
-          viteApiBaseUrl: "http://localhost:3001/api/v1",
+          viteApiBaseUrl: "/api/v1",
           corsOrigin: "http://localhost:3000",
           webauthnOrigin: "http://localhost:3000",
         },

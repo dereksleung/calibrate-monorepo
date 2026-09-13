@@ -239,7 +239,7 @@ describe("dashboard live nutrition", () => {
     expect(within(screen.getByRole("region", { name: "Weighing" })).queryByRole("button")).toBeNull();
     expect(screen.queryByRole("heading", { name: "Daily Insights" })).toBeNull();
 
-    const requestUrl = new URL(getFetchUrl(fetchMock.mock.calls[0][0]));
+    const requestUrl = new URL(getFetchUrl(fetchMock.mock.calls[0][0]), "http://localhost");
     expect(requestUrl.pathname).toBe("/api/v1/daylogs:sync");
     const requestBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
     expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(7);

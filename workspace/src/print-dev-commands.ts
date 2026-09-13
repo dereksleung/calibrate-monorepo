@@ -35,6 +35,7 @@ export function formatWebDevCommand(bindings: DevBindings): string {
     "npx dotenvx run --overload",
     "--env CALIBRATE_E2E=",
     `--env VITE_API_BASE_URL=${shellQuote(bindings.viteApiBaseUrl)}`,
+    `--env API_PROXY_TARGET=${shellQuote(bindings.backendUrl)}`,
     `-- npx nx run web:dev -- --port ${shellQuote(String(bindings.ports.frontend))}`,
   ].join(" ");
 }

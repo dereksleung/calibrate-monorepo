@@ -6,6 +6,9 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 import { WEB_PUBLIC_BASE_URL } from "./src/config/public-base-path.ts";
+import { createViteApiProxy } from "./vite-api-proxy.ts";
+
+const apiProxy = createViteApiProxy();
 
 const config = defineConfig({
   base: WEB_PUBLIC_BASE_URL, // For temp Github page deployment of mock UI, remove for production deployment
@@ -16,6 +19,12 @@ const config = defineConfig({
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     viteReact(),
   ],
+  preview: {
+    proxy: apiProxy,
+  },
+  server: {
+    proxy: apiProxy,
+  },
 });
 
 export default config;

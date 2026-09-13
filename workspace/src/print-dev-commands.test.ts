@@ -14,7 +14,7 @@ describe("print dev commands", () => {
       ports: { frontend: 3010, backend: 3011 },
       frontendUrl: "http://localhost:3010",
       backendUrl: "http://localhost:3011",
-      viteApiBaseUrl: "http://localhost:3011/api/v1",
+      viteApiBaseUrl: "/api/v1",
       corsOrigin: "http://localhost:3010",
       webauthnOrigin: "http://localhost:3010",
     };
@@ -26,7 +26,8 @@ describe("print dev commands", () => {
     expect(formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34")).toContain(
       "--env CALIBRATE_E2E=",
     );
-    expect(formatWebDevCommand(bindings)).toContain("VITE_API_BASE_URL='http://localhost:3011/api/v1'");
+    expect(formatWebDevCommand(bindings)).toContain("VITE_API_BASE_URL='/api/v1'");
+    expect(formatWebDevCommand(bindings)).toContain("API_PROXY_TARGET='http://localhost:3011'");
     expect(formatWebDevCommand(bindings)).toContain("--env CALIBRATE_E2E=");
     expect(formatWebDevCommand(bindings)).toContain("--port '3010'");
   });

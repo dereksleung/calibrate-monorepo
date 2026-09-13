@@ -96,7 +96,7 @@ describe("signup email verification routing", () => {
     });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(new URL(url).pathname).toBe("/api/v1/auth/email-verification");
+    expect(new URL(url, "http://localhost").pathname).toBe("/api/v1/auth/email-verification");
     expect(JSON.parse(init.body as string)).toEqual({
       email: "person@example.com",
     });

@@ -139,6 +139,7 @@ export function createE2eEnvironment(database: DatabaseConnectionConfig, ports: 
     JWT_ISSUER: "calibrate-e2e",
     PORT: String(ports.backend),
     TRUST_PROXY_HOPS: "0",
+    API_PROXY_TARGET: bindings.backendUrl,
     VITE_API_BASE_URL: bindings.viteApiBaseUrl,
     WEBAUTHN_ORIGIN: bindings.webauthnOrigin,
     WEBAUTHN_RP_ID: "localhost",
