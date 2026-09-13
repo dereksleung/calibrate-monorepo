@@ -1,5 +1,4 @@
 import { DEMO_DATABASE_NAME } from "@calibrate/local-runtime-config";
-
 import { getBackendListenHost, prepareDemoRuntime } from "@infrastructure/demo-runtime.js";
 
 process.env.CALIBRATE_DEMO = "1";

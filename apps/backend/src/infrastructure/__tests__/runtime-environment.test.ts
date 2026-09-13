@@ -8,8 +8,12 @@ vi.mock("@dotenvx/dotenvx", () => ({
   },
 }));
 
+import {
+  generateLocalRuntimeConfiguration,
+  localRuntimeConfigurationToProcessEnv,
+} from "@calibrate/local-runtime-config";
+
 import { getRuntimeEnvironmentValue, isDemoRuntime } from "../runtime-environment.js";
-import { generateLocalRuntimeConfiguration, localRuntimeConfigurationToProcessEnv } from "@calibrate/local-runtime-config";
 
 const originalEnvironment = { ...process.env };
 
