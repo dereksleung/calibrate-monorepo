@@ -4,6 +4,7 @@ import {
   createSetupEnvironment,
   isPostgresDuplicateDatabaseError,
   resolveWorktreeDatabaseName,
+  shouldEnsureLocalRuntimeConfiguration,
 } from "./worktree-setup.js";
 
 describe("worktree setup environment", () => {
@@ -51,5 +52,22 @@ describe("worktree setup environment", () => {
         dotenvDbName: "calibrate_dev",
       }),
     ).toMatch(/^calibrate_wt_/);
+  });
+
+  it("creates local runtime configuration when the resolved role is machine-local", () => {
+    expect(
+      shouldEnsureLocalRuntimeConfiguration({
+        user: "calibrate",
+        password: "machine-local-password",
+        source: "machine-local",
+      }),
+    ).toBe(true);
+    expect(
+      shouldEnsureLocalRuntimeConfiguration({
+        user: "dotenvx-user",
+        password: "dotenvx-password",
+        source: "dotenvx",
+      }),
+    ).toBe(false);
   });
 });

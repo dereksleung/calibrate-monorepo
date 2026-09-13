@@ -126,14 +126,18 @@ describe("prepareDemoRuntime", () => {
     await writeDemoRoleFile(directory);
     process.env.CALIBRATE_DEMO = "1";
     process.env.NODE_ENV = "development";
+    process.env.DB_HOST = "remote.example";
     process.env.DB_NAME = "calibrate_wt_feature_ab12cd34";
+    process.env.DB_PORT = "5544";
     process.env.WEBAUTHN_ORIGIN = "http://localhost:3010";
 
     await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
 
-    expect(loadDatabaseConnectionConfigFromEnvironment().database).toBe(
-      "calibrate_wt_feature_ab12cd34",
-    );
+    expect(loadDatabaseConnectionConfigFromEnvironment()).toMatchObject({
+      database: "calibrate_wt_feature_ab12cd34",
+      host: "127.0.0.1",
+      port: 5433,
+    });
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3010");
   });
 

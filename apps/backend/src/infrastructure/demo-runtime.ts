@@ -45,10 +45,10 @@ export async function prepareDemoRuntime(
   const environment = {
     ...localRuntimeConfigurationToProcessEnv(configuration),
     ...DEMO_RUNTIME_DEFAULTS,
-    DB_HOST: getSuppliedDemoRuntimeValue("DB_HOST") ?? DEMO_DATABASE_HOST,
+    DB_HOST: DEMO_DATABASE_HOST,
     DB_NAME: getSuppliedDemoRuntimeValue("DB_NAME") ?? DEMO_DATABASE_NAME,
     DB_PASSWORD: role.password,
-    DB_PORT: getSuppliedDemoRuntimeValue("DB_PORT") ?? DEMO_DATABASE_PORT,
+    DB_PORT: DEMO_DATABASE_PORT,
     DB_USER: role.user,
     WEBAUTHN_ORIGIN: getSuppliedDemoRuntimeValue("WEBAUTHN_ORIGIN") ?? "http://localhost:3000",
   };

@@ -47,6 +47,10 @@ export function resolveWorktreeDatabaseName({
   return deriveLinkedWorktreeDatabaseName(worktreeRoot);
 }
 
+export function shouldEnsureLocalRuntimeConfiguration(role: PostgresRole): boolean {
+  return role.source === "machine-local";
+}
+
 async function runSharedPostgresCommand(command: SharedPostgresCommand): Promise<void> {
   execFileSync(command.command, command.args, {
     cwd: command.cwd,
@@ -116,7 +120,7 @@ export async function runWorktreeSetup(): Promise<void> {
     dotenvDbName,
   });
 
-  if (!hasEnvKeys) {
+  if (shouldEnsureLocalRuntimeConfiguration(role)) {
     await ensureLocalRuntimeConfiguration(workspaceRoot);
   }
 
