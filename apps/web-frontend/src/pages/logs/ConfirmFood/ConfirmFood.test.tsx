@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -32,6 +33,16 @@ const confirmation = {
 };
 
 describe("ConfirmFood", () => {
+  it("uses the shared 450px content frame for its desktop header and page content", () => {
+    render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={vi.fn()} />);
+
+    const main = screen.getByRole("main");
+    expect(main.querySelectorAll(`.${APP_CONTENT_FRAME_CLASS_NAME}`)).toHaveLength(2);
+    expect(main.querySelector(`.${APP_CONTENT_FRAME_CLASS_NAME} > .grid`)?.className).not.toContain(
+      "md:grid-cols",
+    );
+  });
+
   it("recalculates the displayed and submitted nutrition when the quantity changes", () => {
     const onSave = vi.fn();
     render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);

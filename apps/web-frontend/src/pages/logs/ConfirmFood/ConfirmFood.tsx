@@ -1,4 +1,5 @@
 import { Button } from "#/shared/components/base/Button.tsx";
+import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import {
   normalizeFoodEntryForStorage,
   normalizeFoodEntryQuantity,
@@ -74,7 +75,9 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
   return (
     <main className="min-h-screen bg-surface-container-low pb-24 antialiased subtle-aurora-fade-page-background md:bg-surface md:px-10 md:pb-20">
       <form className="w-full" onSubmit={submit}>
-        <header className="sticky top-0 z-40 border-b border-white/80 bg-surface/90 px-6 py-4 backdrop-blur-md shadow-[0_12px_24px_-20px_rgba(26,28,28,0.38)] md:static md:mx-auto md:max-w-[60rem] md:border-0 md:bg-transparent md:px-0 md:py-10 md:shadow-none">
+        <header
+          className={`${APP_CONTENT_FRAME_CLASS_NAME} sticky top-0 z-40 border-b border-white/80 bg-surface/90 px-6 py-4 backdrop-blur-md shadow-[0_12px_24px_-20px_rgba(26,28,28,0.38)] md:static md:border-0 md:bg-transparent md:px-4 md:py-10 md:shadow-none`}
+        >
           <div className="relative flex items-center justify-between gap-4">
             <Button
               aria-label="Back to food search"
@@ -101,8 +104,8 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[60rem] px-6 pt-5 md:px-0 md:pt-0">
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)] md:gap-6">
+        <div className={`${APP_CONTENT_FRAME_CLASS_NAME} px-6 pt-5 md:px-4 md:pt-0`}>
+          <div className="grid gap-4 md:gap-6">
             <div className="space-y-4">
               <section
                 aria-labelledby="food-name-heading"
@@ -191,7 +194,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
               <DailyGoalProgress nutrition={nutrition} />
             </div>
 
-            <div className="md:col-span-2">
+            <div>
               <NutritionFacts nutrition={nutrition} />
             </div>
           </div>
