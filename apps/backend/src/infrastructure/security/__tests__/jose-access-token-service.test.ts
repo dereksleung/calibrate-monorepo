@@ -38,8 +38,8 @@ describe("JoseAccessTokenService", () => {
     delete process.env.CALIBRATE_E2E;
   });
 
-  it("should issue and verify tokens using dotenvx.get for the private key", async () => {
-    process.env.JWT_PRIVATE_KEY_PEM = "do-not-use-process-env";
+  it("should issue and verify tokens using dotenvx.get when no process key is injected", async () => {
+    delete process.env.JWT_PRIVATE_KEY_PEM;
 
     const tokenService = new JoseAccessTokenService({
       issuer: "clean-architecture-backend",
@@ -62,6 +62,24 @@ describe("JoseAccessTokenService", () => {
         strict: true,
       }),
     );
+  });
+
+  it("issues tokens from a normal-mode process environment without dotenvx.get", async () => {
+    process.env.JWT_PRIVATE_KEY_PEM = privateKeyPem;
+
+    const tokenService = new JoseAccessTokenService({
+      issuer: "calibrate-local",
+      audience: "calibrate-local",
+      expiresInSeconds: 900,
+      envFilePath: "/tmp/must-not-read.env",
+      envKeysFilePath: "/tmp/must-not-read.env.keys",
+    });
+
+    const issuedToken = await tokenService.issue({ userId: "local-user" });
+    const verifiedToken = await tokenService.verify(issuedToken.token);
+
+    expect(verifiedToken).toEqual({ userId: "local-user" });
+    expect(mockedGet).not.toHaveBeenCalled();
   });
 
   it("issues tokens from process environment in demo mode without dotenvx or .env.keys", async () => {

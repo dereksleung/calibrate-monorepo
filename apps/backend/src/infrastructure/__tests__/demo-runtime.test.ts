@@ -120,7 +120,7 @@ describe("prepareDemoRuntime", () => {
     expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
 
-  it("preserves worktree database and WebAuthn origins supplied to demo mode", async () => {
+  it("uses fixed standalone-demo database and WebAuthn origins", async () => {
     const directory = await createTemporaryDirectory();
     await writeLocalRuntimeConfiguration(directory, generateLocalRuntimeConfiguration());
     await writeDemoRoleFile(directory);
@@ -134,11 +134,11 @@ describe("prepareDemoRuntime", () => {
     await prepareDemoRuntime(directory, machineLocalRoleOptions(directory));
 
     expect(loadDatabaseConnectionConfigFromEnvironment()).toMatchObject({
-      database: "calibrate_wt_feature_ab12cd34",
+      database: "calibrate_demo",
       host: "127.0.0.1",
       port: 5433,
     });
-    expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3010");
+    expect(getRuntimeEnvironmentValue("WEBAUTHN_ORIGIN")).toBe("http://localhost:3000");
   });
 
   it("is an explicit selection rather than an implicit fallback", async () => {

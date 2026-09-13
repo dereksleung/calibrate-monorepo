@@ -3,6 +3,7 @@ import {
   createDatabaseIfMissing,
   createReadDotenvValue,
   ensureCalibrateSharedPostgres,
+  ensureLocalRuntimeConfiguration,
   isPostgresDuplicateDatabaseError,
   resolvePostgresRole,
   SHARED_COMPOSE_PROJECT_NAME,
@@ -114,6 +115,10 @@ export async function runWorktreeSetup(): Promise<void> {
     isPrimary: isPrimaryWorktree(workspaceRoot),
     dotenvDbName,
   });
+
+  if (role.source === "machine-local") {
+    await ensureLocalRuntimeConfiguration(workspaceRoot);
+  }
 
   await ensureCalibrateSharedPostgres({
     directory: workspaceRoot,

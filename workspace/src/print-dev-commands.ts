@@ -1,6 +1,7 @@
 import type { DevBindings } from "@calibrate/dev-bindings";
 
 import {
+  getDefaultMachineLocalRoleFilePath,
   SHARED_COMPOSE_PROJECT_NAME,
   SHARED_DATABASE_HOST,
   SHARED_DATABASE_PORT,
@@ -52,15 +53,22 @@ export function formatBackendDevCommand(
   }
 
   return [
-    `DB_HOST=${shellQuote(SHARED_DB_HOST)}`,
-    `DB_PORT=${shellQuote(String(SHARED_DB_PORT))}`,
-    `DB_NAME=${shellQuote(dbName)}`,
-    `DB_USER=${shellQuote(role.user)}`,
-    `DB_PASSWORD=${shellQuote(role.password)}`,
-    `PORT=${shellQuote(String(bindings.ports.backend))}`,
-    `CORS_ORIGIN=${shellQuote(bindings.corsOrigin)}`,
-    `WEBAUTHN_ORIGIN=${shellQuote(bindings.webauthnOrigin)}`,
-    "npx nx run backend:dev",
+    "npx dotenvx run --overload",
+    `--env-file ${shellQuote(".local.env")}`,
+    `--env-file ${shellQuote(getDefaultMachineLocalRoleFilePath())}`,
+    `--env DB_HOST=${shellQuote(SHARED_DB_HOST)}`,
+    `--env DB_PORT=${shellQuote(String(SHARED_DB_PORT))}`,
+    `--env ${shellQuote(dotenvEnvAssignment("DB_NAME", dbName))}`,
+    `--env PORT=${shellQuote(String(bindings.ports.backend))}`,
+    `--env CORS_ORIGIN=${shellQuote(bindings.corsOrigin)}`,
+    "--env EMAIL_SERVICE_CREDENTIAL=",
+    "--env EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT=1000",
+    "--env FOODDATA_CENTRAL_API_KEY=",
+    "--env TRUST_PROXY_HOPS=0",
+    "--env WEBAUTHN_RP_ID=localhost",
+    "--env WEBAUTHN_RP_NAME=Calibrate",
+    `--env WEBAUTHN_ORIGIN=${shellQuote(bindings.webauthnOrigin)}`,
+    "-- npx nx run backend:dev",
   ].join(" ");
 }
 

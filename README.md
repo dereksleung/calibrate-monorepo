@@ -263,9 +263,9 @@ Setup is idempotent. It will:
 - start the shared Postgres container only when `127.0.0.1:5433` is not already accepting connections (`COMPOSE_PROJECT_NAME=calibrate-shared`)
 - create and migrate this worktree's database
 - write gitignored `.worktree-dev.json` with the chosen ports and origins
-- print copy-paste normal `backend:dev` / `web:dev` commands; when dotenvx credentials are unavailable, the backend command includes the machine-local role
+- print copy-paste normal `backend:dev` / `web:dev` commands; when dotenvx credentials are unavailable, the backend command uses `dotenvx run --env-file .local.env --env-file ~/.calibrate/shared-postgres.env` to load generated application configuration and the machine-local role without printing either
 
-Setup does not start Vite or Express; run the printed commands in separate terminals. Host processes always talk to Postgres at `DB_HOST=127.0.0.1` and `DB_PORT=5433`. Evaluator worktrees without `.env.keys` still get a per-worktree `calibrate_wt_*` database and normal `backend:dev` command. `backend:demo` is reserved for the standalone `calibrate_demo` entrypoint used by `demo-dev`.
+Setup does not start Vite or Express; run the printed commands in separate terminals. Host processes always talk to Postgres at `DB_HOST=127.0.0.1` and `DB_PORT=5433`. Evaluator worktrees without `.env.keys` generate `.local.env`, get a per-worktree `calibrate_wt_*` database, and start the normal `backend:dev` command without demo mode. `backend:demo` is reserved for the standalone `calibrate_demo` entrypoint used by `demo-dev`.
 
 The selected adjacent frontend/backend port pair is claimed in
 `~/.calibrate/worktree-ports` by worktree path and reused when it is still
