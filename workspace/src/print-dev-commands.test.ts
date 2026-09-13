@@ -32,6 +32,36 @@ describe("print dev commands", () => {
     expect(formatWebDevCommand(bindings)).toContain("--port '3010'");
   });
 
+  it("prints demo runtime commands with the machine-local role when dotenvx is unavailable", () => {
+    const bindings = {
+      ports: { frontend: 3010, backend: 3011 },
+      frontendUrl: "http://localhost:3010",
+      backendUrl: "http://localhost:3011",
+      viteApiBaseUrl: "http://localhost:3011/api/v1",
+      corsOrigin: "http://localhost:3010",
+      webauthnOrigin: "http://localhost:3010",
+    };
+    const role = {
+      user: "calibrate",
+      password: "machine-local-password",
+      source: "machine-local" as const,
+    };
+
+    const backend = formatBackendDevCommand(bindings, "calibrate_wt_feature_ab12cd34", {
+      dotenvxAvailable: false,
+      role,
+    });
+    const web = formatWebDevCommand(bindings, { dotenvxAvailable: false });
+
+    expect(backend).toContain("CALIBRATE_DEMO=1");
+    expect(backend).toContain("npx nx run backend:demo");
+    expect(backend).toContain("DB_USER='calibrate'");
+    expect(backend).toContain("DB_PASSWORD='machine-local-password'");
+    expect(backend).not.toContain("dotenvx");
+    expect(web).toContain("VITE_API_BASE_URL='http://localhost:3011/api/v1'");
+    expect(web).not.toContain("dotenvx");
+  });
+
   it("keeps shell metacharacters inside one generated argument", () => {
     const value = "calibrate; printf injected 'quoted'";
     const output = execFileSync("sh", ["-c", `printf '%s' ${shellQuote(value)}`], {

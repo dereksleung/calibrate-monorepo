@@ -1,19 +1,24 @@
 import { deriveDevBindings } from "@calibrate/dev-bindings";
+import {
+  createDatabaseIfMissing,
+  createReadDotenvValue,
+  ensureCalibrateSharedPostgres,
+  ensureLocalRuntimeConfiguration,
+  isPostgresDuplicateDatabaseError,
+  resolvePostgresRole,
+  SHARED_COMPOSE_PROJECT_NAME,
+  SHARED_DATABASE_HOST,
+  SHARED_DATABASE_PORT,
+  type PostgresRole,
+  type SharedPostgresCommand,
+} from "@calibrate/local-runtime-config";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Pool } from "pg";
 
 import { ensureEnvKeys } from "./env-keys.js";
 import { isPrimaryWorktree } from "./git-worktree.js";
-import { isTcpPortOpen, shouldStartComposePostgres, waitForPostgresReady } from "./postgres-health.js";
-import {
-  COMPOSE_PROJECT_NAME,
-  dotenvEnvAssignment,
-  printDevCommands,
-  SHARED_DB_HOST,
-  SHARED_DB_PORT,
-} from "./print-dev-commands.js";
+import { dotenvEnvAssignment, printDevCommands } from "./print-dev-commands.js";
 import { deriveLinkedWorktreeDatabaseName } from "./worktree-database-name.js";
 import { resolveStickyPortPair } from "./worktree-ports.js";
 import { readWorktreeState, writeWorktreeState } from "./worktree-state.js";
@@ -21,98 +26,36 @@ import { readWorktreeState, writeWorktreeState } from "./worktree-state.js";
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
 
+export { isPostgresDuplicateDatabaseError };
+
 export function createSetupEnvironment(environment: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const setupEnvironment = { ...environment };
   delete setupEnvironment.CALIBRATE_E2E;
   return setupEnvironment;
 }
 
-function getDotenvValue(name: string): string {
-  const value = execFileSync(npxCommand, ["dotenvx", "get", name], {
-    cwd: workspaceRoot,
-    encoding: "utf8",
-    env: createSetupEnvironment(),
-  }).trim();
-
-  if (!value) {
-    throw new Error(`Missing required dotenv value: ${name}`);
-  }
-
-  return value;
+export function resolveWorktreeDatabaseName({
+  worktreeRoot,
+  isPrimary,
+  dotenvDbName,
+}: {
+  worktreeRoot: string;
+  isPrimary: boolean;
+  dotenvDbName: string | null;
+}): string {
+  if (isPrimary && dotenvDbName) return dotenvDbName;
+  return deriveLinkedWorktreeDatabaseName(worktreeRoot);
 }
 
-function quoteIdentifier(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
-}
-
-export function isPostgresDuplicateDatabaseError(error: unknown): boolean {
-  return error instanceof Error && "code" in error && error.code === "42P04";
-}
-
-async function ensureSharedPostgres(): Promise<void> {
-  const isOpen = await isTcpPortOpen(SHARED_DB_HOST, SHARED_DB_PORT);
-  if (!shouldStartComposePostgres(isOpen)) {
-    console.log(`Shared Postgres already accepting connections on ${SHARED_DB_HOST}:${SHARED_DB_PORT}.`);
-  } else {
-    console.log(`Starting shared Postgres with COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}...`);
-    execFileSync(npxCommand, ["dotenvx", "run", "--", "docker", "compose", "up", "-d", "postgres"], {
-      cwd: workspaceRoot,
-      stdio: "inherit",
-      env: {
-        ...createSetupEnvironment(),
-        COMPOSE_PROJECT_NAME,
-      },
-    });
-  }
-
-  const connectionOptions = {
-    database: "postgres",
-    host: SHARED_DB_HOST,
-    port: SHARED_DB_PORT,
-    user: getDotenvValue("DB_USER"),
-    password: getDotenvValue("DB_PASSWORD"),
-    connectionTimeoutMillis: 1_000,
-  };
-
-  await waitForPostgresReady(async () => {
-    const pool = new Pool(connectionOptions);
-    try {
-      await pool.query("SELECT 1");
-    } finally {
-      await pool.end();
-    }
+async function runSharedPostgresCommand(command: SharedPostgresCommand): Promise<void> {
+  execFileSync(command.command, command.args, {
+    cwd: command.cwd,
+    env: command.environment,
+    stdio: "inherit",
   });
 }
 
-async function createDatabaseIfMissing(dbName: string): Promise<void> {
-  const pool = new Pool({
-    database: "postgres",
-    host: SHARED_DB_HOST,
-    port: SHARED_DB_PORT,
-    user: getDotenvValue("DB_USER"),
-    password: getDotenvValue("DB_PASSWORD"),
-  });
-
-  try {
-    const existing = await pool.query("SELECT 1 FROM pg_database WHERE datname = $1", [dbName]);
-    if (existing.rowCount === 0) {
-      try {
-        await pool.query(`CREATE DATABASE ${quoteIdentifier(dbName)}`);
-        console.log(`Created database ${dbName}.`);
-      } catch (error: unknown) {
-        if (!isPostgresDuplicateDatabaseError(error)) throw error;
-        console.log(`Database ${dbName} already exists.`);
-      }
-      return;
-    }
-
-    console.log(`Database ${dbName} already exists.`);
-  } finally {
-    await pool.end();
-  }
-}
-
-function runMigrations(dbNameAssignment: string): void {
+function runDotenvxMigrations(dbNameAssignment: string): void {
   execFileSync(
     npxCommand,
     [
@@ -122,9 +65,9 @@ function runMigrations(dbNameAssignment: string): void {
       "--env",
       dbNameAssignment,
       "--env",
-      `DB_HOST=${SHARED_DB_HOST}`,
+      `DB_HOST=${SHARED_DATABASE_HOST}`,
       "--env",
-      `DB_PORT=${SHARED_DB_PORT}`,
+      `DB_PORT=${SHARED_DATABASE_PORT}`,
       "--env",
       "CALIBRATE_E2E=",
       "--",
@@ -142,38 +85,70 @@ function runMigrations(dbNameAssignment: string): void {
   );
 }
 
-function resolveDatabaseName(): string {
-  if (isPrimaryWorktree(workspaceRoot)) {
-    return getDotenvValue("DB_NAME");
-  }
-
-  return deriveLinkedWorktreeDatabaseName(workspaceRoot);
+function runDemoMigrations(dbName: string, role: PostgresRole): void {
+  execFileSync(npxCommand, ["nx", "run", "backend:kysely", "migrate:latest"], {
+    cwd: workspaceRoot,
+    stdio: "inherit",
+    env: {
+      ...createSetupEnvironment(),
+      CALIBRATE_DEMO: "1",
+      DB_HOST: SHARED_DATABASE_HOST,
+      DB_PORT: String(SHARED_DATABASE_PORT),
+      DB_NAME: dbName,
+      DB_USER: role.user,
+      DB_PASSWORD: role.password,
+    },
+  });
 }
 
 export async function runWorktreeSetup(): Promise<void> {
-  await ensureEnvKeys(workspaceRoot);
+  const hasEnvKeys = await ensureEnvKeys(workspaceRoot);
   const previousState = await readWorktreeState(workspaceRoot);
   const ports = await resolveStickyPortPair(previousState?.bindings.ports, 3000, {
     worktreeRoot: workspaceRoot,
   });
   const bindings = deriveDevBindings(ports);
-  const dbName = resolveDatabaseName();
-  const dbNameAssignment = dotenvEnvAssignment("DB_NAME", dbName);
+  const role = await resolvePostgresRole({ workspaceRoot });
+  const dotenvDbName = hasEnvKeys ? createReadDotenvValue(workspaceRoot)("DB_NAME") : null;
+  const dbName = resolveWorktreeDatabaseName({
+    worktreeRoot: workspaceRoot,
+    isPrimary: isPrimaryWorktree(workspaceRoot),
+    dotenvDbName,
+  });
 
-  await ensureSharedPostgres();
+  if (!hasEnvKeys) {
+    await ensureLocalRuntimeConfiguration(workspaceRoot);
+  }
 
-  await createDatabaseIfMissing(dbName);
-  runMigrations(dbNameAssignment);
+  await ensureCalibrateSharedPostgres({
+    directory: workspaceRoot,
+    role,
+    runCommand: runSharedPostgresCommand,
+    environment: {
+      ...createSetupEnvironment(),
+      COMPOSE_PROJECT_NAME: SHARED_COMPOSE_PROJECT_NAME,
+    },
+  });
+  await createDatabaseIfMissing(dbName, { role });
+
+  if (role.source === "dotenvx") {
+    runDotenvxMigrations(dotenvEnvAssignment("DB_NAME", dbName));
+  } else {
+    runDemoMigrations(dbName, role);
+  }
 
   await writeWorktreeState(workspaceRoot, {
     dbName,
-    dbHost: SHARED_DB_HOST,
-    dbPort: SHARED_DB_PORT,
+    dbHost: SHARED_DATABASE_HOST,
+    dbPort: SHARED_DATABASE_PORT,
     bindings,
   });
 
   console.log(`Worktree database: ${dbName}`);
-  printDevCommands(bindings, dbName);
+  printDevCommands(bindings, dbName, {
+    dotenvxAvailable: role.source === "dotenvx",
+    role,
+  });
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

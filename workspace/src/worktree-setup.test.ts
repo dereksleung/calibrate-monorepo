@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { createSetupEnvironment, isPostgresDuplicateDatabaseError } from "./worktree-setup.js";
+import {
+  createSetupEnvironment,
+  isPostgresDuplicateDatabaseError,
+  resolveWorktreeDatabaseName,
+} from "./worktree-setup.js";
 
 describe("worktree setup environment", () => {
   it("removes inherited E2E mode without mutating the parent environment", () => {
@@ -23,5 +27,29 @@ describe("worktree setup environment", () => {
     expect(isPostgresDuplicateDatabaseError(Object.assign(new Error("other"), { code: "23505" }))).toBe(
       false,
     );
+  });
+
+  it("uses dotenvx DB_NAME on the primary checkout and derive calibrate_wt_* otherwise", () => {
+    expect(
+      resolveWorktreeDatabaseName({
+        worktreeRoot: "/tmp/calibrate-monorepo-edge",
+        isPrimary: true,
+        dotenvDbName: "calibrate_dev",
+      }),
+    ).toBe("calibrate_dev");
+    expect(
+      resolveWorktreeDatabaseName({
+        worktreeRoot: "/tmp/calibrate-monorepo-edge",
+        isPrimary: true,
+        dotenvDbName: null,
+      }),
+    ).toMatch(/^calibrate_wt_/);
+    expect(
+      resolveWorktreeDatabaseName({
+        worktreeRoot: "/tmp/linked-feature",
+        isPrimary: false,
+        dotenvDbName: "calibrate_dev",
+      }),
+    ).toMatch(/^calibrate_wt_/);
   });
 });
