@@ -6,7 +6,7 @@ alwaysApply: false
 ## Local demo runtime
 
 - Explicit opt-in: `CALIBRATE_DEMO=1` via `npx nx run backend:demo` (`apps/backend/src/demo-app.ts`).
-- Reads generated `.local.env` from `@calibrate/local-runtime-config`; never Dotenvx or `.env.keys`.
+- Reads generated `.local.env` from `@calibrate/local-runtime-config` for JWT/HMAC. Resolves `DB_USER` / `DB_PASSWORD` from decryptable dotenvx values when the private key is already present, otherwise `~/.calibrate/shared-postgres.env`. Does not decrypt email, FDC, or other app secrets from `.env`.
 - Rationale and boundaries: `docs/adr/0004-self-contained-local-demo-mode.md`.
 
 ## Backend Architecture Guardrails

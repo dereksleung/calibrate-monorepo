@@ -18,6 +18,26 @@ afterEach(() => {
 });
 
 describe("loadDatabaseConnectionConfigFromEnvironment", () => {
+  it("uses explicit normal-mode database settings without decrypting dotenvx", () => {
+    delete process.env.CALIBRATE_DEMO;
+    process.env.DB_NAME = "calibrate_wt_feature_ab12cd34";
+    process.env.DB_HOST = "127.0.0.1";
+    process.env.DB_PORT = "5433";
+    process.env.DB_USER = "calibrate";
+    process.env.DB_PASSWORD = "machine-local";
+    dotenvGet.mockReturnValue("encrypted:unavailable");
+
+    expect(loadDatabaseConnectionConfigFromEnvironment()).toEqual({
+      database: "calibrate_wt_feature_ab12cd34",
+      host: "127.0.0.1",
+      port: 5433,
+      user: "calibrate",
+      password: "machine-local",
+      maxConnections: 10,
+    });
+    expect(dotenvGet).not.toHaveBeenCalled();
+  });
+
   it("reads complete demo database settings from process env without dotenvx", () => {
     process.env.CALIBRATE_DEMO = "1";
     process.env.DB_NAME = "calibrate_demo";

@@ -1,11 +1,13 @@
-import { execSync } from "node:child_process";
+import {
+  createReadDotenvValue,
+  dropDatabaseIfExists,
+  resolvePostgresRole,
+} from "@calibrate/local-runtime-config";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Pool } from "pg";
 
 import { ensureEnvKeys } from "./env-keys.js";
 import { isPrimaryWorktree } from "./git-worktree.js";
-import { SHARED_DB_HOST, SHARED_DB_PORT } from "./print-dev-commands.js";
 import { deriveLinkedWorktreeDatabaseName } from "./worktree-database-name.js";
 import {
   deleteWorktreeState,
@@ -16,24 +18,6 @@ import {
 import { explainTeardownRefusal, isTeardownDatabaseAllowed } from "./worktree-teardown-guard.js";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-
-function getDotenvValue(name: string): string {
-  const value = execSync(`npx dotenvx get ${name}`, {
-    cwd: workspaceRoot,
-    encoding: "utf8",
-    env: process.env,
-  }).trim();
-
-  if (!value) {
-    throw new Error(`Missing required dotenv value: ${name}`);
-  }
-
-  return value;
-}
-
-function quoteIdentifier(identifier: string): string {
-  return `"${identifier.replaceAll('"', '""')}"`;
-}
 
 export type DatabaseArgument =
   | { kind: "omitted" }
@@ -99,26 +83,9 @@ export async function resolveTeardownDatabaseName(
   return (await readState())?.dbName;
 }
 
-async function dropDatabase(dbName: string): Promise<void> {
-  const pool = new Pool({
-    database: "postgres",
-    host: SHARED_DB_HOST,
-    port: SHARED_DB_PORT,
-    user: getDotenvValue("DB_USER"),
-    password: getDotenvValue("DB_PASSWORD"),
-  });
-
-  try {
-    await pool.query(`DROP DATABASE ${quoteIdentifier(dbName)} WITH (FORCE)`);
-    console.log(`Dropped database ${dbName}.`);
-  } finally {
-    await pool.end();
-  }
-}
-
 export async function runWorktreeTeardown(argv = process.argv.slice(2)): Promise<void> {
   const databaseName = await resolveTeardownDatabaseName(argv);
-  await ensureEnvKeys(workspaceRoot);
+  const hasEnvKeys = await ensureEnvKeys(workspaceRoot);
 
   if (!databaseName) {
     throw new Error(
@@ -126,15 +93,17 @@ export async function runWorktreeTeardown(argv = process.argv.slice(2)): Promise
     );
   }
 
-  const expectedWorktreeDbName = isPrimaryWorktree(workspaceRoot)
-    ? undefined
-    : deriveLinkedWorktreeDatabaseName(workspaceRoot);
-  const primaryDbName = getDotenvValue("DB_NAME");
-  if (!isTeardownDatabaseAllowed(databaseName, primaryDbName, expectedWorktreeDbName)) {
-    throw new Error(explainTeardownRefusal(databaseName, primaryDbName, expectedWorktreeDbName));
+  const dotenvDbName = hasEnvKeys ? createReadDotenvValue(workspaceRoot)("DB_NAME") : null;
+  const expectedWorktreeDbName =
+    !isPrimaryWorktree(workspaceRoot) || !dotenvDbName
+      ? deriveLinkedWorktreeDatabaseName(workspaceRoot)
+      : undefined;
+  if (!isTeardownDatabaseAllowed(databaseName, dotenvDbName ?? undefined, expectedWorktreeDbName)) {
+    throw new Error(explainTeardownRefusal(databaseName, dotenvDbName ?? undefined, expectedWorktreeDbName));
   }
 
-  await dropDatabase(databaseName);
+  const role = await resolvePostgresRole({ workspaceRoot });
+  await dropDatabaseIfExists(databaseName, { role });
   await deleteWorktreeState(workspaceRoot);
   console.log("Deleted .worktree-dev.json. Shared Postgres is still running.");
 }

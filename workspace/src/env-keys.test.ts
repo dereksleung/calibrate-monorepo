@@ -63,9 +63,9 @@ describe("ensureEnvKeys", () => {
     await expect(readFile(path.join(fixture.linked, ".env.keys"), "utf8")).resolves.toBe(keyContents);
   });
 
-  it("fails closed when no local, process, or listed-checkout key exists", async () => {
+  it("returns false when no local, process, or listed-checkout key exists", async () => {
     const fixture = await createGitWorktreeFixture();
 
-    await expect(ensureEnvKeys(fixture.linked)).rejects.toThrow("Missing dotenvx private key");
+    await expect(ensureEnvKeys(fixture.linked)).resolves.toBe(false);
   });
 });

@@ -16,12 +16,20 @@ describe("worktree teardown guard", () => {
     expect(isTeardownDatabaseAllowed("postgres", primaryDbName, currentWorktreeDbName)).toBe(false);
     expect(isTeardownDatabaseAllowed("template0", primaryDbName, currentWorktreeDbName)).toBe(false);
     expect(isTeardownDatabaseAllowed("template1", primaryDbName, currentWorktreeDbName)).toBe(false);
+    expect(isTeardownDatabaseAllowed("calibrate_demo", primaryDbName, currentWorktreeDbName)).toBe(false);
+  });
+
+  it("allows the derived worktree database on the primary checkout when dotenvx DB_NAME is unavailable", () => {
+    expect(isTeardownDatabaseAllowed(currentWorktreeDbName, undefined, currentWorktreeDbName)).toBe(true);
+    expect(isTeardownDatabaseAllowed("calibrate_demo", undefined, currentWorktreeDbName)).toBe(false);
+    expect(isTeardownDatabaseAllowed("postgres", undefined, currentWorktreeDbName)).toBe(false);
   });
 
   it("explains why a database name cannot be dropped", () => {
     expect(explainTeardownRefusal(primaryDbName, primaryDbName, undefined)).toContain(
       "primary checkout database",
     );
+    expect(explainTeardownRefusal("calibrate_demo", primaryDbName, undefined)).toContain("demo database");
     expect(explainTeardownRefusal("postgres", primaryDbName, undefined)).toContain("system database");
     expect(explainTeardownRefusal("some_other_db", primaryDbName, undefined)).toContain("calibrate_wt_*");
     expect(

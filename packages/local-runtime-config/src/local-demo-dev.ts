@@ -4,12 +4,14 @@ import { fileURLToPath } from "node:url";
 
 import {
   createDemoEnvironment,
-  getDemoDockerProjectName,
   runDemoCommand,
   type DemoCommand,
   type DemoCommandRunner,
+  type DemoSetupOptions,
 } from "./demo-catalog-setup.js";
 import { LOCAL_RUNTIME_ENV_FILE_NAME, readLocalRuntimeConfiguration } from "./local-runtime-configuration.js";
+import { resolvePostgresRole } from "./postgres-role.js";
+import { ensureCalibrateSharedPostgres } from "./shared-postgres.js";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -23,6 +25,9 @@ export type DemoDevOptions = {
   output?: (message: string) => void;
   runCommand?: DemoCommandRunner;
   startProcesses?: DemoDevProcessStarter;
+  resolveRole?: DemoSetupOptions["resolveRole"];
+  isPortOpen?: DemoSetupOptions["isPortOpen"];
+  connectAdmin?: DemoSetupOptions["connectAdmin"];
 };
 
 export async function runDemoDev({
@@ -30,35 +35,35 @@ export async function runDemoDev({
   output = console.log,
   runCommand = runDemoCommand,
   startProcesses = startDemoDevProcesses,
+  resolveRole,
+  isPortOpen,
+  connectAdmin,
 }: DemoDevOptions): Promise<void> {
   const configuration = await readLocalRuntimeConfiguration(directory);
   if (!configuration) {
     throw new Error(DEMO_SETUP_REQUIRED_MESSAGE);
   }
 
-  const environment = createDemoEnvironment(configuration);
+  const role = await (resolveRole ?? (() => resolvePostgresRole({ workspaceRoot: directory })))();
+  const environment = createDemoEnvironment(configuration, role);
 
-  try {
-    await runCommand({
-      command: "docker",
-      args: [
-        "compose",
-        "--project-name",
-        getDemoDockerProjectName(directory),
-        "up",
-        "--detach",
-        "--wait",
-        "postgres",
-      ],
-      cwd: directory,
-      environment,
-    });
-  } catch (error: unknown) {
-    throw new Error(
-      "Docker Desktop must be running to start the local demo. Start Docker Desktop, then retry. If this is a fresh clone, run `npx nx run @calibrate/local-runtime-config:demo-setup` first.",
-      { cause: error },
-    );
-  }
+  await ensureCalibrateSharedPostgres({
+    directory,
+    role,
+    runCommand: async (command) => {
+      try {
+        await runCommand(command);
+      } catch (error: unknown) {
+        throw new Error(
+          "Docker Desktop must be running to start the local demo. Start Docker Desktop, then retry. If this is a fresh clone, run `npx nx run @calibrate/local-runtime-config:demo-setup` first.",
+          { cause: error },
+        );
+      }
+    },
+    isPortOpen,
+    connectAdmin,
+    environment,
+  });
 
   output(`Local demo is running at ${DEMO_FRONTEND_URL}`);
   output("Open that URL and choose Start local test session. Demo mode does not require private keys.");

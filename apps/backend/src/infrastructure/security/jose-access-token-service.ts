@@ -130,9 +130,9 @@ export class JoseAccessTokenService implements IAccessTokenService {
         envKeysFile: this.config.envKeysFilePath ?? path.resolve(process.cwd(), ".env.keys"),
         strict: true,
       } as Parameters<typeof dotenvx.get>[1];
-      const privateKeyPem = usesProcessEnvironmentRuntime()
-        ? process.env.JWT_PRIVATE_KEY_PEM
-        : dotenvx.get("JWT_PRIVATE_KEY_PEM", getOptions);
+      const privateKeyPem =
+        process.env.JWT_PRIVATE_KEY_PEM ??
+        (usesProcessEnvironmentRuntime() ? undefined : dotenvx.get("JWT_PRIVATE_KEY_PEM", getOptions));
 
       if (!privateKeyPem) {
         throw new Error("JWT_PRIVATE_KEY_PEM is not configured");
