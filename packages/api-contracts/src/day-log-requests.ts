@@ -47,8 +47,10 @@ export const UpdateDayLogWeightRequestRouteParamsSchema = z.object({
   date: z.iso.date(),
 });
 
+export const MAX_DAY_LOG_WEIGHT = 999.9;
+
 export const UpdateDayLogWeightRequestBodySchema = z.object({
-  weight: z.number().positive("Weight must be greater than 0").max(9999.9, "Weight is too large"),
+  weight: z.number().positive("Weight must be greater than 0").max(MAX_DAY_LOG_WEIGHT, "Weight is too large"),
 });
 
 export type UpdateDayLogWeightRequestRouteParams = z.infer<typeof UpdateDayLogWeightRequestRouteParamsSchema>;

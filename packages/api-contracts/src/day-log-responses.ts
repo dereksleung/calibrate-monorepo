@@ -21,11 +21,20 @@ export const DayLogResponseSchema = z
     lunch: z.array(FoodEntryResponseSchema).nullable(),
     dinner: z.array(FoodEntryResponseSchema).nullable(),
     snacks: z.array(FoodEntryResponseSchema).nullable(),
-    weight: z.number().positive().max(9999.9).nullable(),
+    weight: z.number().positive().max(999.9).nullable(),
   })
   .nullable();
 
 export type DayLogResponse = z.infer<typeof DayLogResponseSchema>;
+
+export const UpdateDayLogWeightResponseSchema = z
+  .object({
+    versionNumber: DayLogVersionNumberSchema,
+    createdDayLogId: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type UpdateDayLogWeightResponse = z.infer<typeof UpdateDayLogWeightResponseSchema>;
 
 export const DayLogRangeDayResponseSchema = z.object({
   date: z.iso.date(),
