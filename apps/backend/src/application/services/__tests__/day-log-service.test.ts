@@ -284,7 +284,7 @@ describe("DayLogServiceImpl", () => {
       expect(mockDayLogRepository.createWithWeight).not.toHaveBeenCalled();
     });
 
-    it("allows a subscribed user to create a weight-only Day Log", async () => {
+    it("allows a subscribed user to create new weight-only Day Logs without the free user 7 day log limit", async () => {
       const user = User.reconstitute({
         id: "user-1",
         email: "user@example.com",
