@@ -1,5 +1,6 @@
 import type { DayLog } from "@domain/entities/day-log.js";
 import type { FoodEntry } from "@domain/entities/food-entry.js";
+import type { Weight } from "@domain/value-objects/weight.js";
 
 export interface FindDayLogByDateAndUserInput {
   userId: string;
@@ -29,6 +30,16 @@ export interface CreateDayLogWithFoodEntryInput {
   foodEntry: FoodEntry;
 }
 
+export interface CreateDayLogWithWeightInput {
+  userId: string;
+  dayLog: DayLog;
+}
+
+export interface RecordWeightResult {
+  versionNumber: number;
+  createdDayLogId?: string;
+}
+
 export interface IDayLogRepository {
   findLogByDateAndUserId({ userId, date }: FindDayLogByDateAndUserInput): Promise<DayLog | null>;
 
@@ -47,6 +58,10 @@ export interface IDayLogRepository {
     dayLog,
     foodEntry,
   }: CreateDayLogWithFoodEntryInput): Promise<AddFoodEntryResult>;
+
+  updateWeight(dayLogId: string, weight: Weight): Promise<RecordWeightResult>;
+
+  createWithWeight({ userId, dayLog }: CreateDayLogWithWeightInput): Promise<RecordWeightResult>;
 
   countDayLogsByUserId(userId: string): Promise<number>;
 }

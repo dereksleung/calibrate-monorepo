@@ -3,6 +3,8 @@ import type {
   DayLogSyncRequest,
   GetDayLogRangeRequestQuery,
   GetDayLogRequestRouteParams,
+  UpdateDayLogWeightRequestBody,
+  UpdateDayLogWeightRequestRouteParams,
 } from "@calibrate/api-contracts";
 
 import { Request, RequestHandler, Router } from "express";
@@ -31,6 +33,12 @@ export function createDayLogRoutes(
   );
   router.post("/daylogs/:date/food-entries", authenticationMiddleware, (req, res) =>
     dayLogController.createFoodEntry(req as Request<CreateFoodEntryRequestRouteParams>, res),
+  );
+  router.put("/daylogs/:date/weight", authenticationMiddleware, (req, res) =>
+    dayLogController.updateWeight(
+      req as Request<UpdateDayLogWeightRequestRouteParams, unknown, UpdateDayLogWeightRequestBody>,
+      res,
+    ),
   );
   return router;
 }

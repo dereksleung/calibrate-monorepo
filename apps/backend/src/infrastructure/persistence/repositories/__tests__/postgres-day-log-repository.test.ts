@@ -1,4 +1,5 @@
 import { DayLog } from "@domain/entities/day-log.js";
+import { Weight } from "@domain/value-objects/weight.js";
 import { buildFoodEntry } from "@factories/food-entry.js";
 import { types } from "pg";
 import { describe, expect, it, vi } from "vitest";
@@ -164,6 +165,94 @@ describe("PostgresDayLogRepository.createWithFoodEntry", () => {
       versionNumber: 1,
       createdDayLogId: "day-log-1",
     });
+  });
+});
+
+describe("PostgresDayLogRepository.updateWeight", () => {
+  it("updates only the aggregate weight and advances its version in one transaction", async () => {
+    let updatedValues: Record<string, unknown> | undefined;
+    let updatedDayLogId: string | undefined;
+    let returnedColumns: unknown;
+    const databaseClient = {
+      transaction: () => ({
+        execute: async (work: (trx: Record<string, unknown>) => Promise<unknown>) =>
+          work({
+            updateTable: () => ({
+              set: (values: Record<string, unknown>) => {
+                updatedValues = values;
+                return {
+                  where: (_column: string, _operator: string, id: string) => {
+                    updatedDayLogId = id;
+                    return {
+                      returning: (columns: unknown) => {
+                        returnedColumns = columns;
+                        return { executeTakeFirst: async () => ({ version_number: 3 }) };
+                      },
+                    };
+                  },
+                };
+              },
+            }),
+          }),
+      }),
+    };
+    const repository = new PostgresDayLogRepository(databaseClient as never);
+
+    const result = await repository.updateWeight("day-log-1", Weight.from(182.45));
+
+    expect(updatedDayLogId).toBe("day-log-1");
+    expect(updatedValues).toMatchObject({ weight: 182.5, updated_at: expect.any(Date) });
+    expect(updatedValues).toHaveProperty("version_number");
+    expect(returnedColumns).toBe("version_number");
+    expect(result).toEqual({ versionNumber: 3 });
+  });
+});
+
+describe("PostgresDayLogRepository.createWithWeight", () => {
+  it("creates an Empty Day Log with its observation at version 1", async () => {
+    let insertedDayLog: Record<string, unknown> | undefined;
+    const insertedTables: string[] = [];
+    const databaseClient = {
+      transaction: () => ({
+        execute: async (work: (trx: Record<string, unknown>) => Promise<unknown>) =>
+          work({
+            insertInto: (table: string) => ({
+              values: (values: Record<string, unknown>) => {
+                insertedTables.push(table);
+                insertedDayLog = values;
+                return {
+                  returning: () => ({
+                    executeTakeFirst: async () => ({ version_number: 1 }),
+                  }),
+                };
+              },
+            }),
+          }),
+      }),
+    };
+    const repository = new PostgresDayLogRepository(databaseClient as never);
+    const dayLog = DayLog.reconstitute({
+      id: "day-log-1",
+      date: Temporal.PlainDate.from("2026-08-06"),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: Weight.from(182.45),
+      versionNumber: 1,
+    });
+
+    const result = await repository.createWithWeight({ userId: "user-1", dayLog });
+
+    expect(insertedTables).toEqual(["day_logs"]);
+    expect(insertedDayLog).toMatchObject({
+      id: "day-log-1",
+      date: "2026-08-06",
+      user_id: "user-1",
+      weight: 182.5,
+      version_number: 1,
+    });
+    expect(result).toEqual({ versionNumber: 1, createdDayLogId: "day-log-1" });
   });
 });
 

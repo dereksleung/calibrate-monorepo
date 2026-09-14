@@ -15,6 +15,11 @@ import {
   GetDayLogRangeRequestQuerySchema,
   GetDayLogRequestRouteParams,
   GetDayLogRequestRouteParamsSchema,
+  UpdateDayLogWeightRequestBody,
+  UpdateDayLogWeightRequestBodySchema,
+  UpdateDayLogWeightRequestRouteParams,
+  UpdateDayLogWeightRequestRouteParamsSchema,
+  UpdateDayLogWeightResponse,
 } from "@calibrate/api-contracts";
 import { handleControllerError } from "@common/errors/controller-error-handler.js";
 import { validate } from "@validation/validation-helpers.js";
@@ -209,6 +214,47 @@ export class DayLogController {
         ...(result.createdDayLogId ? { createdDayLogId: result.createdDayLogId } : {}),
       };
       res.status(201).json(response);
+    } catch (error) {
+      handleControllerError(error, res);
+    }
+  }
+
+  async updateWeight(
+    req: Request<UpdateDayLogWeightRequestRouteParams, unknown, UpdateDayLogWeightRequestBody>,
+    res: Response,
+  ): Promise<void> {
+    try {
+      const validatedDate = validate(UpdateDayLogWeightRequestRouteParamsSchema, req.params);
+      const validatedInput = validate(UpdateDayLogWeightRequestBodySchema, req.body);
+      const errors = [];
+      if (!validatedDate.isValid) errors.push(...validatedDate.errors);
+      if (!validatedInput.isValid) errors.push(...validatedInput.errors);
+      if (errors.length > 0) {
+        res.status(400).json({
+          error: "Validation failed",
+          details: errors,
+        });
+        return;
+      }
+
+      if (!validatedDate.isValid || !validatedInput.isValid) return;
+
+      const authenticatedUserId = req.auth?.userId;
+      if (!authenticatedUserId) {
+        throw new AuthenticationError("Authentication required");
+      }
+
+      const result = await this.dayLogService.recordWeight({
+        userId: authenticatedUserId,
+        date: validatedDate.data.date,
+        weight: validatedInput.data.weight,
+      });
+      const response: UpdateDayLogWeightResponse = {
+        versionNumber: result.versionNumber,
+        ...(result.createdDayLogId ? { createdDayLogId: result.createdDayLogId } : {}),
+      };
+
+      res.status(result.createdDayLogId ? 201 : 200).json(response);
     } catch (error) {
       handleControllerError(error, res);
     }
