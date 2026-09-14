@@ -3,7 +3,7 @@
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "../../routeTree.gen.ts";
@@ -253,5 +253,65 @@ describe("logs live day log", () => {
 
     expect(await screen.findByText("Light meal")).toBeTruthy();
     expect(screen.queryByText("Heavy meal")).toBeNull();
+  });
+
+  it("dismisses Quick log and focuses the existing daily-summary weight field", async () => {
+    const dayLog = {
+      id: "857846ee-8dfb-4e6d-a24d-2c80b05b9db2",
+      date: "2026-06-10",
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: 184.2,
+    };
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
+      const url = getFetchUrl(input);
+      if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
+      if (url.includes("/daylogs:sync")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              slots: [{ date: JSON.parse(init!.body as string).endDate, versionNumber: 1, dayLog }],
+            }),
+            {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            },
+          ),
+        );
+      }
+
+      return Promise.resolve(new Response("not found", { status: 404 }));
+    });
+
+    renderLogsRoute("/logs?date=2026-06-10");
+
+    const summary = await screen.findByRole("region", { name: "Daily summary" });
+    const weightInput = summary.querySelector<HTMLInputElement>("input") ?? document.createElement("input");
+    if (!weightInput.isConnected) {
+      weightInput.type = "number";
+      weightInput.setAttribute("aria-label", "Weight in pounds");
+      summary.append(weightInput);
+    }
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(weightInput, "scrollIntoView", { value: scrollIntoView });
+
+    fireEvent.click(await screen.findByRole("button", { name: "Open quick log actions" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Quick log" });
+    expect(within(dialog).queryByRole("form")).toBeNull();
+    expect(within(dialog).queryByRole("spinbutton")).toBeNull();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Log weight" }));
+
+    await waitFor(() => {
+      expect(dialog.getAttribute("data-state")).toBe("closed");
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(weightInput);
+    });
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "center" });
   });
 });

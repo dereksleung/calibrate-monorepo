@@ -13,7 +13,7 @@ import {
 import { syncDayLogs } from "@calibrate/api-client";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 import {
@@ -84,6 +84,7 @@ function LogsOverviewSkeleton() {
 export function Logs({ selectedDate }: LogsProps) {
   const headingDate = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate]);
   const navigate = useNavigate();
+  const dailySummaryRef = useRef<HTMLDivElement>(null);
 
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
@@ -143,7 +144,9 @@ export function Logs({ selectedDate }: LogsProps) {
 
         {!isPending && !isUpcoming ? (
           <>
-            <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
+            <div ref={dailySummaryRef}>
+              <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
+            </div>
 
             <section aria-labelledby="meals-heading" className="space-y-3">
               <Typography
@@ -175,6 +178,13 @@ export function Logs({ selectedDate }: LogsProps) {
         ) : null}
       </div>
       <QuickLogDrawer
+        onLogWeight={() => {
+          const weightInput = dailySummaryRef.current?.querySelector<HTMLInputElement>("input");
+          if (!weightInput) return;
+
+          weightInput.scrollIntoView({ behavior: "smooth", block: "center" });
+          weightInput.focus();
+        }}
         onSearchFood={() =>
           navigate({
             to: "/logs/food-search",
