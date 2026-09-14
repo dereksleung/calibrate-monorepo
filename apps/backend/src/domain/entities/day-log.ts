@@ -1,5 +1,6 @@
 import { BusinessLogicError } from "@domain/errors/business-logic-error.js";
 import { DayLogVersionNumber } from "@domain/value-objects/day-log-version-number.js";
+import { Weight } from "@domain/value-objects/weight.js";
 
 import { FoodEntry, MealNameEnum, MealNameEnumType } from "./food-entry.js";
 
@@ -17,7 +18,7 @@ export interface DayLogProps {
   lunch: FoodEntry[];
   dinner: FoodEntry[];
   snacks: FoodEntry[];
-  weight: number | null;
+  weight: number | Weight | null;
   versionNumber: number;
 }
 
@@ -28,7 +29,7 @@ export class DayLog {
   private _lunch: FoodEntry[];
   private _dinner: FoodEntry[];
   private _snacks: FoodEntry[];
-  private _weight: number | null;
+  private _weight: Weight | null;
   private readonly _versionNumber: DayLogVersionNumber;
 
   private constructor({ id, date, breakfast, lunch, dinner, snacks, weight, versionNumber }: DayLogProps) {
@@ -46,7 +47,7 @@ export class DayLog {
     this._lunch = lunch;
     this._dinner = dinner;
     this._snacks = snacks;
-    this._weight = weight ?? null;
+    this._weight = weight === null ? null : weight instanceof Weight ? weight : Weight.reconstitute(weight);
     this._versionNumber = DayLogVersionNumber.from(versionNumber);
   }
 
@@ -75,6 +76,12 @@ export class DayLog {
     }
 
     return foodEntry;
+  }
+
+  public recordWeight(weight: Weight | number): Weight {
+    const observation = weight instanceof Weight ? weight : Weight.from(weight);
+    this._weight = observation;
+    return observation;
   }
 
   private getMealArray(meal: MealNameEnumType): FoodEntry[] | null {
@@ -109,7 +116,7 @@ export class DayLog {
     return this._snacks;
   }
   public get weight(): number | null {
-    return this._weight;
+    return this._weight?.value ?? null;
   }
   public get versionNumber(): number {
     return this._versionNumber.value;

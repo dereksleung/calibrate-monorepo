@@ -13,6 +13,7 @@ import {
   GetDayLogRangeRequestQuerySchema,
   UpdateDayLogWeightRequestBodySchema,
   UpdateDayLogWeightRequestRouteParamsSchema,
+  UpdateDayLogWeightResponseSchema,
   CatalogFoodSearchResultSchema,
 } from "./index.js";
 
@@ -63,8 +64,16 @@ describe("log page request contracts", () => {
     });
 
     expect(UpdateDayLogWeightRequestBodySchema.parse({ weight: 180.5 })).toEqual({ weight: 180.5 });
+    expect(UpdateDayLogWeightRequestBodySchema.parse({ weight: 999.9 })).toEqual({ weight: 999.9 });
     expect(() => UpdateDayLogWeightRequestRouteParamsSchema.parse({ date: "05/20/2026" })).toThrow();
     expect(() => UpdateDayLogWeightRequestBodySchema.parse({ weight: 0 })).toThrow();
+    expect(() => UpdateDayLogWeightRequestBodySchema.parse({ weight: 1000 })).toThrow();
+  });
+
+  it("does not retain a client version precondition on weight writes", () => {
+    const result = UpdateDayLogWeightRequestBodySchema.parse({ weight: 180.5, versionNumber: 4 });
+
+    expect(result).toEqual({ weight: 180.5 });
   });
 
   it("trims and bounds food search query params", () => {
@@ -167,6 +176,23 @@ describe("log page response contracts", () => {
     };
 
     expect(CreateFoodEntryResponseSchema.parse(response)).toEqual(response);
+  });
+
+  it("accepts only the compact weight write result", () => {
+    expect(
+      UpdateDayLogWeightResponseSchema.parse({
+        versionNumber: 2,
+      }),
+    ).toEqual({ versionNumber: 2 });
+    expect(
+      UpdateDayLogWeightResponseSchema.parse({
+        versionNumber: 1,
+        createdDayLogId: "day-log-1",
+      }),
+    ).toEqual({ versionNumber: 1, createdDayLogId: "day-log-1" });
+    expect(() =>
+      UpdateDayLogWeightResponseSchema.parse({ versionNumber: 2, weight: 180.5 }),
+    ).toThrow();
   });
 
   it("rejects a create success body that echoes the Food Entry or a dayLogId", () => {

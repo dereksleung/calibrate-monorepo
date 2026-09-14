@@ -1,5 +1,6 @@
 import { MealNameEnum } from "@domain/entities/food-entry.js";
 import { BusinessLogicError } from "@domain/errors/business-logic-error.js";
+import { Weight } from "@domain/value-objects/weight.js";
 import { buildDayLog } from "@factories/day-log.js";
 import { buildFoodEntry } from "@factories/food-entry.js";
 import { describe, it, expect } from "vitest";
@@ -136,6 +137,23 @@ describe("DayLog", () => {
 
       // Lunch is full, but breakfast should still accept entries
       expect(() => dayLog.addFoodEntry(breakfastEntry)).not.toThrow();
+    });
+  });
+
+  describe("recordWeight", () => {
+    it("replaces the existing observation with the rounded Weight value", () => {
+      const dayLog = buildDayLog({ weight: 180.1 });
+
+      dayLog.recordWeight(Weight.from(182.45));
+
+      expect(dayLog.weight).toBe(182.5);
+    });
+
+    it("validates numeric input through the Weight value object", () => {
+      const dayLog = buildDayLog();
+
+      expect(() => dayLog.recordWeight(0)).toThrow(BusinessLogicError);
+      expect(dayLog.weight).toBeNull();
     });
   });
 });
