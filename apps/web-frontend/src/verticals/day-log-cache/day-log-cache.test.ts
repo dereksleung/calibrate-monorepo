@@ -6,6 +6,7 @@ import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   applyDayLogSyncResult,
   applyFoodEntryCreateToDayLogCache,
+  applyWeightObservationToDayLogCache,
   dateRange,
   getDayLogSyncManifest,
   getDayLogsWithStalenessState,
@@ -509,5 +510,108 @@ describe("applyFoodEntryCreateToDayLogCache", () => {
     });
     expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-08-10"))).toBeUndefined();
     expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-08-10"))?.isInvalidated).toBe(true);
+  });
+});
+
+describe("applyWeightObservationToDayLogCache", () => {
+  it("turns a Known-empty slot into an Empty Day Log at version 1", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), null, { updatedAt: now });
+
+    const result = await applyWeightObservationToDayLogCache(
+      queryClient,
+      accountId,
+      "2026-09-03",
+      182.45,
+      { versionNumber: 1, createdDayLogId: "day-log-weight-1" },
+      now + 1,
+    );
+
+    expect(result).toEqual({ needsSingleDateSync: false });
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toEqual({
+      id: "day-log-weight-1",
+      date: "2026-09-03",
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: 182.5,
+    });
+    expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBe(1);
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(false);
+  });
+
+  it("patches a direct predecessor without disturbing food entries", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      dayLogSlotQueryKey(accountId, "2026-09-03"),
+      { ...presentSlot("2026-09-03"), lunch: [{ ...createdLunch, id: "entry-1" }], weight: 180.1 },
+      { updatedAt: now },
+    );
+    queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"), 7, { updatedAt: now });
+
+    const result = await applyWeightObservationToDayLogCache(
+      queryClient,
+      accountId,
+      "2026-09-03",
+      182.45,
+      { versionNumber: 8 },
+      now + 1,
+    );
+
+    expect(result).toEqual({ needsSingleDateSync: false });
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toEqual({
+      ...presentSlot("2026-09-03"),
+      lunch: [{ ...createdLunch, id: "entry-1" }],
+      weight: 182.5,
+    });
+    expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBe(8);
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(false);
+  });
+
+  it("keeps a mismatched slot locally acknowledged but unverified", async () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"), presentSlot("2026-09-03"), {
+      updatedAt: now,
+    });
+    queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"), 4, { updatedAt: now });
+
+    const result = await applyWeightObservationToDayLogCache(
+      queryClient,
+      accountId,
+      "2026-09-03",
+      182.45,
+      { versionNumber: 7 },
+      now + 1,
+    );
+
+    expect(result).toEqual({ needsSingleDateSync: true });
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toEqual({
+      ...presentSlot("2026-09-03"),
+      weight: 182.5,
+    });
+    expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBe(4);
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(true);
+  });
+
+  it("acknowledges an unloaded slot without inventing a trusted version", async () => {
+    const queryClient = new QueryClient();
+
+    const result = await applyWeightObservationToDayLogCache(
+      queryClient,
+      accountId,
+      "2026-09-03",
+      182.45,
+      { versionNumber: 2 },
+      now + 1,
+    );
+
+    expect(result).toEqual({ needsSingleDateSync: true });
+    expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, "2026-09-03"))).toMatchObject({
+      date: "2026-09-03",
+      weight: 182.5,
+    });
+    expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-09-03"))).toBeUndefined();
+    expect(queryClient.getQueryState(dayLogSlotQueryKey(accountId, "2026-09-03"))?.isInvalidated).toBe(true);
   });
 });

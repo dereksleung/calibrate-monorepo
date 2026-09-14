@@ -13,6 +13,7 @@ import {
   type DayLogSyncResponse,
   type FoodEntryResponse,
   type MealNameEnumType,
+  type UpdateDayLogWeightResponse,
 } from "@calibrate/api-contracts";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
@@ -254,6 +255,48 @@ export async function applyFoodEntryCreateToDayLogCache(
     normalizedCreated,
     result.foodEntryId,
   );
+
+  queryClient.setQueryData(slotKey, next, { updatedAt: now });
+
+  if (isPredecessor(cached, cachedVersion, result.versionNumber)) {
+    queryClient.setQueryData(versionKey, result.versionNumber, { updatedAt: now });
+    return { needsSingleDateSync: false };
+  }
+
+  await queryClient.invalidateQueries({ queryKey: slotKey });
+  return { needsSingleDateSync: true };
+}
+
+function normalizeWeightForStorage(value: number): number {
+  return Number(
+    value.toLocaleString("en-US", {
+      useGrouping: false,
+      maximumFractionDigits: 1,
+    }),
+  );
+}
+
+/**
+ * Applies a successful weight write without downloading the Day Log. A direct
+ * predecessor can be trusted immediately; an unloaded or mismatched slot is
+ * shown as a local acknowledgement and remains eligible for ordinary sync.
+ */
+export async function applyWeightObservationToDayLogCache(
+  queryClient: QueryClient,
+  accountId: string,
+  date: string,
+  weight: number,
+  result: UpdateDayLogWeightResponse,
+  now = Date.now(),
+): Promise<{ needsSingleDateSync: boolean }> {
+  const slotKey = dayLogSlotQueryKey(accountId, date);
+  const versionKey = dayLogSlotVersionQueryKey(accountId, date);
+  const cached = queryClient.getQueryData<CachedDayLog>(slotKey);
+  const cachedVersion = queryClient.getQueryData<number>(versionKey);
+  const next = {
+    ...(cached ?? emptyPresentDayLog(date, result.createdDayLogId)),
+    weight: normalizeWeightForStorage(weight),
+  };
 
   queryClient.setQueryData(slotKey, next, { updatedAt: now });
 
