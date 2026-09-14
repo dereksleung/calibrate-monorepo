@@ -168,14 +168,14 @@ export function DailySummary({ totals, progress, weight, onSaveWeight, weightInp
           <Typography variant="labelSpaced" color="onSurface">
             Eaten
           </Typography>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <Typography variant="labelSpaced" color="onSurface">
               Weight
             </Typography>
             <button
               type="button"
               aria-label={weight == null ? "Log weight" : "Edit weight"}
-              className="inline-flex size-8 items-center justify-center rounded-full text-on-surface-variant/60 transition-colors hover:bg-surface-container-high hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex relative -top-2 size-8 items-center justify-center rounded-full text-on-surface-variant/60 transition-colors hover:bg-surface-container-high hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
               disabled={isSaving}
               onClick={focusWeightInput}
             >
