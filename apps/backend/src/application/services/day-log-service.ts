@@ -1,6 +1,7 @@
 import { DayLog } from "@domain/entities/day-log.js";
 import { FoodEntry, MealNameEnumType } from "@domain/entities/food-entry.js";
 import { BusinessLogicError } from "@domain/errors/business-logic-error.js";
+import { Weight } from "@domain/value-objects/weight.js";
 
 import { IDayLogRepository } from "../ports/day-log-repository.js";
 import { type IDayLogSyncQuery } from "../ports/day-log-sync-query.js";
@@ -70,11 +71,23 @@ export interface AddFoodEntryResult {
   createdDayLogId?: string;
 }
 
+export interface RecordWeightInput {
+  userId: string;
+  date: string;
+  weight: number;
+}
+
+export interface RecordWeightResult {
+  versionNumber: number;
+  createdDayLogId?: string;
+}
+
 export interface IDayLogService {
   getLogForDay({ userId, date }: GetDayLogInput): Promise<DayLog | null>;
   getLogsForDateRange({ userId, startDate, endDate }: GetDayLogRangeInput): Promise<DayLog[]>;
   syncLogsForDateRange(input: SyncLogsForDateRangeInput): Promise<SyncLogsForDateRangeResult>;
   addFoodEntry({ userId, date, foodEntry }: AddFoodEntryInput): Promise<AddFoodEntryResult>;
+  recordWeight({ userId, date, weight }: RecordWeightInput): Promise<RecordWeightResult>;
 }
 
 export class DayLogServiceImpl implements IDayLogService {
@@ -161,5 +174,46 @@ export class DayLogServiceImpl implements IDayLogService {
     });
     const entry = dayLog.addFoodEntry(newFoodEntry);
     return this.dayLogRepository.createWithFoodEntry({ userId, dayLog, foodEntry: entry });
+  }
+
+  async recordWeight({ userId, date, weight }: RecordWeightInput): Promise<RecordWeightResult> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new BusinessLogicError("User not found");
+    }
+
+    const existing = await this.dayLogRepository.findLogByDateAndUserId({
+      date,
+      userId,
+    });
+    const observation = Weight.from(weight);
+
+    if (existing) {
+      existing.recordWeight(observation);
+      return this.dayLogRepository.updateWeight(existing.id, observation);
+    }
+
+    if (!user.tier.isSubscribed()) {
+      const dayLogCount = await this.dayLogRepository.countDayLogsByUserId(userId);
+
+      // A free user may not create another Day Log beyond the existing food cap.
+      if (dayLogCount > 7) {
+        throw new BusinessLogicError("User has reached the maximum number of day logs before subscribing");
+      }
+    }
+
+    const dayLog = DayLog.reconstitute({
+      id: crypto.randomUUID(),
+      date: Temporal.PlainDate.from(date),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+      versionNumber: 1,
+    });
+    dayLog.recordWeight(observation);
+
+    return this.dayLogRepository.createWithWeight({ userId, dayLog });
   }
 }

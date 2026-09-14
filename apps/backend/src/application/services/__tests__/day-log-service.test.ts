@@ -5,6 +5,7 @@ import { DayLogServiceImpl } from "@application/services/day-log-service.js";
 import { DayLog } from "@domain/entities/day-log.js";
 import { MealNameEnum } from "@domain/entities/food-entry.js";
 import { User } from "@domain/entities/user.js";
+import { Weight } from "@domain/value-objects/weight.js";
 import { buildDayLog } from "@factories/day-log.js";
 import { buildFoodEntry, buildFoodEntryResponse } from "@factories/food-entry.js";
 import { vi, MockedObject } from "vitest";
@@ -34,6 +35,8 @@ describe("DayLogServiceImpl", () => {
       findOrCreateByDateAndUserId: vi.fn(),
       addFoodEntry: vi.fn(),
       createWithFoodEntry: vi.fn(),
+      updateWeight: vi.fn(),
+      createWithWeight: vi.fn(),
       countDayLogsByUserId: vi.fn(),
     } as any;
     mockDayLogSyncQuery = {
@@ -217,6 +220,105 @@ describe("DayLogServiceImpl", () => {
           dayLog: expect.objectContaining({ versionNumber: 1 }),
         }),
       );
+    });
+  });
+
+  describe("recordWeight", () => {
+    it("replaces an existing observation without checking the create cap", async () => {
+      const user = User.create({ email: "user@example.com", passwordHash: "hash" });
+      const persistedResult = { versionNumber: 8 };
+      mockUserRepository.findById.mockResolvedValue(user);
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(mockDayLog);
+      mockDayLogRepository.updateWeight.mockResolvedValue(persistedResult);
+
+      await expect(
+        dayLogService.recordWeight({ userId: "user-1", date: "2026-02-22", weight: 182.45 }),
+      ).resolves.toEqual(persistedResult);
+
+      expect(mockDayLogRepository.countDayLogsByUserId).not.toHaveBeenCalled();
+      expect(mockDayLogRepository.updateWeight).toHaveBeenCalledWith(mockDayLog.id, expect.any(Weight));
+      expect(mockDayLogRepository.updateWeight.mock.calls[0]?.[1]?.value).toBe(182.5);
+      expect(mockDayLog.weight).toBe(182.5);
+    });
+
+    it("creates a weight-only Empty Day Log at version 1", async () => {
+      const user = User.create({ email: "user@example.com", passwordHash: "hash" });
+      const persistedResult = {
+        versionNumber: 1,
+        createdDayLogId: "day-log-weight-1",
+      };
+      mockUserRepository.findById.mockResolvedValue(user);
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(null);
+      mockDayLogRepository.countDayLogsByUserId.mockResolvedValue(1);
+      mockDayLogRepository.createWithWeight.mockResolvedValue(persistedResult);
+
+      await expect(
+        dayLogService.recordWeight({ userId: "user-1", date: "2026-02-23", weight: 182.45 }),
+      ).resolves.toEqual(persistedResult);
+
+      expect(mockDayLogRepository.createWithWeight).toHaveBeenCalledWith({
+        userId: "user-1",
+        dayLog: expect.objectContaining({
+          weight: 182.5,
+          versionNumber: 1,
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          snacks: [],
+        }),
+      });
+      expect(mockDayLogRepository.updateWeight).not.toHaveBeenCalled();
+    });
+
+    it("rejects a new weight-only Day Log at the free-user cap", async () => {
+      mockUserRepository.findById.mockResolvedValue(
+        User.create({ email: "user@example.com", passwordHash: "hash" }),
+      );
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(null);
+      mockDayLogRepository.countDayLogsByUserId.mockResolvedValue(8);
+
+      await expect(
+        dayLogService.recordWeight({ userId: "user-1", date: "2026-02-23", weight: 182.5 }),
+      ).rejects.toThrow("maximum number of day logs");
+
+      expect(mockDayLogRepository.createWithWeight).not.toHaveBeenCalled();
+    });
+
+    it("allows a subscribed user to create a weight-only Day Log", async () => {
+      const user = User.reconstitute({
+        id: "user-1",
+        email: "user@example.com",
+        passwordHash: "hash",
+        tier: "PREMIUM",
+        createdAt: new Date("2026-01-01"),
+        updatedAt: new Date("2026-01-01"),
+      });
+      mockUserRepository.findById.mockResolvedValue(user);
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(null);
+      mockDayLogRepository.createWithWeight.mockResolvedValue({
+        versionNumber: 1,
+        createdDayLogId: "day-log-weight-1",
+      });
+
+      await expect(
+        dayLogService.recordWeight({ userId: "user-1", date: "2026-02-23", weight: 182.5 }),
+      ).resolves.toEqual({ versionNumber: 1, createdDayLogId: "day-log-weight-1" });
+
+      expect(mockDayLogRepository.countDayLogsByUserId).not.toHaveBeenCalled();
+    });
+
+    it("rejects invalid weight before creating or updating a Day Log", async () => {
+      mockUserRepository.findById.mockResolvedValue(
+        User.create({ email: "user@example.com", passwordHash: "hash" }),
+      );
+      mockDayLogRepository.findLogByDateAndUserId.mockResolvedValue(mockDayLog);
+
+      await expect(
+        dayLogService.recordWeight({ userId: "user-1", date: "2026-02-22", weight: 1000 }),
+      ).rejects.toThrow("Weight");
+
+      expect(mockDayLogRepository.updateWeight).not.toHaveBeenCalled();
+      expect(mockDayLogRepository.createWithWeight).not.toHaveBeenCalled();
     });
   });
 });

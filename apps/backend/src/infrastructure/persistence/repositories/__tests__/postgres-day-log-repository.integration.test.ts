@@ -1,4 +1,5 @@
 import { DayLog } from "@domain/entities/day-log.js";
+import { Weight } from "@domain/value-objects/weight.js";
 import { buildFoodEntry } from "@factories/food-entry.js";
 import { randomUUID } from "node:crypto";
 
@@ -34,7 +35,7 @@ async function insertUser(databaseClient: DatabaseClient, email: string): Promis
 
 async function insertDayLog(
   databaseClient: DatabaseClient,
-  input: { userId: string; date: string; versionNumber?: number },
+  input: { userId: string; date: string; versionNumber?: number; weight?: number | null },
 ): Promise<string> {
   const id = randomUUID();
   await databaseClient
@@ -43,7 +44,7 @@ async function insertDayLog(
       id,
       date: input.date,
       user_id: input.userId,
-      weight: null,
+      weight: input.weight ?? null,
       version_number: input.versionNumber,
     })
     .execute();
@@ -88,6 +89,63 @@ describe("PostgresDayLogRepository day log sync", () => {
       .executeTakeFirstOrThrow();
 
     expect(persisted.version_number).toBe(2);
+  });
+
+  it("creates a weight-only Empty Day Log at version 1 without food entries", async () => {
+    const userId = await insertUser(databaseClient, "weight-create@example.com");
+    const dayLogId = randomUUID();
+    const dayLog = DayLog.reconstitute({
+      id: dayLogId,
+      date: Temporal.PlainDate.from("2026-08-06"),
+      breakfast: [],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: Weight.from(182.45),
+      versionNumber: 1,
+    });
+
+    const result = await repository.createWithWeight({ userId, dayLog });
+
+    expect(result).toEqual({ versionNumber: 1, createdDayLogId: dayLogId });
+    await expect(
+      databaseClient
+        .selectFrom("day_logs")
+        .select(["weight", "version_number"])
+        .where("id", "=", dayLogId)
+        .executeTakeFirstOrThrow(),
+    ).resolves.toEqual({ weight: 182.5, version_number: 1 });
+    await expect(
+      databaseClient.selectFrom("food_entries").selectAll().where("day_log_id", "=", dayLogId).execute(),
+    ).resolves.toEqual([]);
+  });
+
+  it("replaces weight in place, advances the version, and preserves food entries", async () => {
+    const userId = await insertUser(databaseClient, "weight-update@example.com");
+    const dayLogId = await insertDayLog(databaseClient, {
+      userId,
+      date: "2026-08-06",
+      versionNumber: 4,
+      weight: 180.1,
+    });
+    await repository.addFoodEntry(
+      dayLogId,
+      buildFoodEntry({ id: randomUUID(), dayLogId, name: "Breakfast oats" }),
+    );
+
+    const result = await repository.updateWeight(dayLogId, Weight.from(182.45));
+
+    expect(result).toEqual({ versionNumber: 6 });
+    await expect(
+      databaseClient
+        .selectFrom("day_logs")
+        .select(["weight", "version_number"])
+        .where("id", "=", dayLogId)
+        .executeTakeFirstOrThrow(),
+    ).resolves.toEqual({ weight: 182.5, version_number: 6 });
+    await expect(
+      databaseClient.selectFrom("food_entries").select(["name"]).where("day_log_id", "=", dayLogId).execute(),
+    ).resolves.toEqual([{ name: "Breakfast oats" }]);
   });
 
   it("persists a new day log and its first food entry at version 1", async () => {

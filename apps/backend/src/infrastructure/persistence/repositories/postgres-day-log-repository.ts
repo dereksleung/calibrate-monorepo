@@ -1,3 +1,5 @@
+import type { Weight } from "@domain/value-objects/weight.js";
+
 import { datesNeedingSyncPayload, listInclusiveDates } from "@application/day-log-sync.js";
 import { DayLog } from "@domain/entities/day-log.js";
 import { FoodEntry, MealNameEnum } from "@domain/entities/food-entry.js";
@@ -7,10 +9,12 @@ import { randomUUID } from "node:crypto";
 import type {
   AddFoodEntryResult,
   CreateDayLogWithFoodEntryInput,
+  CreateDayLogWithWeightInput,
   FindDayLogByDateAndUserInput,
   FindDayLogsByDateRangeAndUserInput,
   FindOrCreateDayLogByDateAndUserInput,
   IDayLogRepository,
+  RecordWeightResult,
 } from "../../../application/ports/day-log-repository.js";
 import type {
   DayLogSyncQueryInput,
@@ -143,6 +147,52 @@ export class PostgresDayLogRepository implements IDayLogRepository, IDayLogSyncQ
 
       return {
         foodEntryId: foodEntryRow.id,
+        versionNumber: insertedDayLog.version_number,
+        createdDayLogId: dayLog.id,
+      };
+    });
+  }
+
+  async updateWeight(dayLogId: string, weight: Weight): Promise<RecordWeightResult> {
+    return this.databaseClient.transaction().execute(async (trx) => {
+      const updated = await trx
+        .updateTable("day_logs")
+        .set({
+          weight: weight.value,
+          version_number: sql`version_number + 1`,
+          updated_at: new Date(),
+        })
+        .where("id", "=", dayLogId)
+        .returning("version_number")
+        .executeTakeFirst();
+
+      if (!updated) {
+        throw new Error("Failed to update day log weight");
+      }
+
+      return { versionNumber: updated.version_number };
+    });
+  }
+
+  async createWithWeight({ userId, dayLog }: CreateDayLogWithWeightInput): Promise<RecordWeightResult> {
+    return this.databaseClient.transaction().execute(async (trx) => {
+      const insertedDayLog = await trx
+        .insertInto("day_logs")
+        .values({
+          id: dayLog.id,
+          date: dayLog.date.toString(),
+          user_id: userId,
+          weight: dayLog.weight,
+          version_number: dayLog.versionNumber,
+        })
+        .returning("version_number")
+        .executeTakeFirst();
+
+      if (!insertedDayLog) {
+        throw new Error("Failed to create day log");
+      }
+
+      return {
         versionNumber: insertedDayLog.version_number,
         createdDayLogId: dayLog.id,
       };
