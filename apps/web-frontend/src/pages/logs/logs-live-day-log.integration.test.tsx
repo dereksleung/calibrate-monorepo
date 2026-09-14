@@ -288,13 +288,7 @@ describe("logs live day log", () => {
 
     renderLogsRoute("/logs?date=2026-06-10");
 
-    const summary = await screen.findByRole("region", { name: "Daily summary" });
-    const weightInput = summary.querySelector<HTMLInputElement>("input") ?? document.createElement("input");
-    if (!weightInput.isConnected) {
-      weightInput.type = "number";
-      weightInput.setAttribute("aria-label", "Weight in pounds");
-      summary.append(weightInput);
-    }
+    const weightInput = await screen.findByRole("textbox", { name: "Weight in pounds" });
     const scrollIntoView = vi.fn();
     Object.defineProperty(weightInput, "scrollIntoView", { value: scrollIntoView });
 

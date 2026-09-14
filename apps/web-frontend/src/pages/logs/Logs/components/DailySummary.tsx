@@ -1,6 +1,7 @@
 import { cn } from "#/lib/utils.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { Pencil } from "lucide-react";
+import type { RefObject } from "react";
 
 import type { NutritionTotals, ProgressValue } from "../../log-page-helpers.ts";
 
@@ -17,6 +18,7 @@ type DailySummaryProps = {
   totals: NutritionTotals;
   progress: DailyProgress;
   weight: number | null;
+  weightInputRef?: RefObject<HTMLInputElement | null>;
 };
 
 function ProgressBar({
@@ -70,7 +72,7 @@ function MacroStat({
 
 const calorieLimitClassName = "text-xl font-light leading-none text-on-surface-variant/65";
 
-export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
+export function DailySummary({ totals, progress, weight, weightInputRef }: DailySummaryProps) {
   const caloriesRemaining = Math.max(DAILY_TARGETS.calories - totals.calories, 0);
 
   return (
@@ -109,12 +111,18 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
                 {caloriesRemaining.toLocaleString()} left
               </p>
             </div>
-            {weight != null ? (
-              <span className={cn(calorieLimitClassName, "text-right")}>
-                {weight.toFixed(1)}
-                <span className="sr-only"> pounds</span>
-              </span>
-            ) : null}
+            <input
+              ref={weightInputRef}
+              aria-label="Weight in pounds"
+              className={cn(
+                calorieLimitClassName,
+                "w-24 min-w-0 rounded-lg bg-transparent px-2 py-1 text-right outline-none transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:ring-2 focus-visible:ring-primary/20",
+              )}
+              defaultValue={weight != null ? weight.toFixed(1) : ""}
+              inputMode="decimal"
+              placeholder="—"
+              type="text"
+            />
           </div>
           <div className="col-span-2 w-2/3 md:w-full">
             <ProgressBar

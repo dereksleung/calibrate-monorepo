@@ -115,7 +115,7 @@ describe("Logs", () => {
     expect((await screen.findAllByText("282")).length).toBeGreaterThan(0);
     expect(screen.getByText("/ 1,800")).toBeTruthy();
     expect(screen.getByText("1,518 left")).toBeTruthy();
-    expect(screen.getByText("184.2")).toBeTruthy();
+    expect(screen.getByDisplayValue("184.2")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Meals" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Breakfast" })).toBeTruthy();
     expect(screen.getByText("Oatmeal")).toBeTruthy();

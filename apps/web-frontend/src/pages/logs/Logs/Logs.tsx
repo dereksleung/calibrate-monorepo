@@ -84,7 +84,7 @@ function LogsOverviewSkeleton() {
 export function Logs({ selectedDate }: LogsProps) {
   const headingDate = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate]);
   const navigate = useNavigate();
-  const dailySummaryRef = useRef<HTMLDivElement>(null);
+  const weightInputRef = useRef<HTMLInputElement>(null);
 
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
@@ -144,9 +144,12 @@ export function Logs({ selectedDate }: LogsProps) {
 
         {!isPending && !isUpcoming ? (
           <>
-            <div ref={dailySummaryRef}>
-              <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
-            </div>
+            <DailySummary
+              totals={totals}
+              progress={progress}
+              weight={dayLog.weight}
+              weightInputRef={weightInputRef}
+            />
 
             <section aria-labelledby="meals-heading" className="space-y-3">
               <Typography
@@ -179,7 +182,7 @@ export function Logs({ selectedDate }: LogsProps) {
       </div>
       <QuickLogDrawer
         onLogWeight={() => {
-          const weightInput = dailySummaryRef.current?.querySelector<HTMLInputElement>("input");
+          const weightInput = weightInputRef.current;
           if (!weightInput) return;
 
           weightInput.scrollIntoView({ behavior: "smooth", block: "center" });
