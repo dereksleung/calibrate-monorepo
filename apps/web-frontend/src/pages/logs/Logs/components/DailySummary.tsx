@@ -1,6 +1,7 @@
 import { cn } from "#/lib/utils.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 import type { NutritionTotals, ProgressValue } from "../../log-page-helpers.ts";
 
@@ -17,6 +18,7 @@ type DailySummaryProps = {
   totals: NutritionTotals;
   progress: DailyProgress;
   weight: number | null;
+  onSaveWeight: (weight: number) => Promise<void>;
 };
 
 function ProgressBar({
@@ -70,8 +72,80 @@ function MacroStat({
 
 const calorieLimitClassName = "text-xl font-light leading-none text-on-surface-variant/65";
 
-export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
+const MAX_WEIGHT = 999.9;
+
+function normalizeWeight(value: number): number {
+  return Number(
+    value.toLocaleString("en-US", {
+      useGrouping: false,
+      maximumFractionDigits: 1,
+    }),
+  );
+}
+
+function formatWeight(weight: number | null): string {
+  return weight == null ? "" : weight.toFixed(1);
+}
+
+function parseWeight(value: string): number | null {
+  if (value.trim() === "") return null;
+
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+
+  const normalized = normalizeWeight(parsed);
+  return normalized > 0 && normalized <= MAX_WEIGHT ? normalized : null;
+}
+
+export function DailySummary({ totals, progress, weight, onSaveWeight }: DailySummaryProps) {
   const caloriesRemaining = Math.max(DAILY_TARGETS.calories - totals.calories, 0);
+  const [draft, setDraft] = useState(() => formatWeight(weight));
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const savedWeightRef = useRef(weight);
+  const isSavingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isEditing && !isSavingRef.current) {
+      savedWeightRef.current = weight;
+      setDraft(formatWeight(weight));
+    }
+  }, [isEditing, weight]);
+
+  function restoreSavedWeight() {
+    setDraft(formatWeight(savedWeightRef.current));
+    setIsEditing(false);
+  }
+
+  function focusWeightInput() {
+    inputRef.current?.focus();
+  }
+
+  async function saveOnBlur() {
+    if (isSavingRef.current) return;
+
+    const nextWeight = parseWeight(draft);
+    const savedWeight = savedWeightRef.current;
+    if (nextWeight === null || nextWeight === savedWeight) {
+      restoreSavedWeight();
+      return;
+    }
+
+    isSavingRef.current = true;
+    setIsSaving(true);
+    try {
+      await onSaveWeight(nextWeight);
+      savedWeightRef.current = nextWeight;
+      setDraft(formatWeight(nextWeight));
+      setIsEditing(false);
+    } catch {
+      restoreSavedWeight();
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
+  }
 
   return (
     <section
@@ -97,7 +171,15 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
             <Typography variant="labelSpaced" color="onSurface">
               Weight
             </Typography>
-            <Pencil aria-hidden className="size-4 text-on-surface-variant/50" strokeWidth={1.5} />
+            <button
+              type="button"
+              aria-label={weight == null ? "Log weight" : "Edit weight"}
+              className="inline-flex size-8 items-center justify-center rounded-full text-on-surface-variant/60 transition-colors hover:bg-surface-container-high hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+              disabled={isSaving}
+              onClick={focusWeightInput}
+            >
+              <Pencil aria-hidden className="size-4" strokeWidth={1.5} />
+            </button>
           </div>
           <div className="col-span-2 mt-3 grid grid-cols-subgrid items-baseline">
             <div className="flex items-baseline">
@@ -109,12 +191,30 @@ export function DailySummary({ totals, progress, weight }: DailySummaryProps) {
                 {caloriesRemaining.toLocaleString()} left
               </p>
             </div>
-            {weight != null ? (
-              <span className={cn(calorieLimitClassName, "text-right")}>
-                {weight.toFixed(1)}
-                <span className="sr-only"> pounds</span>
+            {isSaving ? (
+              <span className={cn(calorieLimitClassName, "text-right")} role="status">
+                Saving..
               </span>
-            ) : null}
+            ) : (
+              <input
+                ref={inputRef}
+                aria-label="Weight in pounds"
+                className={cn(
+                  calorieLimitClassName,
+                  "w-24 min-w-0 rounded-lg bg-transparent px-2 py-1 text-right outline-none transition-colors placeholder:text-on-surface-variant/40 focus-visible:bg-surface-container-lowest focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60",
+                )}
+                inputMode="decimal"
+                onBlur={() => void saveOnBlur()}
+                onChange={(event) => {
+                  if (isSavingRef.current) return;
+                  setIsEditing(true);
+                  setDraft(event.target.value);
+                }}
+                onFocus={() => setIsEditing(true)}
+                type="text"
+                value={draft}
+              />
+            )}
           </div>
           <div className="col-span-2 w-2/3 md:w-full">
             <ProgressBar

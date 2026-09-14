@@ -18,6 +18,7 @@ const meta = {
     totals,
     progress: getDailyProgress(totals),
     weight: 184.2,
+    onSaveWeight: async () => {},
   },
   decorators: [
     (Story) => (

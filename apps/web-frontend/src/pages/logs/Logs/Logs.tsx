@@ -4,13 +4,14 @@ import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
   applyDayLogSyncResult,
+  applyWeightObservationToDayLogCache,
   dayLogSlotQueryKey,
   dayLogSyncQueryKey,
   doesDayLogSlotNeedValidation,
   getDayLogSyncManifest,
   type DayLogSlotResult,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { syncDayLogs } from "@calibrate/api-client";
+import { syncDayLogs, useUpdateDayLogWeight } from "@calibrate/api-client";
 import { skipToken, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo } from "react";
@@ -88,6 +89,7 @@ export function Logs({ selectedDate }: LogsProps) {
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
+  const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
   const todayDate = getTodayDateString();
   const isUpcoming = selectedDate > todayDate;
   const slotQuery = useQuery({
@@ -133,6 +135,11 @@ export function Logs({ selectedDate }: LogsProps) {
   const totals = getDailyTotals(dayLog);
   const progress = getDailyProgress(totals);
 
+  async function saveWeight(weight: number) {
+    const result = await weightMutation.mutateAsync({ weight });
+    await applyWeightObservationToDayLogCache(queryClient, accountId, selectedDate, weight, result);
+  }
+
   return (
     <main className="min-h-screen bg-surface pb-24 pt-8 antialiased md:pb-20 md:pt-16 subtle-aurora-fade-page-background">
       <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
@@ -143,7 +150,12 @@ export function Logs({ selectedDate }: LogsProps) {
 
         {!isPending && !isUpcoming ? (
           <>
-            <DailySummary totals={totals} progress={progress} weight={dayLog.weight} />
+            <DailySummary
+              totals={totals}
+              progress={progress}
+              weight={dayLog.weight}
+              onSaveWeight={saveWeight}
+            />
 
             <section aria-labelledby="meals-heading" className="space-y-3">
               <Typography
