@@ -1,4 +1,8 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
+import { syncDayLogs } from "@calibrate/api-client";
+import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+
 import {
   applyDayLogSyncResult,
   dateRange,
@@ -10,10 +14,7 @@ import {
   getDayLogSyncManifest,
   type DayLogSlotResult,
   type DayLogSnapshot,
-} from "#/verticals/day-log-cache/day-log-cache.ts";
-import { syncDayLogs } from "@calibrate/api-client";
-import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+} from "./day-log-cache.ts";
 
 type DayLogDateRange = {
   endDate: string;
