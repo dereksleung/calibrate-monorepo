@@ -7,6 +7,8 @@ export interface RecentFoodRecord extends Omit<
   foodEntryId: string;
   catalogFoodId: string | null;
   lastUsedDate: string;
+  chosenQuantity: number;
+  chosenUnit: string;
 }
 
 export interface IRecentFoodQuery {

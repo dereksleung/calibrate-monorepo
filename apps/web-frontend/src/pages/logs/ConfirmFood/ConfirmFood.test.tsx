@@ -103,6 +103,65 @@ describe("ConfirmFood", () => {
     );
   });
 
+  it("initializes a recent food to its last logged plate and rescales from its catalog reference", () => {
+    const onSave = vi.fn();
+    render(
+      <ConfirmFood
+        confirmation={{
+          ...confirmation,
+          food: {
+            ...confirmation.food,
+            calories: 444,
+            totalFatGrams: 25.4,
+            saturatedFatGrams: 3.6,
+            cholesterolMg: 0,
+            sodiumMg: 200,
+            totalCarbohydrateGrams: 6.4,
+            fiberGrams: 2,
+            sugarGrams: 0,
+            proteinGrams: 47.8,
+            chosenQuantity: 2,
+            chosenUnit: "serving",
+          },
+        }}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+
+    expect((screen.getByLabelText("Quantity") as HTMLInputElement).value).toBe("2");
+    expect(
+      within(screen.getByRole("region", { name: "Nutrition at a glance" })).getByText("444 cal"),
+    ).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chosenQuantity: 1,
+        chosenUnit: "serving",
+        calories: 222,
+        proteinGrams: 23.9,
+      }),
+    );
+  });
+
+  it("falls back to the catalog serving when a recent food's chosen unit is unavailable", () => {
+    render(
+      <ConfirmFood
+        confirmation={{
+          ...confirmation,
+          food: { ...confirmation.food, chosenQuantity: 2, chosenUnit: "unavailable" },
+        }}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+
+    expect((screen.getByLabelText("Quantity") as HTMLInputElement).value).toBe("1");
+  });
+
   it("uses storage precision for the displayed and submitted nutrition", () => {
     const onSave = vi.fn();
     render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);

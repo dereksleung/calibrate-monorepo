@@ -57,6 +57,36 @@ export function getFoodUnitOptions(food: SelectedFoodForConfirmation): FoodUnitO
   });
 }
 
+/** Restores a recent food's stored plate nutrition to its catalog reference serving. */
+export function recoverCatalogReferenceNutrition(
+  food: SelectedFoodForConfirmation,
+): SelectedFoodForConfirmation {
+  const selectedUnit = getFoodUnitOptions(food).find((option) => option.unit === food.chosenUnit);
+  const chosenQuantity = food.chosenQuantity;
+  if (
+    !selectedUnit ||
+    typeof chosenQuantity !== "number" ||
+    !Number.isFinite(chosenQuantity) ||
+    chosenQuantity <= 0
+  ) {
+    return food;
+  }
+
+  const scale = selectedUnit.baseQuantity / chosenQuantity;
+  return {
+    ...food,
+    calories: food.calories * scale,
+    totalFatGrams: food.totalFatGrams * scale,
+    saturatedFatGrams: scaleNullableNutrition(food.saturatedFatGrams, scale),
+    cholesterolMg: scaleNullableNutrition(food.cholesterolMg, scale),
+    sodiumMg: scaleNullableNutrition(food.sodiumMg, scale),
+    totalCarbohydrateGrams: food.totalCarbohydrateGrams * scale,
+    fiberGrams: scaleNullableNutrition(food.fiberGrams, scale),
+    sugarGrams: scaleNullableNutrition(food.sugarGrams, scale),
+    proteinGrams: food.proteinGrams * scale,
+  };
+}
+
 function scaleNullableNutrition(value: number | null, scale: number): number | null {
   return value === null ? null : value * scale;
 }

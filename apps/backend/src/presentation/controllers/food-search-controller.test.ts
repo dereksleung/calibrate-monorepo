@@ -91,4 +91,60 @@ describe("FoodSearchController", () => {
     expect(search).not.toHaveBeenCalled();
     expect(status).toHaveBeenCalledWith(400);
   });
+
+  it("maps a recent result's last logged plate onto the response", async () => {
+    const search = vi.fn().mockResolvedValue({
+      results: [
+        {
+          kind: "recent",
+          food: {
+            foodEntryId: "entry-1",
+            catalogFoodId: "catalog-1",
+            lastUsedDate: "2026-10-03",
+            name: "Greek yogurt",
+            brand: "Calibrate Kitchen",
+            chosenQuantity: 2,
+            chosenUnit: "cups",
+            quantityServing: 1,
+            servingLabel: "cup",
+            quantityMass: null,
+            massUnit: null,
+            quantityVolume: null,
+            volumeUnit: null,
+            calories: 300,
+            totalFatGrams: 8,
+            saturatedFatGrams: 4,
+            cholesterolMg: 20,
+            sodiumMg: 130,
+            totalCarbohydrateGrams: 16,
+            fiberGrams: 0,
+            sugarGrams: 12,
+            proteinGrams: 36,
+          },
+        },
+      ],
+      nextCursor: null,
+    });
+    const controller = new FoodSearchController({ search });
+    const status = vi.fn().mockReturnThis();
+    const json = vi.fn();
+
+    await controller.search(
+      { auth: { userId: "user-1" }, query: { query: "yogurt" } } as never,
+      { status, json } as never,
+    );
+
+    expect(json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        results: [
+          expect.objectContaining({
+            source: "recent",
+            chosenQuantity: 2,
+            chosenUnit: "cups",
+            recency: { lastUsedDate: "2026-10-03", displayLabel: "Recent" },
+          }),
+        ],
+      }),
+    );
+  });
 });
