@@ -1,4 +1,3 @@
-import { useSyncDayLogsForDateRange } from "#/pages/dashboard/DashboardV2/useSyncDayLogsForDateRange.ts";
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
@@ -8,6 +7,7 @@ import {
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
+import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
