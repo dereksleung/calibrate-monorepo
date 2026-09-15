@@ -19,7 +19,10 @@ export type SelectedFoodForConfirmation = {
   massUnit: string | null;
   quantityVolume: number | null;
   volumeUnit: string | null;
+  chosenQuantity?: number;
+  chosenUnit?: string;
   lastUsedLabel?: string;
+  lastUsedDate?: string;
 };
 
 export type FoodConfirmationState = {
@@ -35,6 +38,10 @@ declare module "@tanstack/history" {
 
 function isOptionalString(value: unknown): value is string | undefined {
   return value === undefined || typeof value === "string";
+}
+
+function isOptionalNumber(value: unknown): value is number | undefined {
+  return value === undefined || typeof value === "number";
 }
 
 function isNullableNumber(value: unknown): value is number | null {
@@ -76,6 +83,10 @@ export function parseFoodConfirmationState(value: unknown): FoodConfirmationStat
     typeof candidate.id !== "string" ||
     typeof candidate.name !== "string" ||
     !isOptionalString(candidate.brand) ||
+    !isOptionalNumber(candidate.chosenQuantity) ||
+    !isOptionalString(candidate.chosenUnit) ||
+    !isOptionalString(candidate.lastUsedLabel) ||
+    !isOptionalString(candidate.lastUsedDate) ||
     typeof candidate.servingLabel !== "string" ||
     !hasRequiredNumbers ||
     !hasNullableNumbers ||

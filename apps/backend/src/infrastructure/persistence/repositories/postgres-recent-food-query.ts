@@ -33,6 +33,8 @@ export class PostgresRecentFoodQuery implements IRecentFoodQuery {
       foodEntryId: row.id,
       catalogFoodId: row.food_catalog_id,
       lastUsedDate: row.last_used_date,
+      chosenQuantity: row.chosen_quantity,
+      chosenUnit: row.chosen_unit,
       name: row.name,
       brand: row.brand,
       quantityServing: row.quantity_serving,

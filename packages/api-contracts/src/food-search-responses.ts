@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-import { FoodEntryBaseSchema } from "./common/food-entry-base.js";
+import { FoodEntryBaseSchema, FoodEntryChosenFieldsSchema } from "./common/food-entry-base.js";
 
 const FoodSearchResultBaseSchema = FoodEntryBaseSchema.extend({
   sourceLabel: z.string().min(1),
@@ -15,7 +15,7 @@ export const RecentFoodSearchResultSchema = FoodSearchResultBaseSchema.extend({
   source: z.literal("recent"),
   foodEntryId: z.string().min(1),
   recency: RecentFoodRecencyMetadataSchema,
-});
+}).extend(FoodEntryChosenFieldsSchema.shape);
 
 export const CatalogFoodSearchResultSchema = FoodSearchResultBaseSchema.extend({
   source: z.literal("catalog"),
