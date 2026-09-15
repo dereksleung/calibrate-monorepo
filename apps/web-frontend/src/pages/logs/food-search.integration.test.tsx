@@ -145,7 +145,11 @@ const cachedFood: FoodEntryResponse = {
   chosenUnit: "serving",
 };
 
-function renderFoodSearchRoute(queryClient = createQueryClient(), includeCachedFood = true) {
+function renderFoodSearchRoute(
+  queryClient = createQueryClient(),
+  includeCachedFood = true,
+  preselectedMeal: "BREAKFAST" | "LUNCH" | "DINNER" | "SNACKS" | null = "BREAKFAST",
+) {
   if (includeCachedFood) {
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-17"), {
       id: "cached-day-log",
@@ -160,7 +164,9 @@ function renderFoodSearchRoute(queryClient = createQueryClient(), includeCachedF
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({
-      initialEntries: ["/logs/food-search?date=2026-05-18&meal=BREAKFAST"],
+      initialEntries: [
+        `/logs/food-search?date=2026-05-18${preselectedMeal ? `&meal=${preselectedMeal}` : ""}`,
+      ],
     }),
     defaultPreload: "intent",
     scrollRestoration: false,
@@ -178,6 +184,74 @@ function renderFoodSearchRoute(queryClient = createQueryClient(), includeCachedF
 }
 
 describe("food search route", () => {
+  it("quick-adds a Recent food's stored plate to the selected Meal and stays on search", async () => {
+    const { router } = renderFoodSearchRoute();
+
+    fireEvent.click(await screen.findByRole("button", { name: /add Cached oat to Breakfast/i }));
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/daylogs/2026-05-18/food-entries"),
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    const createCall = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([input]) => String(input).includes("/food-entries"))
+      .at(-1);
+
+    expect(JSON.parse(String(createCall?.[1]?.body))).toMatchObject({
+      name: "Cached oat",
+      meal: "BREAKFAST",
+      chosenQuantity: 1,
+      chosenUnit: "serving",
+      calories: 40,
+    });
+    expect(await screen.findByText("Added to Breakfast")).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/logs/food-search");
+  });
+
+  it("keeps search usable and reports the quick-add failure", async () => {
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      if (url.includes("/auth/session")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: {
+                id: accountId,
+                email: "person@example.com",
+                tier: "FREE",
+                createdAt: "2030-01-01T00:00:00.000Z",
+                updatedAt: "2030-01-01T00:00:00.000Z",
+              },
+              sessionTransport: "cookie",
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.includes("/food-entries"))
+        return Promise.resolve(new Response("server error", { status: 500 }));
+      if (url.includes("/daylogs/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(null), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(new Response("not found", { status: 404 }));
+    });
+
+    const { router } = renderFoodSearchRoute();
+    fireEvent.click(await screen.findByRole("button", { name: /add Cached oat to Breakfast/i }));
+
+    expect(await screen.findByText("We couldn't save that food.")).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/logs/food-search");
+    expect(screen.getByRole("button", { name: /select Cached oat/i })).toBeTruthy();
+  });
+
   it("carries the selected food and meal into the confirmation route", async () => {
     const { router } = renderFoodSearchRoute();
 
