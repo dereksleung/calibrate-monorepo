@@ -58,9 +58,10 @@ function NutrientSummary({
     .join(", ");
 
   return (
-    <p
+    <Typography
       aria-label={accessibleLabel}
-      className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-on-primary-fixed"
+      className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-on-primary-fixed"
+      variant="foodListItemSubtitle"
     >
       <span className="inline-flex items-center gap-1">
         <Flame aria-hidden className="size-3" />
@@ -76,7 +77,7 @@ function NutrientSummary({
         <span className="font-semibold">C</span> {carbs} g
       </span>
       {portion ? <span>• {portion}</span> : null}
-    </p>
+    </Typography>
   );
 }
 
@@ -110,9 +111,9 @@ export function MealSection({ meal, title, entries, onAddFood }: MealSectionProp
           <ul className="flex flex-col gap-5" role="list">
             {entries.map((entry) => (
               <li key={entry.id} className="min-w-0">
-                <p className="truncate text-base font-semibold text-on-primary-fixed">
+                <Typography as="p" className="truncate text-on-primary-fixed" variant="foodListItemTitle">
                   {foodItemTitle(entry)}
-                </p>
+                </Typography>
                 <NutrientSummary
                   calories={entry.calories}
                   proteinGrams={entry.proteinGrams}

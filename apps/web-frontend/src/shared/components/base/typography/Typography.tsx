@@ -20,6 +20,8 @@ const typographyVariants = cva("", {
       h2SectionTitle: "font-heading text-xl font-semibold tracking-[-0.02em]",
       h3: "font-heading text-lg font-semibold tracking-[-0.02em]",
       miniCardSubtitle: "text-xs",
+      foodListItemTitle: "text-base font-semibold",
+      foodListItemSubtitle: "text-xs",
       /**
        * Older variants I am considering to deprecate. Came from the original design system
        * generated from working with Google Stitch. Finding Stitch to be a frustrating design tool.

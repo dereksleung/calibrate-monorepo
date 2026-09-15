@@ -8,6 +8,8 @@ const variants = [
   "h2SectionTitle",
   "h3",
   "miniCardSubtitle",
+  "foodListItemTitle",
+  "foodListItemSubtitle",
   "display",
   "headline",
   "headlineLg",
