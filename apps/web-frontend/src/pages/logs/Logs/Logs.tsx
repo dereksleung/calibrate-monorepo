@@ -12,14 +12,16 @@ import { toast } from "sonner";
 
 import {
   MEAL_SECTIONS,
+  DAILY_TARGETS,
   addDaysToIsoDate,
   getDailyProgress,
   getDailyTotals,
   getTodayDateString,
+  isToday,
   normalizeDayLogForRender,
 } from "../log-page-helpers.ts";
+import { CalendarWeek } from "./components/CalendarWeek.tsx";
 import { DailySummary } from "./components/DailySummary.tsx";
-import { DateStepper } from "./components/DateStepper.tsx";
 import { MealSection } from "./components/MealSection.tsx";
 import { QuickLogDrawer } from "./components/QuickLogDrawer.tsx";
 
@@ -76,7 +78,6 @@ function LogsOverviewSkeleton() {
 }
 
 export function Logs({ selectedDate }: LogsProps) {
-  const headingDate = useMemo(() => new Date(`${selectedDate}T00:00:00`), [selectedDate]);
   const navigate = useNavigate();
   const weightInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,15 +87,35 @@ export function Logs({ selectedDate }: LogsProps) {
   const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
   const todayDate = getTodayDateString();
   const isUpcoming = selectedDate > todayDate;
-  const range = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
-  const { cached, syncResponse } = useSyncDayLogsForDateRange({
+  const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
+  const weekStartDate = addDaysToIsoDate(selectedDate, -new Date(`${selectedDate}T00:00:00`).getDay());
+  const calendarWeek = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(weekStartDate, index)),
+    [weekStartDate],
+  );
+  const calendarRange = {
+    startDate: addDaysToIsoDate(weekStartDate, -7),
+    endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
+  };
+  const selectedDaySync = useSyncDayLogsForDateRange({
     accountId,
-    dateRange: range,
+    dateRange: selectedRange,
     enabled: !isUpcoming,
   });
-  const data = cached.find((query) => query.data?.date === selectedDate)?.data?.data;
-  const isPending = !isUpcoming && data === undefined && (syncResponse.isPending || syncResponse.isFetching);
-  const error = syncResponse.error;
+  const calendarWeekSync = useSyncDayLogsForDateRange({
+    accountId,
+    dateRange: calendarRange,
+    enabled: !isUpcoming,
+  });
+  const cachedDayLogs = [...selectedDaySync.cached, ...calendarWeekSync.cached];
+  const getCachedDayLog = (date: string) =>
+    cachedDayLogs.find((query) => query.data?.date === date)?.data?.data;
+  const data = getCachedDayLog(selectedDate);
+  const isPending =
+    !isUpcoming &&
+    data === undefined &&
+    (selectedDaySync.syncResponse.isPending || selectedDaySync.syncResponse.isFetching);
+  const error = selectedDaySync.syncResponse.error;
 
   useEffect(() => {
     if (!isPending && error) {
@@ -107,6 +128,21 @@ export function Logs({ selectedDate }: LogsProps) {
   const dayLog = useMemo(() => normalizeDayLogForRender(data ?? null, selectedDate), [data, selectedDate]);
   const totals = getDailyTotals(dayLog);
   const progress = getDailyProgress(totals);
+  const calendarDays = calendarWeek.map((date) => {
+    const cachedDayLog = getCachedDayLog(date);
+    const calories = getDailyTotals(normalizeDayLogForRender(cachedDayLog ?? null, date)).calories;
+
+    return {
+      date,
+      fillRatio: Math.min(calories / DAILY_TARGETS.calories, 1),
+      selected: date === selectedDate,
+    };
+  });
+  const title = isToday(selectedDate)
+    ? "Today"
+    : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
+        new Date(`${selectedDate}T00:00:00`),
+      );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });
@@ -116,7 +152,12 @@ export function Logs({ selectedDate }: LogsProps) {
   return (
     <main className="min-h-screen bg-surface pb-24 pt-8 antialiased md:pb-20 md:pt-16 subtle-aurora-fade-page-background">
       <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
-        <DateStepper selectedDate={selectedDate} date={headingDate} />
+        <section aria-label="Selected day" className="space-y-3">
+          <Typography as="h1" color="onSurface" variant="h1PageTitle">
+            {title}
+          </Typography>
+          <CalendarWeek days={calendarDays} todayDate={todayDate} />
+        </section>
 
         {isUpcoming ? <p role="status">Upcoming</p> : null}
         {isPending ? <LogsOverviewSkeleton /> : null}
