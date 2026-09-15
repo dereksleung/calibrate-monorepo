@@ -7,7 +7,7 @@ import { applyWeightObservationToDayLogCache } from "#/verticals/day-log-cache/d
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -88,13 +88,18 @@ export function Logs({ selectedDate }: LogsProps) {
   const todayDate = getTodayDateString();
   const isUpcoming = selectedDate > todayDate;
   const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
-  const weekStartDate = addDaysToIsoDate(selectedDate, -new Date(`${selectedDate}T00:00:00`).getDay());
+  const todayWeekStart = addDaysToIsoDate(todayDate, -new Date(`${todayDate}T00:00:00`).getDay());
+  const selectedWeekStart = addDaysToIsoDate(
+    selectedDate > todayDate ? todayWeekStart : selectedDate,
+    -new Date(`${selectedDate > todayDate ? todayWeekStart : selectedDate}T00:00:00`).getDay(),
+  );
+  const [viewedWeekStart, setViewedWeekStart] = useState(selectedWeekStart);
   const calendarWeek = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(weekStartDate, index)),
-    [weekStartDate],
+    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(viewedWeekStart, index)),
+    [viewedWeekStart],
   );
   const calendarRange = {
-    startDate: addDaysToIsoDate(weekStartDate, -7),
+    startDate: addDaysToIsoDate(viewedWeekStart, -7),
     endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
   };
   const selectedDaySync = useSyncDayLogsForDateRange({
@@ -118,6 +123,10 @@ export function Logs({ selectedDate }: LogsProps) {
   const error = selectedDaySync.syncResponse.error;
 
   useEffect(() => {
+    setViewedWeekStart(selectedWeekStart);
+  }, [selectedWeekStart]);
+
+  useEffect(() => {
     if (!isPending && error) {
       toast.error(error.message, {
         closeButton: true,
@@ -128,7 +137,7 @@ export function Logs({ selectedDate }: LogsProps) {
   const dayLog = useMemo(() => normalizeDayLogForRender(data ?? null, selectedDate), [data, selectedDate]);
   const totals = getDailyTotals(dayLog);
   const progress = getDailyProgress(totals);
-  const calendarDays = calendarWeek.map((date) => {
+  const getCalendarDay = (date: string) => {
     const cachedDayLog = getCachedDayLog(date);
     const calories = getDailyTotals(normalizeDayLogForRender(cachedDayLog ?? null, date)).calories;
 
@@ -137,7 +146,7 @@ export function Logs({ selectedDate }: LogsProps) {
       fillRatio: Math.min(calories / DAILY_TARGETS.calories, 1),
       selected: date === selectedDate,
     };
-  });
+  };
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
@@ -156,7 +165,13 @@ export function Logs({ selectedDate }: LogsProps) {
           <Typography as="h1" color="onSurface" variant="h1PageTitle">
             {title}
           </Typography>
-          <CalendarWeek days={calendarDays} todayDate={todayDate} />
+          <CalendarWeek
+            getDay={getCalendarDay}
+            onViewedWeekChange={setViewedWeekStart}
+            selectedWeekStart={selectedWeekStart}
+            todayDate={todayDate}
+            viewedWeekStart={viewedWeekStart}
+          />
         </section>
 
         {isUpcoming ? <p role="status">Upcoming</p> : null}
