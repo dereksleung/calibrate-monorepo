@@ -4,11 +4,11 @@ import {
 } from "#/shared/date/local-date-range.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useIsRestoring } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
-import { useSyncDayLogsForDateRange } from "./useSyncDayLogsForDateRange.ts";
 
 export function DashboardV2Container() {
   const isRestoring = useIsRestoring();
