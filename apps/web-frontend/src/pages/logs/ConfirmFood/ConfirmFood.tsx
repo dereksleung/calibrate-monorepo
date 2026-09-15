@@ -13,7 +13,11 @@ import type { FoodConfirmationState } from "../food-confirmation-state.ts";
 
 import { ConfirmFoodUnitSelect } from "./components/ConfirmFoodUnitSelect.tsx";
 import { DailyGoalProgress, NutritionAtGlance, NutritionFacts } from "./components/FoodNutritionPanels.tsx";
-import { getFoodUnitOptions, scaleFoodNutrition } from "./confirm-food-nutrition.ts";
+import {
+  getFoodUnitOptions,
+  recoverCatalogReferenceNutrition,
+  scaleFoodNutrition,
+} from "./confirm-food-nutrition.ts";
 
 type ConfirmFoodProps = {
   confirmation: FoodConfirmationState;
@@ -30,10 +34,17 @@ const meals: Array<{ value: MealNameEnumType; label: string }> = [
 ];
 
 export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: ConfirmFoodProps) {
-  const { food } = confirmation;
+  const food = useMemo(() => recoverCatalogReferenceNutrition(confirmation.food), [confirmation.food]);
   const units = useMemo(() => getFoodUnitOptions(food), [food]);
-  const [quantity, setQuantity] = useState(String(normalizeFoodEntryQuantity(food.quantityServing)));
-  const [unit, setUnit] = useState(units[0]?.unit ?? food.servingLabel);
+  const initialUnit = units.find((option) => option.unit === confirmation.food.chosenUnit)?.unit;
+  const [quantity, setQuantity] = useState(
+    String(
+      normalizeFoodEntryQuantity(
+        initialUnit ? (confirmation.food.chosenQuantity ?? 0) : food.quantityServing,
+      ),
+    ),
+  );
+  const [unit, setUnit] = useState(initialUnit ?? units[0]?.unit ?? food.servingLabel);
   const [meal, setMeal] = useState<MealNameEnumType>(confirmation.preselectedMeal ?? "BREAKFAST");
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);

@@ -13,10 +13,15 @@ export function FoodResultCard({ food, onSelect }: FoodResultCardProps) {
     `${Math.round(food.calories)} cal`,
     `${food.quantityServing} ${food.servingLabel}`,
     food.brand,
-    food.lastUsedLabel,
   ]
     .filter(Boolean)
     .join(" · ");
+  const recentDate = food.lastUsedDate
+    ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(
+        new Date(`${food.lastUsedDate}T00:00:00Z`),
+      )
+    : undefined;
+  const subtitle = recentDate ? `${recentDate} • ${details}` : details;
 
   return (
     <li>
@@ -33,7 +38,7 @@ export function FoodResultCard({ food, onSelect }: FoodResultCardProps) {
           <span className="block truncate font-heading text-base font-semibold text-on-surface">
             {food.name}
           </span>
-          <span className="mt-1 block truncate text-sm text-on-surface-variant/80">{details}</span>
+          <span className="mt-1 block truncate text-sm text-on-surface-variant/80">{subtitle}</span>
         </span>
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition group-hover:bg-primary-container">
           <Plus aria-hidden className="size-5" strokeWidth={1.75} />
