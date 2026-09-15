@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import type { FoodEntryResponse } from "@calibrate/api-contracts";
+
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { dayLogSlotQueryKey, dayLogSlotVersionQueryKey } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -117,7 +119,44 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderFoodSearchRoute(queryClient = createQueryClient()) {
+const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
+
+const cachedFood: FoodEntryResponse = {
+  id: "cached-oat",
+  meal: "BREAKFAST",
+  name: "Cached oat",
+  brand: "Calibrate Kitchen",
+  calories: 40,
+  totalFatGrams: 1,
+  saturatedFatGrams: null,
+  cholesterolMg: null,
+  sodiumMg: 120,
+  totalCarbohydrateGrams: 7,
+  fiberGrams: 2,
+  sugarGrams: 1,
+  proteinGrams: 3,
+  quantityServing: 1,
+  servingLabel: "cup",
+  quantityMass: null,
+  massUnit: null,
+  quantityVolume: null,
+  volumeUnit: null,
+  chosenQuantity: 1,
+  chosenUnit: "serving",
+};
+
+function renderFoodSearchRoute(queryClient = createQueryClient(), includeCachedFood = true) {
+  if (includeCachedFood) {
+    queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-17"), {
+      id: "cached-day-log",
+      date: "2026-05-17",
+      breakfast: [cachedFood],
+      lunch: [],
+      dinner: [],
+      snacks: [],
+      weight: null,
+    });
+  }
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({
@@ -142,13 +181,18 @@ describe("food search route", () => {
   it("carries the selected food and meal into the confirmation route", async () => {
     const { router } = renderFoodSearchRoute();
 
-    fireEvent.click(await screen.findByRole("button", { name: /select Zero Sugar Oat/i }));
+    expect(await screen.findByRole("button", { name: /select Cached oat/i })).toBeTruthy();
+    expect(screen.getByText("May 17 • 40 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
+    expect(
+      vi.mocked(globalThis.fetch).mock.calls.some(([input]) => String(input).includes("/foods/search")),
+    ).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: /select Cached oat/i }));
 
     expect(await screen.findByRole("heading", { name: "Add Food" })).toBeTruthy();
     expect(router.state.location.pathname).toBe("/logs/confirm-food");
     expect(router.state.location.search).toMatchObject({ date: "2026-05-18" });
     expect(router.state.location.state.foodConfirmation).toMatchObject({
-      food: { name: "Zero Sugar Oat" },
+      food: { name: "Cached oat" },
       preselectedMeal: "BREAKFAST",
     });
   });
@@ -169,7 +213,7 @@ describe("food search route", () => {
 
   it("saves the confirmation and returns to the selected daily log", async () => {
     const { router } = renderFoodSearchRoute();
-    fireEvent.click(await screen.findByRole("button", { name: /select Zero Sugar Oat/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /select Cached oat/i }));
     fireEvent.click(await screen.findByRole("button", { name: "Done" }));
 
     await screen.findByRole("heading", { name: "Monday, May 18" });
@@ -207,7 +251,7 @@ describe("food search route", () => {
     });
 
     const { router } = renderFoodSearchRoute();
-    fireEvent.click(await screen.findByRole("button", { name: /select Zero Sugar Oat/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /select Cached oat/i }));
     fireEvent.click(await screen.findByRole("button", { name: "Done" }));
 
     await waitFor(() => {
@@ -224,9 +268,12 @@ describe("food search route", () => {
     const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
     const queryClient = createQueryClient();
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-18"), null);
+    for (const date of ["2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16"]) {
+      queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), null);
+    }
 
     const { router } = renderFoodSearchRoute(queryClient);
-    fireEvent.click(await screen.findByRole("button", { name: /select Zero Sugar Oat/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /select Cached oat/i }));
     fireEvent.click(await screen.findByRole("button", { name: "Done" }));
 
     await screen.findByRole("heading", { name: "Monday, May 18" });
@@ -254,6 +301,9 @@ describe("food search route", () => {
     });
     queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, "2026-05-18"), 2);
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-11"), null);
+    for (const date of ["2026-05-12", "2026-05-13", "2026-05-14", "2026-05-15", "2026-05-16"]) {
+      queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), null);
+    }
 
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
       const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
@@ -311,7 +361,7 @@ describe("food search route", () => {
     });
 
     const { router } = renderFoodSearchRoute(queryClient);
-    fireEvent.click(await screen.findByRole("button", { name: /select Zero Sugar Oat/i }));
+    fireEvent.click(await screen.findByRole("button", { name: /select Cached oat/i }));
     fireEvent.click(await screen.findByRole("button", { name: "Done" }));
 
     await screen.findByRole("heading", { name: "Monday, May 18" });

@@ -102,7 +102,7 @@ function RecentFoodSkeletons() {
   return (
     <div aria-busy="true" aria-label="Loading recently logged foods" className="space-y-3">
       {Array.from({ length: 4 }).map((_, index) => (
-        <div key={index} className="glass-card rounded-2xl px-5 py-4">
+        <div key={index} className="rounded-xl px-4 py-3">
           <div className="h-5 w-2/5 animate-pulse rounded-full bg-surface-container-high" />
           <div className="mt-3 h-4 w-3/5 animate-pulse rounded-full bg-surface-container-high" />
         </div>
@@ -112,7 +112,7 @@ function RecentFoodSkeletons() {
 }
 
 export function FoodSearchPage({
-  recentFoods = mockRecentFoods,
+  recentFoods = [],
   state = "ready",
   query = "",
   onQueryChange,
@@ -147,19 +147,16 @@ export function FoodSearchPage({
             {heading}
           </h1>
 
-          <div className="mt-4">
+          <div className="food-search-list-card mt-4 rounded-2xl p-2">
             {state === "loading" ? <RecentFoodSkeletons /> : null}
             {state === "empty" ? (
-              <p
-                role="status"
-                className="rounded-2xl bg-surface-container-low px-5 py-6 text-on-surface-variant"
-              >
-                No results.
+              <p role="status" className="px-3 py-5 text-on-surface-variant">
+                {isSearching ? "No results." : "No recently logged foods."}
               </p>
             ) : null}
             {state === "error" ? <WarningBanner>Could not search.</WarningBanner> : null}
             {state === "ready" ? (
-              <ul role="list" className="space-y-3">
+              <ul role="list" className="space-y-1">
                 {recentFoods.map((food) => (
                   <FoodResultCard
                     key={food.id}
