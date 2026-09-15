@@ -314,8 +314,8 @@ describe("Logs", () => {
     renderLogsRoute();
 
     expect(await screen.findByRole("heading", { name: "May 18" })).toBeTruthy();
-    expect(screen.getByRole("list", { name: "Calendar week" })).toBeTruthy();
-    expect(screen.getAllByRole("link", { name: /May/ })).toHaveLength(7);
+    expect(screen.getAllByRole("list", { name: "Calendar week" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: /May/ })).toHaveLength(14);
     await screen.findAllByText("282");
     expect(
       screen
@@ -365,5 +365,47 @@ describe("Logs", () => {
       ]),
     );
     expect(JSON.stringify(syncBodies)).not.toContain("2026-09-16");
+  });
+
+  it("keeps the URL and title stable while a week is dragged, then snaps to the older Sunday", async () => {
+    const { router } = renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    const scroller = await screen.findByTestId("calendar-week-scroller");
+    Object.defineProperty(scroller, "scrollLeft", { configurable: true, value: 640, writable: true });
+    fireEvent.scroll(scroller);
+    fireEvent(scroller, new Event("scrollend"));
+
+    expect(router.state.location.search).toEqual({ date: "2026-09-15" });
+    expect(screen.getByRole("heading", { name: "Today" })).toBeTruthy();
+    expect(await screen.findByTestId("calendar-week-2026-09-06")).toBeTruthy();
+  });
+
+  it("clamps the future direction and exposes desktop week chevrons without changing the URL", async () => {
+    const { router } = renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    expect(((await screen.findByRole("button", { name: "Next week" })) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Previous week" }));
+    expect(await screen.findByTestId("calendar-week-2026-09-06")).toBeTruthy();
+    expect(router.state.location.search).toEqual({ date: "2026-09-15" });
+  });
+
+  it("prefetches the snapped week and its previous week while mounting only the visible week and older overscan", async () => {
+    const fetchMock = vi.mocked(globalThis.fetch);
+    renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Previous week" }));
+    await screen.findByTestId("calendar-week-2026-09-06");
+
+    expect(screen.getAllByTestId(/calendar-week-\d/)).toHaveLength(2);
+    await waitFor(() => {
+      const syncBodies = fetchMock.mock.calls
+        .filter(([request]) => getFetchUrl(request).includes("/daylogs:sync"))
+        .map(([, init]) => JSON.parse(init!.body as string));
+      expect(syncBodies).toEqual(
+        expect.arrayContaining([expect.objectContaining({ startDate: "2026-08-30", endDate: "2026-09-12" })]),
+      );
+    });
   });
 });
