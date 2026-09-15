@@ -84,7 +84,7 @@ This gives a defensible ordering guarantee: a restore or persist operation that 
 | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Dashboard or current Logs view              | Use rolling `today - 6` through today; cache-first, then sync if eligible.                    |
 | Future date in current Sunday-Saturday week | Render Upcoming; do not model as Known-empty or sync it.                                      |
-| Scroll historical Calendar weeks            | No request.                                                                                   |
+| Scroll historical Calendar weeks            | Amended by [ADR-0006](../adr/0006-logs-calendar-week-scroller-prefetch.md): prefetch `W` (≤ today) plus `W−1`. |
 | Explicitly select historical date `D`       | Cache-first; only if D is unloaded, unverified, or one-hour stale, sync `D - 6` through D.    |
 | Select a nearby historic date after success | Skip while its own validation timestamp remains fresh.                                        |
 | Open Nutrient Analytics drawer              | Cache-first; when coverage is stale/incomplete, deliberately sync `today - 27` through today. |

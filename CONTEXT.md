@@ -36,6 +36,18 @@ _Avoid_: weight day, completed weight log
 A Day Log containing at least one Food Entry. It is the completed state for the Food Logging habit display.
 _Avoid_: meal day, completed food log
 
+**Food Entry**:
+A recorded food amount on a Day Log, assigned to exactly one Meal.
+_Avoid_: food log item, logged food, meal item
+
+**Meal**:
+Breakfast, Lunch, Dinner, or Snacks on a Day Log. It is a named bucket, not a clock time.
+_Avoid_: meal time, sitting, course
+
+**Recent food**:
+A prior Food Entry reused as a logging suggestion. It carries the last logged amount, not a catalog Reference serving.
+_Avoid_: search hit, catalog food, recently logged item
+
 **Food contribution**:
 The total amount of one nutrient supplied by Food Entries with exactly the same recorded name during an analysis window.
 _Avoid_: food source, fuzzy food match

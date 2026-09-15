@@ -2,6 +2,8 @@
 
 **Status:** Accepted
 
+Logs Calendar week scroller freshness is amended by [ADR-0006](./0006-logs-calendar-week-scroller-prefetch.md).
+
 ## Context
 
 Calibrate needs fast cache-first Day Log reads without repeatedly transferring and rehydrating unchanged Food Entries. The previous ETag design optimized exact range reads, but needed a special six-day rollover validator and did not let the server return only the individual dates that changed. It also did not fully resolve a shared IndexedDB race: a tab that missed a logout broadcast, or that was persisting while another tab logged out, could otherwise restore or revive a prior account's private cache.
@@ -44,7 +46,7 @@ Persisted slots are retained for 30 days after their last successful validation.
 
 One hour is the normal validation freshness period. Cache-first composition always renders known slots before a qualifying background sync. Dashboard synchronizes its rolling seven-day range (`today - 6` through `today`). Logs displays a human Sunday-to-Saturday Calendar week, but the current week uses the same rolling seven-day range and can reuse Dashboard slots. Future dates are Upcoming, disabled, and never represented as Known-empty.
 
-Scrolling a historical Calendar week does not request data. Explicitly selecting a historical date synchronizes the selected date and the preceding six days only if that selected slot is unloaded, unverified, or at least one hour since its last successful validation. Freshness is evaluated for the selected date, not the calendar-week range. A successful sync timestamps all seven dates, reducing nearby browse requests. Nutrient Analytics waits until its drawer opens, then synchronizes the preceding 28 dates when its coverage is not fresh; it renders cached slots first and does not claim a complete comparison until all 28 dates are confirmed.
+Scrolling a historical Calendar week on Logs is no longer network-silent; ADR-0006 prefetches the snapped week (dates ≤ today) plus the previous Calendar week so calorie rings are ready before the overscan week enters view. Explicitly selecting a historical date still synchronizes the selected date and the preceding six days only if that selected slot is unloaded, unverified, or at least one hour since its last successful validation. Freshness for that selected-date range is evaluated for the selected date, not the calendar-week range. A successful sync timestamps all seven dates, reducing nearby browse requests. Nutrient Analytics waits until its drawer opens, then synchronizes the preceding 28 dates when its coverage is not fresh; it renders cached slots first and does not claim a complete comparison until all 28 dates are confirmed.
 
 Food Entry mutations return a compact write delta: the created entry, Day Log ID, previous version (or `null` for an aggregate created from known absence), and new version. The client patches a cached slot only when its predecessor version matches. On a mismatch or unloaded slot it keeps a locally acknowledged view but marks the slot unverified for normal sync rather than issuing an immediate follow-up request during meal-time traffic.
 
