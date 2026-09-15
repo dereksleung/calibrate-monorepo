@@ -34,10 +34,10 @@ describe("FoodSearchPage", () => {
     expect(screen.getByLabelText("Loading recently logged foods")).toBeTruthy();
   });
 
-  it("renders a simple empty result message", () => {
+  it("renders the cache-only idle empty message", () => {
     render(<FoodSearchPage state="empty" />);
 
-    expect(screen.getByText("No results.")).toBeTruthy();
+    expect(screen.getByText("No recently logged foods.")).toBeTruthy();
   });
 
   it("renders a warning banner when recent foods cannot load", () => {
