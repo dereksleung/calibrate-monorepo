@@ -106,6 +106,14 @@
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04);
 }
 
+.food-search-list-card {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.04);
+}
+
 .auth-page-background {
   background: radial-gradient(circle at top, #caecbc 0%, #f9f9f9 60%);
 }
