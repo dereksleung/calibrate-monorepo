@@ -5,7 +5,7 @@ import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.
 import { createDayLogSyncResponse } from "@calibrate/api-contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "../../../routeTree.gen.ts";
@@ -92,14 +92,15 @@ beforeEach(() => {
       );
     }
     if (url.includes("/daylogs:sync")) {
+      const { endDate } = JSON.parse(init!.body as string) as { endDate: string };
       return Promise.resolve(
         new Response(
           JSON.stringify(
             createDayLogSyncResponse([
               {
-                date: JSON.parse(init!.body as string).endDate,
-                dayLog: dayLogMay18Response,
-                versionNumber: 1,
+                date: endDate,
+                dayLog: endDate === "2026-05-18" ? dayLogMay18Response : null,
+                versionNumber: endDate === "2026-05-18" ? 1 : null,
               },
             ]),
           ),
@@ -120,28 +121,34 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderLogsRoute(queryClient: QueryClient = createQueryClient()) {
+function renderLogsRoute(
+  queryClient: QueryClient = createQueryClient(),
+  initialEntry = "/logs?date=2026-05-18",
+) {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({
-      initialEntries: ["/logs?date=2026-05-18"],
+      initialEntries: [initialEntry],
     }),
     defaultPreload: "intent",
     scrollRestoration: false,
   });
 
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
+  return {
+    router,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 describe("Logs", () => {
   it("renders the daily overview shell from fixture data", async () => {
     renderLogsRoute();
 
-    expect(await screen.findByRole("heading", { name: "Monday, May 18" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "May 18" })).toBeTruthy();
     expect((await screen.findAllByText("282")).length).toBeGreaterThan(0);
     expect(screen.getByText("/ 1,800")).toBeTruthy();
     expect(screen.getByText("1,518 left")).toBeTruthy();
@@ -301,5 +308,62 @@ describe("Logs", () => {
     expect(
       fetchMock.mock.calls.filter(([request]) => getFetchUrl(request).includes("/daylogs/2026-05-18/weight")),
     ).toHaveLength(0);
+  });
+
+  it("renders a compact title and the selected Sunday-through-Saturday week", async () => {
+    renderLogsRoute();
+
+    expect(await screen.findByRole("heading", { name: "May 18" })).toBeTruthy();
+    expect(screen.getByRole("list", { name: "Calendar week" })).toBeTruthy();
+    expect(screen.getAllByRole("link", { name: /May/ })).toHaveLength(7);
+    await screen.findAllByText("282");
+    expect(
+      screen
+        .getByRole("link", { name: /May 18/ })
+        .querySelector("[stroke-dashoffset]")
+        ?.getAttribute("stroke-dashoffset"),
+    ).not.toBe("113.09733552923255");
+  });
+
+  it("uses date numbers for past weeks and writes the selected day to the URL", async () => {
+    const { router } = renderLogsRoute();
+
+    const maySeventeen = await screen.findByRole("link", { name: /May 17/ });
+    expect(maySeventeen.textContent).toContain("17");
+
+    fireEvent.click(maySeventeen);
+
+    await waitFor(() => {
+      expect(router.state.location.search).toEqual({ date: "2026-05-17" });
+    });
+  });
+
+  it("uses weekday labels, a dotted zero-calorie ring, and disables upcoming days in the current week", async () => {
+    renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    const selectedDay = await screen.findByRole("link", { name: /September 15/ });
+    expect(selectedDay.textContent).toContain("T");
+    expect(selectedDay.querySelector('[data-dotted="true"]')).toBeTruthy();
+    expect(screen.getAllByLabelText(/upcoming/)).not.toHaveLength(0);
+    expect(screen.queryByRole("link", { name: /September 16/ })).toBeNull();
+  });
+
+  it("syncs the selected range and the visible plus previous calendar weeks without future dates", async () => {
+    const fetchMock = vi.mocked(globalThis.fetch);
+    renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    await screen.findByRole("heading", { name: "Today" });
+
+    const syncBodies = fetchMock.mock.calls
+      .filter(([request]) => getFetchUrl(request).includes("/daylogs:sync"))
+      .map(([, init]) => JSON.parse(init!.body as string));
+
+    expect(syncBodies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ startDate: "2026-09-09", endDate: "2026-09-15" }),
+        expect.objectContaining({ startDate: "2026-09-06", endDate: "2026-09-15" }),
+      ]),
+    );
+    expect(JSON.stringify(syncBodies)).not.toContain("2026-09-16");
   });
 });
