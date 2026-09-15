@@ -35,6 +35,9 @@ function toConfirmationFood(food: FoodSearchResult): SelectedFoodForConfirmation
     quantityVolume: food.quantityVolume,
     volumeUnit: food.volumeUnit,
     lastUsedLabel: food.source === "recent" ? food.recency.displayLabel : undefined,
+    lastUsedDate: food.source === "recent" ? food.recency.lastUsedDate : undefined,
+    chosenQuantity: food.source === "recent" ? food.chosenQuantity : undefined,
+    chosenUnit: food.source === "recent" ? food.chosenUnit : undefined,
   };
 }
 

@@ -46,6 +46,8 @@ function toRecentResult(
   return {
     source: "recent",
     foodEntryId: food.foodEntryId,
+    chosenQuantity: food.chosenQuantity,
+    chosenUnit: food.chosenUnit,
     sourceLabel: "Recent",
     recency: { lastUsedDate: food.lastUsedDate, displayLabel: "Recent" },
     name: food.name,

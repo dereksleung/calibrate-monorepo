@@ -190,9 +190,7 @@ describe("log page response contracts", () => {
         createdDayLogId: "day-log-1",
       }),
     ).toEqual({ versionNumber: 1, createdDayLogId: "day-log-1" });
-    expect(() =>
-      UpdateDayLogWeightResponseSchema.parse({ versionNumber: 2, weight: 180.5 }),
-    ).toThrow();
+    expect(() => UpdateDayLogWeightResponseSchema.parse({ versionNumber: 2, weight: 180.5 })).toThrow();
   });
 
   it("rejects a create success body that echoes the Food Entry or a dayLogId", () => {
@@ -280,12 +278,35 @@ describe("log page response contracts", () => {
         lastUsedDate: "2026-05-19",
         displayLabel: "Tue",
       },
+      chosenQuantity: 2,
+      chosenUnit: "cups",
     });
 
     expect(result.recency).toEqual({
       lastUsedDate: "2026-05-19",
       displayLabel: "Tue",
     });
+    expect(result).toMatchObject({ chosenQuantity: 2, chosenUnit: "cups" });
+  });
+
+  it("requires chosen fields on recent results and excludes them from catalog results", () => {
+    const recent = {
+      ...baseFoodResult,
+      source: "recent" as const,
+      foodEntryId: "food-entry-1",
+      recency: { lastUsedDate: "2026-05-19", displayLabel: "Tue" },
+    };
+
+    expect(() => RecentFoodSearchResultSchema.parse(recent)).toThrow();
+    expect(
+      CatalogFoodSearchResultSchema.parse({
+        ...baseFoodResult,
+        source: "catalog",
+        catalogFoodId: "2d38c136-5633-4b22-9553-b8a587dd6ba6",
+        chosenQuantity: 2,
+        chosenUnit: "cups",
+      }),
+    ).not.toHaveProperty("chosenQuantity");
   });
 
   it("models food search as one backend-ordered discriminated result list", () => {
@@ -299,6 +320,8 @@ describe("log page response contracts", () => {
             lastUsedDate: "2026-05-19",
             displayLabel: "Tue",
           },
+          chosenQuantity: 2,
+          chosenUnit: "cups",
         },
         {
           ...baseFoodResult,
