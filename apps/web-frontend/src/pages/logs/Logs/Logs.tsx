@@ -7,7 +7,7 @@ import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-d
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -88,13 +88,23 @@ export function Logs({ selectedDate }: LogsProps) {
   const todayDate = getTodayDateString();
   const isUpcoming = selectedDate > todayDate;
   const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
-  const weekStartDate = addDaysToIsoDate(selectedDate, -new Date(`${selectedDate}T00:00:00`).getDay());
+  const selectedWeekStartDate = addDaysToIsoDate(
+    selectedDate,
+    -new Date(`${selectedDate}T00:00:00`).getDay(),
+  );
+  const todayWeekStartDate = addDaysToIsoDate(todayDate, -new Date(`${todayDate}T00:00:00`).getDay());
+  const [visibleWeekStartDate, setVisibleWeekStartDate] = useState(selectedWeekStartDate);
+
+  useEffect(() => {
+    setVisibleWeekStartDate(selectedWeekStartDate);
+  }, [selectedWeekStartDate]);
+
   const calendarWeek = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(weekStartDate, index)),
-    [weekStartDate],
+    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(visibleWeekStartDate, index)),
+    [visibleWeekStartDate],
   );
   const calendarRange = {
-    startDate: addDaysToIsoDate(weekStartDate, -7),
+    startDate: addDaysToIsoDate(visibleWeekStartDate, -7),
     endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
   };
   const selectedDaySync = useSyncDayLogsForDateRange({
@@ -153,10 +163,20 @@ export function Logs({ selectedDate }: LogsProps) {
     <main className="min-h-screen bg-surface pb-24 pt-8 antialiased md:pb-20 md:pt-16 subtle-aurora-fade-page-background">
       <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
         <section aria-label="Selected day" className="space-y-3">
-          <Typography as="h1" color="onSurface" variant="h1PageTitle">
+          <Typography
+            as="h1"
+            className="font-heading text-[1.75rem] leading-8 tracking-[-0.03em]"
+            color="onSurface"
+          >
             {title}
           </Typography>
-          <CalendarWeek days={calendarDays} todayDate={todayDate} />
+          <CalendarWeek
+            canShowNextWeek={visibleWeekStartDate < todayWeekStartDate}
+            days={calendarDays}
+            onShowNextWeek={() => setVisibleWeekStartDate((date) => addDaysToIsoDate(date, 7))}
+            onShowPreviousWeek={() => setVisibleWeekStartDate((date) => addDaysToIsoDate(date, -7))}
+            todayDate={todayDate}
+          />
         </section>
 
         {isUpcoming ? <p role="status">Upcoming</p> : null}

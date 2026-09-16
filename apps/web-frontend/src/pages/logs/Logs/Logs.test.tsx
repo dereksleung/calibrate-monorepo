@@ -60,6 +60,8 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date("2026-09-15T12:00:00"));
   window.scrollTo = vi.fn();
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -119,6 +121,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function renderLogsRoute(
@@ -346,6 +349,44 @@ describe("Logs", () => {
     expect(selectedDay.querySelector('[data-dotted="true"]')).toBeTruthy();
     expect(screen.getAllByLabelText(/upcoming/)).not.toHaveLength(0);
     expect(screen.queryByRole("link", { name: /September 16/ })).toBeNull();
+  });
+
+  it("shows desktop week chevrons that change the visible week without changing the selected date", async () => {
+    const { router } = renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    expect(await screen.findByRole("button", { name: "Show previous week" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Show next week" }).hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Show previous week" }));
+
+    expect(await screen.findByRole("link", { name: /September 6/ })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Today" })).toBeTruthy();
+    expect(router.state.location.search).toEqual({ date: "2026-09-15" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Show next week" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Show next week" }).hasAttribute("disabled")).toBe(true);
+    });
+  });
+
+  it("hides week chevrons on mobile", async () => {
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: query === "(max-width: 767px)",
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+
+    renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
+
+    await screen.findByRole("heading", { name: "Today" });
+    expect(screen.queryByRole("button", { name: "Show previous week" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Show next week" })).toBeNull();
   });
 
   it("syncs the selected range and the visible plus previous calendar weeks without future dates", async () => {
