@@ -1,8 +1,9 @@
+import type { RefObject } from "react";
+
 import { cn } from "#/lib/utils.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import type { RefObject } from "react";
 
 import type { NutritionTotals, ProgressValue } from "../../log-page-helpers.ts";
 
