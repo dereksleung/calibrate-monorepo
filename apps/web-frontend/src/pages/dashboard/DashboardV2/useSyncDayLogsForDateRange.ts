@@ -30,7 +30,10 @@ export function useSyncDayLogsForDateRange({
   enabled: boolean;
 }) {
   const queryClient = useQueryClient();
-  const dates = enabled ? dateRange(requestedRange.startDate, requestedRange.endDate) : [];
+  // Continue observing the requested slots even when network synchronization is
+  // disabled. Callers can therefore render cache data while deciding whether the
+  // selected date warrants a future range validation.
+  const dates = dateRange(requestedRange.startDate, requestedRange.endDate);
   const cached = useQueries({
     queries: dates.map((date) => ({
       queryKey: dayLogSlotQueryKey(accountId, date),

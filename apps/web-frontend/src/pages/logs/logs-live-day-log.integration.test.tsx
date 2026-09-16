@@ -255,6 +255,62 @@ describe("logs live day log", () => {
     expect(screen.queryByText("Heavy meal")).toBeNull();
   });
 
+  it("does not synchronize again when selecting a freshly validated day in the initial window", async () => {
+    const syncRequests: Array<{ startDate: string; endDate: string }> = [];
+
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
+      const url = getFetchUrl(input);
+      if (url.includes("/auth/session")) return Promise.resolve(authenticatedSessionResponse());
+      if (url.includes("/daylogs:sync")) {
+        const request = JSON.parse(init!.body as string) as { startDate: string; endDate: string };
+        syncRequests.push(request);
+        const dates =
+          request.startDate === "2026-06-03"
+            ? [
+                "2026-06-03",
+                "2026-06-04",
+                "2026-06-05",
+                "2026-06-06",
+                "2026-06-07",
+                "2026-06-08",
+                "2026-06-09",
+              ]
+            : [
+                "2026-06-04",
+                "2026-06-05",
+                "2026-06-06",
+                "2026-06-07",
+                "2026-06-08",
+                "2026-06-09",
+                "2026-06-10",
+              ];
+
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              slots: dates.map((date) => ({ date, versionNumber: null, dayLog: null })),
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+
+      return Promise.resolve(new Response("not found", { status: 404 }));
+    });
+
+    renderLogsRoute("/logs?date=2026-06-10");
+
+    expect(await screen.findByRole("heading", { name: "Wednesday, June 10" })).toBeTruthy();
+    expect(syncRequests).toHaveLength(1);
+    expect(syncRequests[0]).toMatchObject({ startDate: "2026-06-04", endDate: "2026-06-10" });
+
+    fireEvent.click(screen.getAllByRole("link", { name: "Previous day" })[0]);
+
+    expect(await screen.findByRole("heading", { name: "Tuesday, June 9" })).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(syncRequests).toHaveLength(1);
+  });
+
   it("dismisses Quick log and focuses the existing daily-summary weight field", async () => {
     const dayLog = {
       id: "857846ee-8dfb-4e6d-a24d-2c80b05b9db2",
