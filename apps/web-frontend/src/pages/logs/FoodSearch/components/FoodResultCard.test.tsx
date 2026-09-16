@@ -33,6 +33,23 @@ describe("FoodResultCard", () => {
     expect(screen.getByText("Oct 3 • 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
   });
 
+  it("shows the persisted serving for a Recent food", () => {
+    render(
+      <FoodResultCard
+        food={{
+          ...food,
+          calories: 300,
+          chosenQuantity: 2,
+          chosenUnit: "cups",
+          lastUsedDate: "2026-10-03",
+        }}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Oct 3 • 300 cal · 2 cups · Calibrate Kitchen")).toBeTruthy();
+  });
+
   it("does not prefix a catalog subtitle with a date", () => {
     render(<FoodResultCard food={food} onSelect={vi.fn()} />);
 

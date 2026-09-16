@@ -9,9 +9,11 @@ type FoodResultCardProps = {
 };
 
 export function FoodResultCard({ food, onSelect }: FoodResultCardProps) {
+  const servingQuantity = food.chosenQuantity ?? food.quantityServing;
+  const servingUnit = food.chosenUnit ?? food.servingLabel;
   const details = [
     `${Math.round(food.calories)} cal`,
-    `${food.quantityServing} ${food.servingLabel}`,
+    `${servingQuantity} ${servingUnit}`,
     food.brand,
   ]
     .filter(Boolean)
