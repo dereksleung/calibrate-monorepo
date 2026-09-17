@@ -189,6 +189,11 @@ describe("ConfirmFood", () => {
     render(<ConfirmFood confirmation={confirmation} onCancel={vi.fn()} onSave={onSave} />);
 
     fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0.333" } });
+
+    expect(
+      within(screen.getByRole("region", { name: "Nutrition at a glance" })).getByText("8g"),
+    ).toBeTruthy();
+
     fireEvent.submit(screen.getByRole("button", { name: "Done" }).closest("form")!);
 
     expect(screen.getByRole("alert").textContent).toContain("no more than two decimal places");

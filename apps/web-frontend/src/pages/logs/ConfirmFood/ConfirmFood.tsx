@@ -33,6 +33,18 @@ const meals: Array<{ value: MealNameEnumType; label: string }> = [
   { value: "SNACKS", label: "Snacks" },
 ];
 
+function hasAtMostTwoFractionDigits(value: string): boolean {
+  const match = value.match(/^[+-]?(?:\d+(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/);
+  if (!match) {
+    return false;
+  }
+
+  const fractionalDigits = (match[1] ?? match[2] ?? "").replace(/0+$/, "").length;
+  const exponent = Number(match[3] ?? "0");
+
+  return Math.max(0, fractionalDigits - exponent) <= 2;
+}
+
 export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: ConfirmFoodProps) {
   const food = useMemo(() => recoverCatalogReferenceNutrition(confirmation.food), [confirmation.food]);
   const units = useMemo(() => getFoodUnitOptions(food), [food]);
@@ -49,10 +61,9 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);
   const enteredQuantity = Number(quantity);
-  const chosenQuantity = normalizeFoodEntryQuantity(enteredQuantity);
   const nutrition = useMemo(
-    () => scaleFoodNutrition(food, chosenQuantity, unit),
-    [chosenQuantity, food, unit],
+    () => scaleFoodNutrition(food, enteredQuantity, unit),
+    [enteredQuantity, food, unit],
   );
 
   useEffect(() => {
@@ -70,7 +81,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
       setQuantityError("Enter an amount greater than 0.");
       return;
     }
-    if (chosenQuantity !== enteredQuantity) {
+    if (!hasAtMostTwoFractionDigits(quantity)) {
       setQuantityError("Use no more than two decimal places.");
       return;
     }
@@ -81,7 +92,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
         name: food.name,
         brand: food.brand ?? null,
         meal,
-        chosenQuantity,
+        chosenQuantity: enteredQuantity,
         chosenUnit: unit,
         ...nutrition,
         quantityServing: food.quantityServing,

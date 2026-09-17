@@ -1,6 +1,5 @@
 import {
   normalizeFoodEntryNutrition,
-  normalizeFoodEntryQuantity,
   type CreateFoodEntryRequest,
 } from "@calibrate/api-contracts";
 
@@ -25,17 +24,16 @@ export type ScaledFoodNutrition = Pick<
 >;
 
 function createUnitOption(quantity: number | null, unit: string | null): FoodUnitOption | null {
-  const normalizedQuantity = quantity === null ? null : normalizeFoodEntryQuantity(quantity);
   if (
-    !Number.isFinite(normalizedQuantity) ||
-    normalizedQuantity === null ||
-    normalizedQuantity <= 0 ||
+    quantity === null ||
+    !Number.isFinite(quantity) ||
+    quantity <= 0 ||
     !unit?.trim()
   ) {
     return null;
   }
 
-  return { unit: unit.trim(), baseQuantity: normalizedQuantity };
+  return { unit: unit.trim(), baseQuantity: quantity };
 }
 
 /** Returns only catalog units that have a matching, positive reference quantity. */
