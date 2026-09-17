@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
 
-import { recoverCatalogReferenceNutrition } from "./confirm-food-nutrition.ts";
+import { recoverCatalogReferenceNutrition, scaleFoodNutrition } from "./confirm-food-nutrition.ts";
 
 const food: SelectedFoodForConfirmation = {
   id: "food-1",
@@ -47,5 +47,29 @@ describe("recoverCatalogReferenceNutrition", () => {
     const invalidFood = { ...food, chosenQuantity: 0 };
 
     expect(recoverCatalogReferenceNutrition(invalidFood)).toBe(invalidFood);
+  });
+
+  it("recovers recent nutrition from the exact catalog reference quantity", () => {
+    const recentlyLoggedFood = {
+      ...food,
+      calories: 100,
+      quantityServing: 3.236,
+      chosenQuantity: 3.2,
+    };
+
+    expect(recoverCatalogReferenceNutrition(recentlyLoggedFood).calories).toBeCloseTo(101.125, 10);
+  });
+});
+
+describe("scaleFoodNutrition", () => {
+  it("scales nutrition from an exact catalog unit quantity", () => {
+    const foodWithPreciseVolume = {
+      ...food,
+      calories: 100,
+      quantityVolume: 3.236,
+      volumeUnit: "ml",
+    };
+
+    expect(scaleFoodNutrition(foodWithPreciseVolume, 3.2, "ml").calories).toBe(98.9);
   });
 });
