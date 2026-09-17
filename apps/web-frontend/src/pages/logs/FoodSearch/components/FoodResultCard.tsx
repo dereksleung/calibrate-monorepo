@@ -19,7 +19,7 @@ export function FoodResultCard({ food, onSelect }: FoodResultCardProps) {
         new Date(`${food.lastUsedDate}T00:00:00Z`),
       )
     : undefined;
-  const subtitle = recentDate ? `${recentDate} • ${details}` : details;
+  const subtitle = recentDate ? `${recentDate} · ${details}` : details;
 
   return (
     <li>

@@ -30,7 +30,7 @@ describe("FoodResultCard", () => {
   it("prefixes a Recent food subtitle with its Food Logging day", () => {
     render(<FoodResultCard food={{ ...food, lastUsedDate: "2026-10-03" }} onSelect={vi.fn()} />);
 
-    expect(screen.getByText("Oct 3 • 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
+    expect(screen.getByText("Oct 3 · 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
   });
 
   it("shows the persisted serving for a Recent food", () => {
@@ -47,7 +47,7 @@ describe("FoodResultCard", () => {
       />,
     );
 
-    expect(screen.getByText("Oct 3 • 300 cal · 2 cups · Calibrate Kitchen")).toBeTruthy();
+    expect(screen.getByText("Oct 3 · 300 cal · 2 cups · Calibrate Kitchen")).toBeTruthy();
   });
 
   it("does not prefix a catalog subtitle with a date", () => {
