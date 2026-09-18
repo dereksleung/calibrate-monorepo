@@ -102,17 +102,6 @@ function toConfirmationFood(
   };
 }
 
-function toCachedConfirmationFood(
-  food: FoodEntryResponse,
-  lastUsedDate: string,
-): SelectedFoodForConfirmation {
-  return {
-    ...food,
-    brand: food.brand ?? undefined,
-    lastUsedDate,
-  };
-}
-
 export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const navigate = useNavigate();
   const session = useAuthenticatedSession();
@@ -177,7 +166,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
       .map(([queryKey, data]) => ({ date: String(queryKey[3]), data }));
 
     return rankRecentFoodsFromCache({ slots, today: getTodayDateString(), preselectedMeal }).map(
-      ({ date, food }) => toCachedConfirmationFood(food, date),
+      ({ date, food }) => toConfirmationFood(food, formatRecentFoodDate(date)),
     );
   }, [preselectedMeal, queryClient, session]);
   const state = activeSearch
