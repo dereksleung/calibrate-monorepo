@@ -28,7 +28,7 @@ export function FoodResultCard({ food, onSelect }: FoodResultCardProps) {
       <button
         type="button"
         className={cn(
-          "group flex w-full items-center justify-between gap-4 rounded-xl px-4 py-3 text-left",
+          "group flex w-full items-center justify-between gap-4 rounded-xl py-2 text-left",
           "transition hover:bg-white/35 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30 active:translate-y-px",
         )}
         aria-label={`Select ${food.name}`}

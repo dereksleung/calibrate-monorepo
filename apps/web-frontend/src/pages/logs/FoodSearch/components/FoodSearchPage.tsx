@@ -135,7 +135,7 @@ export function FoodSearchPage({
             value={query}
             onChange={(event) => onQueryChange?.(event.target.value)}
             placeholder="Search foods, brands, flavors..."
-            className="glass-card h-12 w-full rounded-full py-3 px-5 text-sm text-on-surface outline-none placeholder:text-secondary focus:ring-3 focus:ring-ring/30"
+            className="glass-card h-12 w-full rounded-full py-3 px-3 text-sm text-on-surface outline-none placeholder:text-secondary focus:ring-3 focus:ring-ring/30"
           />
         </div>
 
@@ -147,7 +147,7 @@ export function FoodSearchPage({
             {heading}
           </h1>
 
-          <div className="food-search-list-card mt-4 rounded-2xl p-2">
+          <div className="food-search-list-card mt-4 rounded-2xl px-3 py-1">
             {state === "loading" ? <RecentFoodSkeletons /> : null}
             {state === "empty" ? (
               <p role="status" className="px-3 py-5 text-on-surface-variant">
