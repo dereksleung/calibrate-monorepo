@@ -25,10 +25,18 @@ function formatRecentFoodDate(date: string): string {
   );
 }
 
+function isRecentSearchResult(
+  food: FoodSearchResult | FoodEntryResponse,
+): food is Extract<FoodSearchResult, { source: "recent" }> {
+  return "source" in food && food.source === "recent";
+}
+
 function toConfirmationFood(
   food: FoodSearchResult | FoodEntryResponse,
   lastUsedLabel?: string,
 ): SelectedFoodForConfirmation {
+  const recentSearch = isRecentSearchResult(food) ? food : null;
+
   return {
     id: "source" in food ? (food.source === "catalog" ? food.catalogFoodId : food.foodEntryId) : food.id,
     name: food.name,
@@ -48,10 +56,10 @@ function toConfirmationFood(
     massUnit: food.massUnit,
     quantityVolume: food.quantityVolume,
     volumeUnit: food.volumeUnit,
-    lastUsedLabel: food.source === "recent" ? food.recency.displayLabel : undefined,
-    lastUsedDate: food.source === "recent" ? food.recency.lastUsedDate : undefined,
-    chosenQuantity: food.source === "recent" ? food.chosenQuantity : undefined,
-    chosenUnit: food.source === "recent" ? food.chosenUnit : undefined,
+    lastUsedLabel: lastUsedLabel ?? recentSearch?.recency.displayLabel,
+    lastUsedDate: recentSearch?.recency.lastUsedDate,
+    chosenQuantity: recentSearch?.chosenQuantity,
+    chosenUnit: recentSearch?.chosenUnit,
   };
 }
 
