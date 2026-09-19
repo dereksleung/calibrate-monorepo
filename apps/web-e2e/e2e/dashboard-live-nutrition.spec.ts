@@ -19,7 +19,10 @@ async function expectHeaderAlignsWithPageContent(page: Page) {
   expect(Math.abs(headerBox!.x + headerBox!.width - (pageBox!.x + pageBox!.width))).toBeLessThanOrEqual(1);
 }
 
-test("searching and saving seeded food updates the live dashboard nutrition cards", async ({ context, page }) => {
+test("searching and saving seeded food updates the live dashboard nutrition cards", async ({
+  context,
+  page,
+}) => {
   test.skip(
     process.env.CALIBRATE_E2E_SEEDED_CATALOG !== "1",
     "This journey requires the seeded Foundation Foods catalog.",

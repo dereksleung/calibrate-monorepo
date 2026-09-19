@@ -283,9 +283,13 @@ export async function run(): Promise<void> {
   try {
     if (seededCatalog) {
       const seedResult = await runNx(
-        createE2eEnvironment(config, { frontend: E2E_PORT_POOL_START, backend: E2E_PORT_POOL_START + 1 }, {
-          seededCatalog,
-        }),
+        createE2eEnvironment(
+          config,
+          { frontend: E2E_PORT_POOL_START, backend: E2E_PORT_POOL_START + 1 },
+          {
+            seededCatalog,
+          },
+        ),
         createSeedDemoCatalogTargetArguments(),
       );
       if (seedResult.exitCode !== 0) {
