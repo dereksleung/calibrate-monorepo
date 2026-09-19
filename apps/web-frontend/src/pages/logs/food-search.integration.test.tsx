@@ -224,7 +224,10 @@ describe("food search route", () => {
       }
       if (url.includes("/daylogs/")) {
         return Promise.resolve(
-          new Response(JSON.stringify(null), { status: 200, headers: { "content-type": "application/json" } }),
+          new Response(JSON.stringify(null), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
         );
       }
       return Promise.resolve(new Response("not found", { status: 404 }));
@@ -254,7 +257,8 @@ describe("food search route", () => {
       ).toBe(false);
     });
     expect(
-      (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement).disabled,
+      (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement)
+        .disabled,
     ).toBe(true);
 
     createResolvers[1]?.(
@@ -266,7 +270,8 @@ describe("food search route", () => {
 
     await waitFor(() => {
       expect(
-        (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement).disabled,
+        (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement)
+          .disabled,
       ).toBe(false);
     });
   });

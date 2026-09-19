@@ -5,6 +5,7 @@ import { Select } from "@base-ui/react/select";
 import { Plus } from "lucide-react";
 
 import type { SelectedFoodForConfirmation } from "../../food-confirmation-state.ts";
+
 import { MEAL_SECTIONS } from "../../log-page-helpers.ts";
 
 type FoodResultCardProps = {
@@ -32,8 +33,8 @@ export function FoodResultCard({
     .join(" · ");
   const labelFromDate = food.lastUsedDate
     ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(
-      new Date(`${food.lastUsedDate}T00:00:00Z`),
-    )
+        new Date(`${food.lastUsedDate}T00:00:00Z`),
+      )
     : undefined;
   const lastUsedLabel = food.lastUsedLabel ?? labelFromDate;
   const subtitle = lastUsedLabel ? `${lastUsedLabel} · ${details}` : details;
@@ -71,7 +72,6 @@ export function FoodResultCard({
         </button>
       ) : (
         <Select.Root
-          items={MEAL_SECTIONS}
           modal={false}
           onValueChange={(meal) => {
             if (meal) onQuickAdd?.(food, meal as MealNameEnumType);
