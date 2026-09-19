@@ -75,6 +75,7 @@ function toConfirmationFood(
   lastUsedLabel?: string,
 ): SelectedFoodForConfirmation {
   const recentSearch = isRecentSearchResult(food) ? food : null;
+  const hasChosenServing = "chosenQuantity" in food && "chosenUnit" in food;
 
   return {
     id: "source" in food ? (food.source === "catalog" ? food.catalogFoodId : food.foodEntryId) : food.id,
@@ -97,8 +98,8 @@ function toConfirmationFood(
     volumeUnit: food.volumeUnit,
     lastUsedLabel: lastUsedLabel ?? recentSearch?.recency.displayLabel,
     lastUsedDate: recentSearch?.recency.lastUsedDate,
-    chosenQuantity: recentSearch?.chosenQuantity,
-    chosenUnit: recentSearch?.chosenUnit,
+    chosenQuantity: hasChosenServing ? food.chosenQuantity : undefined,
+    chosenUnit: hasChosenServing ? food.chosenUnit : undefined,
   };
 }
 

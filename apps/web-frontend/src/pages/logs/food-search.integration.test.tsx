@@ -126,7 +126,7 @@ const cachedFood: FoodEntryResponse = {
   meal: "BREAKFAST",
   name: "Cached oat",
   brand: "Calibrate Kitchen",
-  calories: 40,
+  calories: 300,
   totalFatGrams: 1,
   saturatedFatGrams: null,
   cholesterolMg: null,
@@ -141,8 +141,8 @@ const cachedFood: FoodEntryResponse = {
   massUnit: null,
   quantityVolume: null,
   volumeUnit: null,
-  chosenQuantity: 1,
-  chosenUnit: "serving",
+  chosenQuantity: 2,
+  chosenUnit: "cup",
 };
 
 function renderFoodSearchRoute(
@@ -203,9 +203,9 @@ describe("food search route", () => {
     expect(JSON.parse(String(createCall?.[1]?.body))).toMatchObject({
       name: "Cached oat",
       meal: "BREAKFAST",
-      chosenQuantity: 1,
-      chosenUnit: "serving",
-      calories: 40,
+      chosenQuantity: 2,
+      chosenUnit: "cup",
+      calories: 300,
     });
     expect(await screen.findByText("Added to Breakfast")).toBeTruthy();
     expect(router.state.location.pathname).toBe("/logs/food-search");
@@ -256,7 +256,7 @@ describe("food search route", () => {
     const { router } = renderFoodSearchRoute();
 
     expect(await screen.findByRole("button", { name: /select Cached oat/i })).toBeTruthy();
-    expect(screen.getByText("May 17 • 40 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
+    expect(screen.getByText("May 17 • 300 cal · 2 cup · Calibrate Kitchen")).toBeTruthy();
     expect(
       vi.mocked(globalThis.fetch).mock.calls.some(([input]) => String(input).includes("/foods/search")),
     ).toBe(false);
