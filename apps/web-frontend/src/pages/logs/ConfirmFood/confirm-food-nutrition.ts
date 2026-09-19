@@ -1,7 +1,4 @@
-import {
-  normalizeFoodEntryNutrition,
-  type CreateFoodEntryRequest,
-} from "@calibrate/api-contracts";
+import { normalizeFoodEntryNutrition, type CreateFoodEntryRequest } from "@calibrate/api-contracts";
 
 import type { SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
 
@@ -24,12 +21,7 @@ export type ScaledFoodNutrition = Pick<
 >;
 
 function createUnitOption(quantity: number | null, unit: string | null): FoodUnitOption | null {
-  if (
-    quantity === null ||
-    !Number.isFinite(quantity) ||
-    quantity <= 0 ||
-    !unit?.trim()
-  ) {
+  if (quantity === null || !Number.isFinite(quantity) || quantity <= 0 || !unit?.trim()) {
     return null;
   }
 

@@ -1,3 +1,5 @@
+import type { MealNameEnumType } from "@calibrate/api-contracts";
+
 import { WarningBanner } from "#/shared/components/base/WarningBanner.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { Search } from "lucide-react";
@@ -14,6 +16,9 @@ type FoodSearchPageProps = {
   query?: string;
   onQueryChange?: (query: string) => void;
   onSelectFood?: (state: FoodConfirmationState) => void;
+  onQuickAdd?: (food: SelectedFoodForConfirmation, meal: MealNameEnumType) => void;
+  preselectedMeal?: MealNameEnumType;
+  addingFoodIds?: ReadonlySet<string>;
 };
 
 export const mockRecentFoods: SelectedFoodForConfirmation[] = [
@@ -116,7 +121,10 @@ export function FoodSearchPage({
   state = "ready",
   query = "",
   onQueryChange,
+  onQuickAdd,
   onSelectFood,
+  preselectedMeal,
+  addingFoodIds,
 }: FoodSearchPageProps) {
   const isSearching = query.trim().length >= 3;
   const heading = isSearching ? "Search results" : "Recently logged";
@@ -161,7 +169,10 @@ export function FoodSearchPage({
                   <FoodResultCard
                     key={food.id}
                     food={food}
+                    isAdding={addingFoodIds?.has(food.id)}
+                    onQuickAdd={onQuickAdd}
                     onSelect={(selectedFood) => onSelectFood?.({ food: selectedFood })}
+                    preselectedMeal={preselectedMeal}
                   />
                 ))}
               </ul>

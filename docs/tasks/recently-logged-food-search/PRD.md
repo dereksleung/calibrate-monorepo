@@ -87,10 +87,10 @@ Before a typed query, rank unique Recent foods from cached Day Logs older than t
 17. As a signed-in user, I want a second plus to log a second copy, so that “another serving” is explicit rather than hidden dedupe.
 18. As a signed-in user, I want only the in-flight plus disabled, so that I can add a different row while one save runs.
 19. As a signed-in user whose save fails, I want `We couldn't save that food.` and to remain on search, so that I can retry.
-20. As a signed-in user, I want Logs meal-card rows and search rows to share `foodListItemTitle` / `foodListItemSubtitle` (size, weight, family only), so that type matches without a shared list-item component.
+20. As a signed-in user, I want Logs meal-card rows and search rows to use matching title and subtitle type (size, weight, family only), so that type matches without a shared list-item component.
 21. As a signed-in user, I want the search list, empty state, and skeletons in one ~70% white glass card, with the search field still its own pill, so that aurora shows around the list and item text stays readable.
 22. As a signed-in user, I do not want Food Entry timestamps on Day Log or search payloads for this work, so that ranking stays on Meal and date.
-23. As a signed-in user looking at a Recent food row (idle or typed search), I want the subtitle to start with that Food Logging day’s date as `Oct 3`, then a bullet, then the rest of the subtitle, so that I can see which prior day the leftover came from.
+23. As a signed-in user looking at a Recent food row (idle or typed search), I want the subtitle to start with that Food Logging day’s date as `Oct 3`, then a middle dot, then the rest of the subtitle, so that I can see which prior day the leftover came from.
 
 ## Implementation Decisions
 
@@ -105,10 +105,10 @@ Before a typed query, rank unique Recent foods from cached Day Logs older than t
 - **Plus payload:** Recent food → POST stored plate + `chosenQuantity` / `chosenUnit` (no recover-and-rescale). Catalog → same as confirm’s initial Reference serving scale. Meal is preselected Meal or the Select choice. Date is `selectedDate`. Reuse `useSaveFoodEntry`; on success do not navigate away.
 - **Plus control:** preselected Meal → button. No Meal → Base UI `Select` like `ConfirmFoodUnitSelect` (primitive only). Trigger stays the plus pill (not the full-width unit field). Positioner `side="top"` so the Meal list expands upward (same as the confirm unit Select). Items: Breakfast, Lunch, Dinner, Snacks. `onValueChange` with a value → close and save. No Meal label on the trigger. Row tap must not fire when using plus/Select (`stopPropagation` / split controls).
 - **Toasts:** Sonner success `Added to {Meal display name}`; error copy matches confirm-food (`We couldn't save that food.`).
-- **Typography:** add `foodListItemTitle: "text-base font-semibold"` and `foodListItemSubtitle: "text-xs"` to `typographyVariants`. No color, tracking, or margin in the variant. Use them in `MealSection` title and `NutrientSummary`, and in `FoodResultCard` title and subtitle. Update the Storybook variant list.
+- **Typography:** `foodListItemTitle: "text-base font-semibold"` and `foodListItemSubtitle: "text-xs"` are the shared type values. The Typography variants carry them in `MealSection` title and `NutrientSummary`; `FoodResultCard` applies the same values directly. No color, tracking, or margin belongs to the variants. The Storybook variant list includes them.
 - **Glass:** do not change global `.glass-card` (40% white). Add a search-list-only class with the same blur/border/shadow and `background-color: rgba(255, 255, 255, 0.7)`. Wrap the list, empty status, and skeletons in one card. Remove per-row `glass-card` from result rows and idle skeletons. Search input keeps its pill `glass-card`.
 - **FoodResultCard** remains search-specific (plus / Select). **MealSection** rows stay display-only. Similar row height comes from shared type, not a shared component.
-- **Recent food subtitle date:** prefix with the Food Logging day’s ISO date formatted `en-US` short month + numeric day (`Oct 3`), then ` • `, then calories / serving / brand. Use the cache slot date for idle rows and `recency.lastUsedDate` for typed recents. Do not use `displayLabel` (`Recent`). Catalog rows have no date prefix. This is a calendar date, not `createdAt` / `updatedAt`.
+- **Recent food subtitle date:** prefix with the Food Logging day’s ISO date formatted `en-US` short month + numeric day (`Oct 3`), then ` · `, then calories / serving / brand. Use the cache slot date for idle rows and `recency.lastUsedDate` for typed recents. Do not use `displayLabel` (`Recent`). Catalog rows have no date prefix. This is a calendar date, not `createdAt` / `updatedAt`.
 
 ### Ranking sketch
 
@@ -154,8 +154,8 @@ Browser Playwright is not required for this delivery unless a later E2E ticket i
 - Typed recent results include `chosenQuantity` and `chosenUnit`; catalog results do not.
 - Confirm from a Recent food opens on last amount and still scales when quantity or unit changes.
 - Plus adds immediately (Select first when no Meal), stays on search, toasts success/error as specified.
-- Logs and search share the two Typography variants; search list uses one 70% glass card; global `.glass-card` remains 40%.
-- Recent food subtitles start with `Oct 3 • …`; catalog subtitles do not.
+- Logs and search use matching title/subtitle type values; search list uses one 70% glass card; global `.glass-card` remains 40%.
+- Recent food subtitles start with `Oct 3 · …`; catalog subtitles do not.
 - No Food Entry timestamp fields on Day Log or search contracts.
 
 ## Out of Scope
