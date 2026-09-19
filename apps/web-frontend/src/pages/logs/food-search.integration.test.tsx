@@ -185,6 +185,19 @@ function renderFoodSearchRoute(
 }
 
 describe("food search route", () => {
+  it("shows a quick-added search result in Recently logged after clearing the search", async () => {
+    renderFoodSearchRoute();
+
+    const searchInput = await screen.findByRole("searchbox", { name: "Search foods" });
+    fireEvent.change(searchInput, { target: { value: "greek yogurt" } });
+    fireEvent.click(await screen.findByRole("button", { name: /add Greek yogurt to Breakfast/i }));
+
+    expect(await screen.findByText("Added to Breakfast")).toBeTruthy();
+    fireEvent.change(searchInput, { target: { value: "" } });
+
+    expect(await screen.findByText("May 18 • 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
+  });
+
   it("re-enables each quick-add after overlapping saves settle", async () => {
     const createResolvers: Array<(response: Response) => void> = [];
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {

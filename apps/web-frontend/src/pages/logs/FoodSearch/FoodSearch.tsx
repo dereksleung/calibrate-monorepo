@@ -110,6 +110,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [addingFoodIds, setAddingFoodIds] = useState<ReadonlySet<string>>(new Set());
+  const [recentFoodsRevision, setRecentFoodsRevision] = useState(0);
   const save = useSaveFoodEntry(selectedDate, {
     onError: () => {
       toast.error("We couldn't save that food.", { closeButton: true });
@@ -120,6 +121,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
     setAddingFoodIds((ids) => new Set(ids).add(food.id));
     try {
       await save.mutateAsync(toFoodEntry(food, meal));
+      setRecentFoodsRevision((revision) => revision + 1);
       toast.success(`Added to ${MEAL_SECTIONS.find((section) => section.meal === meal)?.title}`);
     } catch {
       return;
@@ -161,7 +163,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
     return rankRecentFoodsFromCache({ slots, today: getTodayDateString(), preselectedMeal }).map(
       ({ date, food }) => toConfirmationFood(food, formatRecentFoodDate(date)),
     );
-  }, [preselectedMeal, queryClient, session]);
+  }, [preselectedMeal, queryClient, recentFoodsRevision, session]);
   const state = activeSearch
     ? search.isPending
       ? "loading"
