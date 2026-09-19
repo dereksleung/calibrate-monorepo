@@ -344,8 +344,13 @@ describe("Logs", () => {
   it("uses weekday labels, a dotted zero-calorie ring, and disables upcoming days in the current week", async () => {
     renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
 
+    const title = await screen.findByRole("heading", { name: "Today" });
+    expect(title.className).toContain("font-bold");
+    expect(title.className).toContain("text-on-primary-fixed");
+
     const selectedDay = await screen.findByRole("link", { name: /September 15/ });
     expect(selectedDay.textContent).toContain("T");
+    expect(selectedDay.className).toContain("gap-2");
     expect(selectedDay.querySelector('[data-dotted="true"]')).toBeTruthy();
     expect(screen.getAllByLabelText(/upcoming/)).not.toHaveLength(0);
     expect(screen.queryByRole("link", { name: /September 16/ })).toBeNull();

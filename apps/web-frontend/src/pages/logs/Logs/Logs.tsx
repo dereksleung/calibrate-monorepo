@@ -162,11 +162,11 @@ export function Logs({ selectedDate }: LogsProps) {
   return (
     <main className="min-h-screen bg-surface pb-24 pt-8 antialiased md:pb-20 md:pt-16 subtle-aurora-fade-page-background">
       <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
-        <section aria-label="Selected day" className="space-y-3">
+        <section aria-label="Selected day" className="-mb-4 space-y-3">
           <Typography
             as="h1"
-            className="font-heading text-[1.75rem] leading-8 tracking-[-0.03em]"
-            color="onSurface"
+            className="font-heading text-[1.75rem] font-bold leading-8 tracking-[-0.03em]"
+            color="onPrimaryFixed"
           >
             {title}
           </Typography>

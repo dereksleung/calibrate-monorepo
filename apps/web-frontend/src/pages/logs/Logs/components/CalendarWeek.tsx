@@ -86,7 +86,7 @@ function CalendarWeekDayCell({
       <CalorieRing dotted={dotted} fillRatio={day.fillRatio} />
     </>
   );
-  const className = `flex min-w-0 flex-col items-center gap-1 px-1 py-1.5 transition-colors ${
+  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${
     upcoming
       ? "cursor-default text-on-surface-variant/40"
       : day.selected
