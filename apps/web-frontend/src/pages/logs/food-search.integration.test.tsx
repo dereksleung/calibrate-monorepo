@@ -195,7 +195,7 @@ describe("food search route", () => {
     expect(await screen.findByText("Added to Breakfast")).toBeTruthy();
     fireEvent.change(searchInput, { target: { value: "" } });
 
-    expect(await screen.findByText("May 18 • 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
+    expect(await screen.findByText("May 18 · 150 cal · 1 cup · Calibrate Kitchen")).toBeTruthy();
   });
 
   it("re-enables each quick-add after overlapping saves settle", async () => {
@@ -248,8 +248,14 @@ describe("food search route", () => {
       }),
     );
 
-    await waitFor(() => expect((firstAdd as HTMLButtonElement).disabled).toBe(false));
-    expect((secondAdd as HTMLButtonElement).disabled).toBe(true);
+    await waitFor(() => {
+      expect(
+        (screen.getByRole("button", { name: /add Cached oat to Breakfast/i }) as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+    expect(
+      (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement).disabled,
+    ).toBe(true);
 
     createResolvers[1]?.(
       new Response(JSON.stringify({ foodEntryId: "entry-2", versionNumber: 2 }), {
@@ -258,7 +264,11 @@ describe("food search route", () => {
       }),
     );
 
-    await waitFor(() => expect((secondAdd as HTMLButtonElement).disabled).toBe(false));
+    await waitFor(() => {
+      expect(
+        (screen.getByRole("button", { name: /add Second cached oat to Breakfast/i }) as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
   });
 
   it("quick-adds a Recent food's stored plate to the selected Meal and stays on search", async () => {
@@ -333,7 +343,7 @@ describe("food search route", () => {
     const { router } = renderFoodSearchRoute();
 
     expect(await screen.findByRole("button", { name: /select Cached oat/i })).toBeTruthy();
-    expect(screen.getByText("May 17 • 300 cal · 2 cup · Calibrate Kitchen")).toBeTruthy();
+    expect(screen.getByText("May 17 · 300 cal · 2 cup · Calibrate Kitchen")).toBeTruthy();
     expect(
       vi.mocked(globalThis.fetch).mock.calls.some(([input]) => String(input).includes("/foods/search")),
     ).toBe(false);
