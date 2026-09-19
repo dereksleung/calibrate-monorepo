@@ -8,7 +8,11 @@ vi.mock("@dotenvx/dotenvx", () => ({
   },
 }));
 
-import { getRuntimeEnvironmentValue, isDemoRuntime } from "../runtime-environment.js";
+import {
+  getRuntimeEnvironmentValue,
+  isDemoRuntime,
+  isSeededCatalogE2eRuntime,
+} from "../runtime-environment.js";
 
 const originalEnvironment = { ...process.env };
 
@@ -18,6 +22,16 @@ afterEach(() => {
 });
 
 describe("getRuntimeEnvironmentValue", () => {
+  it("recognizes seeded catalog mode only within the E2E runtime", () => {
+    process.env.CALIBRATE_E2E_SEEDED_CATALOG = "1";
+    delete process.env.CALIBRATE_E2E;
+
+    expect(isSeededCatalogE2eRuntime()).toBe(false);
+
+    process.env.CALIBRATE_E2E = "1";
+    expect(isSeededCatalogE2eRuntime()).toBe(true);
+  });
+
   it("uses the process environment without consulting dotenvx in E2E mode", () => {
     process.env.CALIBRATE_E2E = "1";
     process.env.WEBAUTHN_ORIGIN = "http://localhost:43100";

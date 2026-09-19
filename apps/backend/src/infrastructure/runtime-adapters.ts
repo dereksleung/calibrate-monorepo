@@ -6,13 +6,13 @@ import { BrevoEmailSender } from "./email/brevo-email-sender.js";
 import { NoopEmailSender } from "./email/noop-email-sender.js";
 import { LocalOnlyFoodCatalogImporter } from "./food-catalog/local-only-food-catalog-importer.js";
 import { FoodDataCentralCatalogImporter } from "./food-data-central/food-data-central-catalog-importer.js";
-import { isDemoRuntime, isE2eRuntime } from "./runtime-environment.js";
+import { isDemoRuntime, isE2eRuntime, isSeededCatalogE2eRuntime } from "./runtime-environment.js";
 
 export function createFoodCatalogImporter(options: {
   apiKey: string | undefined;
   writer: IFoodCatalogWriter;
 }): IFoodCatalogImporter {
-  if (isDemoRuntime()) {
+  if (isDemoRuntime() || isSeededCatalogE2eRuntime()) {
     return new LocalOnlyFoodCatalogImporter();
   }
 

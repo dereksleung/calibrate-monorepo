@@ -8,6 +8,10 @@ export function isDemoRuntime(): boolean {
   return process.env.CALIBRATE_DEMO === "1";
 }
 
+export function isSeededCatalogE2eRuntime(): boolean {
+  return isE2eRuntime() && process.env.CALIBRATE_E2E_SEEDED_CATALOG === "1";
+}
+
 /**
  * E2E and local demo values are supplied as process environment, never by
  * decrypting a developer's dotenv file. Missing values intentionally remain
