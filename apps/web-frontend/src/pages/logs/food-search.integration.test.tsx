@@ -149,12 +149,13 @@ function renderFoodSearchRoute(
   queryClient = createQueryClient(),
   includeCachedFood = true,
   preselectedMeal: "BREAKFAST" | "LUNCH" | "DINNER" | "SNACKS" | null = "BREAKFAST",
+  cachedFoods: FoodEntryResponse[] = [cachedFood],
 ) {
   if (includeCachedFood) {
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-17"), {
       id: "cached-day-log",
       date: "2026-05-17",
-      breakfast: [cachedFood],
+      breakfast: cachedFoods,
       lunch: [],
       dinner: [],
       snacks: [],
@@ -184,6 +185,69 @@ function renderFoodSearchRoute(
 }
 
 describe("food search route", () => {
+  it("re-enables each quick-add after overlapping saves settle", async () => {
+    const createResolvers: Array<(response: Response) => void> = [];
+    vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      if (url.includes("/auth/session")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              user: {
+                id: accountId,
+                email: "person@example.com",
+                tier: "FREE",
+                createdAt: "2030-01-01T00:00:00.000Z",
+                updatedAt: "2030-01-01T00:00:00.000Z",
+              },
+              sessionTransport: "cookie",
+            }),
+            { status: 200, headers: { "content-type": "application/json" } },
+          ),
+        );
+      }
+      if (url.includes("/food-entries")) {
+        return new Promise<Response>((resolve) => createResolvers.push(resolve));
+      }
+      if (url.includes("/daylogs/")) {
+        return Promise.resolve(
+          new Response(JSON.stringify(null), { status: 200, headers: { "content-type": "application/json" } }),
+        );
+      }
+      return Promise.resolve(new Response("not found", { status: 404 }));
+    });
+
+    renderFoodSearchRoute(createQueryClient(), true, "BREAKFAST", [
+      cachedFood,
+      { ...cachedFood, id: "cached-second-oat", name: "Second cached oat" },
+    ]);
+
+    const firstAdd = await screen.findByRole("button", { name: /add Cached oat to Breakfast/i });
+    const secondAdd = screen.getByRole("button", { name: /add Second cached oat to Breakfast/i });
+    fireEvent.click(firstAdd);
+    fireEvent.click(secondAdd);
+
+    await waitFor(() => expect(createResolvers).toHaveLength(2));
+    createResolvers[0]?.(
+      new Response(JSON.stringify({ foodEntryId: "entry-1", versionNumber: 1 }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await waitFor(() => expect((firstAdd as HTMLButtonElement).disabled).toBe(false));
+    expect((secondAdd as HTMLButtonElement).disabled).toBe(true);
+
+    createResolvers[1]?.(
+      new Response(JSON.stringify({ foodEntryId: "entry-2", versionNumber: 2 }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    await waitFor(() => expect((secondAdd as HTMLButtonElement).disabled).toBe(false));
+  });
+
   it("quick-adds a Recent food's stored plate to the selected Meal and stays on search", async () => {
     const { router } = renderFoodSearchRoute();
 

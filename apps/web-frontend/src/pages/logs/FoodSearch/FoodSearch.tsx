@@ -111,33 +111,25 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [addingFoodIds, setAddingFoodIds] = useState<ReadonlySet<string>>(new Set());
   const save = useSaveFoodEntry(selectedDate, {
-    onSuccess: () => {
-      // The save remains on this route; cache patching is handled by the shared hook.
-    },
     onError: () => {
       toast.error("We couldn't save that food.", { closeButton: true });
     },
   });
 
-  function quickAdd(food: SelectedFoodForConfirmation, meal: MealNameEnumType) {
+  async function quickAdd(food: SelectedFoodForConfirmation, meal: MealNameEnumType) {
     setAddingFoodIds((ids) => new Set(ids).add(food.id));
-    save.mutate(toFoodEntry(food, meal), {
-      onSuccess: () => {
-        setAddingFoodIds((ids) => {
-          const next = new Set(ids);
-          next.delete(food.id);
-          return next;
-        });
-        toast.success(`Added to ${MEAL_SECTIONS.find((section) => section.meal === meal)?.title}`);
-      },
-      onError: () => {
-        setAddingFoodIds((ids) => {
-          const next = new Set(ids);
-          next.delete(food.id);
-          return next;
-        });
-      },
-    });
+    try {
+      await save.mutateAsync(toFoodEntry(food, meal));
+      toast.success(`Added to ${MEAL_SECTIONS.find((section) => section.meal === meal)?.title}`);
+    } catch {
+      return;
+    } finally {
+      setAddingFoodIds((ids) => {
+        const next = new Set(ids);
+        next.delete(food.id);
+        return next;
+      });
+    }
   }
 
   useEffect(() => {
