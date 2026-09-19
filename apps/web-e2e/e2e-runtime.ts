@@ -29,6 +29,7 @@ const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)),
 const migrationFolder = path.join(workspaceRoot, "apps/backend/src/infrastructure/persistence/migrations");
 
 export type E2ePorts = DevPortPair;
+export const SEEDED_CATALOG_E2E_ENV = "CALIBRATE_E2E_SEEDED_CATALOG";
 type DatabaseConnectionConfig = {
   database: string;
   host: string;
@@ -45,6 +46,10 @@ export type E2ePortSelectionOptions = {
   lastFrontendPort?: number;
   startPort?: number;
 };
+
+export function isSeededCatalogE2eRun(environment = process.env): boolean {
+  return environment[SEEDED_CATALOG_E2E_ENV] === "1";
+}
 
 function isErrorWithCode(error: unknown, code: string): boolean {
   return error instanceof Error && "code" in error && error.code === code;
@@ -117,7 +122,11 @@ export async function selectE2ePortPair(options: E2ePortSelectionOptions = {}): 
   throw new Error("No E2E localhost port pair is available in the E2E port pool");
 }
 
-export function createE2eEnvironment(database: DatabaseConnectionConfig, ports: E2ePorts): NodeJS.ProcessEnv {
+export function createE2eEnvironment(
+  database: DatabaseConnectionConfig,
+  ports: E2ePorts,
+  options: { seededCatalog?: boolean } = {},
+): NodeJS.ProcessEnv {
   const bindings = deriveDevBindings(ports);
   const runtimeEnvironment = localRuntimeConfigurationToProcessEnv(generateLocalRuntimeConfiguration());
 
@@ -125,6 +134,7 @@ export function createE2eEnvironment(database: DatabaseConnectionConfig, ports: 
     ...process.env,
     ...runtimeEnvironment,
     CALIBRATE_E2E: "1",
+    ...(options.seededCatalog ? { [SEEDED_CATALOG_E2E_ENV]: "1" } : {}),
     CORS_ORIGIN: bindings.corsOrigin,
     DB_HOST: database.host,
     DB_NAME: database.database,
@@ -214,6 +224,10 @@ export function createPlaywrightTargetArguments(playwrightArguments: string[]): 
   ];
 }
 
+export function createSeedDemoCatalogTargetArguments(): string[] {
+  return ["nx", "run", "backend:seed-demo-catalog", "--outputStyle=static"];
+}
+
 async function runNx(
   env: NodeJS.ProcessEnv,
   targetArguments: string[],
@@ -264,12 +278,29 @@ export async function run(): Promise<void> {
 
   const { container, config } = await startDatabase();
   const playwrightArguments = process.argv.slice(2);
+  const seededCatalog = isSeededCatalogE2eRun();
 
   try {
+    if (seededCatalog) {
+      const seedResult = await runNx(
+        createE2eEnvironment(
+          config,
+          { frontend: E2E_PORT_POOL_START, backend: E2E_PORT_POOL_START + 1 },
+          {
+            seededCatalog,
+          },
+        ),
+        createSeedDemoCatalogTargetArguments(),
+      );
+      if (seedResult.exitCode !== 0) {
+        throw new Error(`Seeded catalog setup failed with exit code ${seedResult.exitCode}`);
+      }
+    }
+
     for (let attempt = 0; attempt < MAX_PORT_ATTEMPTS; attempt += 1) {
       const ports = await selectE2ePortPair({ startPort: E2E_PORT_POOL_START + attempt * 2 });
       const result = await runNx(
-        createE2eEnvironment(config, ports),
+        createE2eEnvironment(config, ports, { seededCatalog }),
         createPlaywrightTargetArguments(playwrightArguments),
       );
 

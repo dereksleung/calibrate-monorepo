@@ -8,6 +8,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   createE2eEnvironment,
   createPlaywrightTargetArguments,
+  createSeedDemoCatalogTargetArguments,
+  isSeededCatalogE2eRun,
   selectE2ePortPair,
   selectPortPair,
 } from "./e2e-runtime.js";
@@ -100,7 +102,32 @@ describe("E2E runtime", () => {
     expect(environment.JWT_PRIVATE_KEY_PEM).toContain("BEGIN PRIVATE KEY");
     expect(environment.JWT_ACCESS_TOKEN_TTL_SECONDS).toBe("900");
     expect(environment.OTP_HMAC_CURRENT_KEY_VERSION).toBe("1");
+    expect(environment.CALIBRATE_DEMO).toBeUndefined();
     expectUsableGeneratedRuntimeKeys(environment);
+  });
+
+  it("marks only seeded catalog runs with the dedicated E2E flag", () => {
+    const environment = createE2eEnvironment(
+      {
+        database: "calibrate_e2e_test",
+        host: "127.0.0.1",
+        maxConnections: 10,
+        password: "database-password",
+        port: 54_321,
+        user: "calibrate_e2e",
+      },
+      { frontend: 43_100, backend: 43_101 },
+      { seededCatalog: true },
+    );
+
+    expect(environment.CALIBRATE_DEMO).toBeUndefined();
+    expect(environment.CALIBRATE_E2E_SEEDED_CATALOG).toBe("1");
+  });
+
+  it("recognizes only the explicit seeded catalog runtime flag", () => {
+    expect(isSeededCatalogE2eRun({})).toBe(false);
+    expect(isSeededCatalogE2eRun({ CALIBRATE_E2E_SEEDED_CATALOG: "true" })).toBe(false);
+    expect(isSeededCatalogE2eRun({ CALIBRATE_E2E_SEEDED_CATALOG: "1" })).toBe(true);
   });
 
   it("uses a fresh generated runtime without writing dotenvx or local config files", async () => {
@@ -172,6 +199,15 @@ describe("E2E runtime", () => {
       "--",
       "--grep",
       "local development passkey signup",
+    ]);
+  });
+
+  it("runs the existing Foundation Foods seed target", () => {
+    expect(createSeedDemoCatalogTargetArguments()).toEqual([
+      "nx",
+      "run",
+      "backend:seed-demo-catalog",
+      "--outputStyle=static",
     ]);
   });
 });

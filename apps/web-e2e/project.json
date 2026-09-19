@@ -12,6 +12,16 @@
         "command": "tsx apps/web-e2e/e2e-runtime.ts"
       }
     },
+    "e2e-seeded-catalog": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "tsx apps/web-e2e/e2e-runtime.ts",
+        "env": {
+          "CALIBRATE_E2E_SEEDED_CATALOG": "1"
+        }
+      }
+    },
     "runtime-test": {
       "executor": "nx:run-commands",
       "cache": false,

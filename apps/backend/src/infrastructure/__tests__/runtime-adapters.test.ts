@@ -37,6 +37,21 @@ describe("createFoodCatalogImporter", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("returns an ordinary empty result without calling FoodData Central in seeded E2E mode", async () => {
+    process.env.CALIBRATE_E2E = "1";
+    process.env.CALIBRATE_E2E_SEEDED_CATALOG = "1";
+    delete process.env.CALIBRATE_DEMO;
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const importer = createFoodCatalogImporter({
+      apiKey: "fdc-secret-that-must-not-be-used",
+      writer: createWriter(),
+    });
+
+    await expect(importer.searchAndImport("branded soda", 20)).resolves.toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("still uses FoodData Central outside demo mode when an API key is present", async () => {
     delete process.env.CALIBRATE_DEMO;
     const fetchMock = vi.fn().mockResolvedValue(
