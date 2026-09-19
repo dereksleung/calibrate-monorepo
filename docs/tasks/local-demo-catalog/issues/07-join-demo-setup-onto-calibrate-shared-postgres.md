@@ -4,27 +4,30 @@ overview: "Joining demo-setup onto `calibrate-shared` is feasible. The shared cl
 todos:
   - id: resolve-postgres-role
     content: Add resolvePostgresRole() that prefers dotenvx DB_USER/DB_PASSWORD when decryptable, else ~/.calibrate/shared-postgres.env
-    status: pending
+    status: completed
   - id: shared-ensure-helper
     content: Extract ensure-calibrate-shared-postgres + create-database-if-missing for both demo-setup and worktree-setup
-    status: pending
+    status: completed
   - id: demo-on-shared-cluster
     content: Point runDemoSetup at calibrate-shared, create calibrate_demo, stop using otpHmacKey as DB password, use the same role resolver
-    status: pending
+    status: completed
   - id: safe-demo-reset
     content: Change demo-reset to drop/recreate only calibrate_demo; never compose down --volumes on the shared project
-    status: pending
+    status: completed
   - id: worktree-dotenvx-first
     content: Worktree setup/teardown and printed backend:dev prefer dotenvx DB role; fall back to machine-local without requiring .env.keys
-    status: pending
+    status: completed
   - id: no-keys-fallback-test
     content: Add a test that relocates repo .env.keys with fs.rename, asserts the machine-local role path, and restores the file in finally
-    status: pending
+    status: completed
   - id: docs-adr-migration
     content: Update ADR-0004, README, and document evaluator worktrees plus existing-volume recreate when roles disagree
-    status: pending
+    status: completed
 isProject: false
 ---
+
+**Type:** task
+**Status:** resolved
 
 # Join demo-setup onto calibrate-shared Postgres
 
@@ -91,7 +94,7 @@ ADR-0004 stays: demo must not require Dotenvx, and demo runtime still must not d
 
 [worktree-setup.ts](workspace/src/worktree-setup.ts) starts Postgres with `dotenvx run` and [env-keys.ts](workspace/src/env-keys.ts) throws if `.env.keys` is missing. That blocks an evaluator from sampling worktrees even after machine-local Postgres exists.
 
-[`formatBackendDevCommand()`](workspace/src/print-dev-commands.ts) already prefers dotenvx for `DB_USER` / `DB_PASSWORD` (it only overrides host/port/name). Keep that when the key exists. When it does not, `dotenvx run --overload` cannot start `backend:dev` anyway because JWT material is also encrypted.
+[`formatBackendDevCommand()`](workspace/src/print-dev-commands.ts) already prefers dotenvx for `DB_USER` / `DB_PASSWORD` (it only overrides host/port/name). Keep that when the key exists. When it does not, use `dotenvx run --env-file .local.env --env-file ~/.calibrate/shared-postgres.env` so the normal `backend:dev` process receives generated application values and the machine-local database role without decrypting `.env`.
 
 ## Recommended join
 
@@ -118,7 +121,7 @@ ADR-0004 stays: demo must not require Dotenvx, and demo runtime still must not d
 **Printed commands**
 
 - Dotenvx available: keep today’s `npx dotenvx run --overload ... -- npx nx run backend:dev` so the process decrypts `DB_USER` / `DB_PASSWORD` (and the rest of local/prod-like config) at start. That is the path for running a production-like environment locally later.
-- Dotenvx absent: do not print `dotenvx run`. Print worktree host/port/DB_NAME plus machine-local `DB_USER` / `DB_PASSWORD` and the demo runtime entrypoint (`CALIBRATE_DEMO=1` / generated `.local.env`). An evaluator cannot run non-demo `backend:dev` without JWT keys; worktree sampling for them is shared Postgres, sticky ports, and per-worktree databases under demo mode.
+- Dotenvx absent: generate `.local.env`, then print normal `backend:dev` through `dotenvx run --env-file .local.env --env-file ~/.calibrate/shared-postgres.env`. Pass only the worktree host/port/DB_NAME and frontend overrides on the command line; do not print the generated application secrets or machine-local `DB_USER` / `DB_PASSWORD`. Credential selection does not select demo mode; evaluator demo sessions use the explicit `demo-dev` command instead.
 
 **Reset must shrink, not grow**
 
@@ -188,3 +191,7 @@ This belongs in the fast suite (`*.test.ts`), not Docker/integration, because it
 ## Feasibility caveats
 
 This join reduces paths for **persistent local Docker Postgres**. It does not make hiring-manager setup and developer worktree setup the same command: evaluators still generate `.local.env` and seed `calibrate_demo`; you still use dotenvx for app secrets and for a production-like `backend:dev`. The shared part is “resolve the cluster role, ensure `calibrate-shared`, create/migrate this database.”
+
+## Answer
+
+Demo setup and worktree setup now share Compose project `calibrate-shared` on `127.0.0.1:5433`. `resolvePostgresRole()` prefers decryptable dotenvx `DB_USER` / `DB_PASSWORD` and otherwise uses `~/.calibrate/shared-postgres.env`. Demo creates `calibrate_demo` instead of hashing a `calibrate-demo-*` project or using `otpHmacKey` as the cluster password. `demo-reset` drops only `calibrate_demo`. Worktree setup continues without `.env.keys`, generates `.local.env`, and prints normal `backend:dev` commands that load its selected worktree database without exposing credentials; only explicit `demo-dev` starts `backend:demo` for `calibrate_demo`.

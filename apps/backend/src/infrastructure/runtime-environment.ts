@@ -23,5 +23,7 @@ export function usesProcessEnvironmentRuntime(): boolean {
  * the consuming configuration validates and rejects an unsafe startup.
  */
 export function getRuntimeEnvironmentValue(name: string): string | undefined {
-  return usesProcessEnvironmentRuntime() ? process.env[name] : dotenvx.get(name);
+  const processValue = process.env[name];
+  if (processValue !== undefined) return processValue;
+  return usesProcessEnvironmentRuntime() ? undefined : dotenvx.get(name);
 }

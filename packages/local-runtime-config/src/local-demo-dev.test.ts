@@ -3,6 +3,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { PostgresRole } from "./postgres-role.js";
+import type { SharedPostgresAdminClient } from "./shared-postgres.js";
+
 import { type DemoCommand } from "./demo-catalog-setup.js";
 import {
   DEMO_FRONTEND_URL,
@@ -17,6 +20,25 @@ import {
 
 const originalEnvironment = { ...process.env };
 const temporaryDirectories: string[] = [];
+const role: PostgresRole = {
+  user: "calibrate",
+  password: "machine-local-password",
+  source: "machine-local",
+};
+
+function createFakeAdmin(): SharedPostgresAdminClient {
+  return {
+    query: async () => ({ rowCount: 1, rows: [{ "?column?": 1 }] }),
+  };
+}
+
+function demoPostgresOptions() {
+  return {
+    resolveRole: async () => role,
+    isPortOpen: async () => false,
+    connectAdmin: async () => createFakeAdmin(),
+  };
+}
 
 afterEach(async () => {
   process.env = { ...originalEnvironment };
@@ -92,6 +114,7 @@ describe("demo-dev launch configuration", () => {
       output: (message) => output.push(message),
       runCommand: runner.runCommand,
       startProcesses: processes.startProcesses,
+      ...demoPostgresOptions(),
     });
 
     await expect(access(path.join(directory, ".env.keys"))).rejects.toMatchObject({ code: "ENOENT" });
@@ -111,7 +134,7 @@ describe("demo-dev launch configuration", () => {
           CORS_ORIGIN: "http://localhost:3000",
           DB_HOST: "127.0.0.1",
           DB_NAME: "calibrate_demo",
-          DB_PASSWORD: generated.otpHmacKey,
+          DB_PASSWORD: role.password,
           DB_PORT: "5433",
           EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT: "1000",
           PORT: "3001",
@@ -146,6 +169,7 @@ describe("demo-dev launch configuration", () => {
         startProcesses: async () => {
           started = true;
         },
+        ...demoPostgresOptions(),
       }),
     ).rejects.toThrow(/Docker Desktop/);
 
@@ -166,6 +190,7 @@ describe("demo-dev launch configuration", () => {
       output: () => undefined,
       runCommand: runner.runCommand,
       startProcesses: processes.startProcesses,
+      ...demoPostgresOptions(),
     });
 
     const backendEnvironment = processes.processes[0]?.environment;

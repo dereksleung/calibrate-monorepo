@@ -8,11 +8,11 @@ import {
 
 export function loadDatabaseConnectionConfigFromEnvironment(): DatabaseConnectionConfig {
   const config = {
-    database: getRuntimeEnvironmentValue("DB_NAME"),
-    host: getRuntimeEnvironmentValue("DB_HOST"),
-    port: Number(getRuntimeEnvironmentValue("DB_PORT") || "5432"),
-    user: getRuntimeEnvironmentValue("DB_USER"),
-    password: getRuntimeEnvironmentValue("DB_PASSWORD"),
+    database: getDatabaseEnvironmentValue("DB_NAME"),
+    host: getDatabaseEnvironmentValue("DB_HOST"),
+    port: Number(getDatabaseEnvironmentValue("DB_PORT") || "5432"),
+    user: getDatabaseEnvironmentValue("DB_USER"),
+    password: getDatabaseEnvironmentValue("DB_PASSWORD"),
     maxConnections: 10,
   };
 
@@ -28,4 +28,8 @@ export function loadDatabaseConnectionConfigFromEnvironment(): DatabaseConnectio
   }
 
   return config as DatabaseConnectionConfig;
+}
+
+function getDatabaseEnvironmentValue(name: string): string | undefined {
+  return process.env[name] ?? getRuntimeEnvironmentValue(name);
 }

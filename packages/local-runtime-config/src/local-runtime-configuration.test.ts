@@ -120,7 +120,18 @@ describe("local runtime configuration", () => {
     await writeFile(ignoredKeysPath, "DOTENV_PRIVATE_KEY=must-not-be-required\n");
     delete process.env.DOTENV_PRIVATE_KEY;
 
-    const generated = await runLocalDemoSetup(directory, { runCommand: async () => {} });
+    const generated = await runLocalDemoSetup(directory, {
+      runCommand: async () => {},
+      resolveRole: async () => ({
+        user: "calibrate",
+        password: "machine-local-password",
+        source: "machine-local",
+      }),
+      isPortOpen: async () => true,
+      connectAdmin: async () => ({
+        query: async () => ({ rowCount: 1, rows: [{ "?column?": 1 }] }),
+      }),
+    });
     const persisted = await readLocalRuntimeConfiguration(directory);
 
     expect(persisted).toEqual(generated.configuration);

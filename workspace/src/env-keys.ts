@@ -12,20 +12,18 @@ async function pathExists(filePath: string): Promise<boolean> {
   }
 }
 
-export async function ensureEnvKeys(worktreeRoot: string): Promise<void> {
+export async function ensureEnvKeys(worktreeRoot: string): Promise<boolean> {
   const localKeysPath = path.join(worktreeRoot, ".env.keys");
   if ((await pathExists(localKeysPath)) || process.env.DOTENV_PRIVATE_KEY) {
-    return;
+    return true;
   }
 
   const primaryKeysPath = path.join(getPrimaryWorktreePath(worktreeRoot), ".env.keys");
   if (await pathExists(primaryKeysPath)) {
     await copyFile(primaryKeysPath, localKeysPath);
     console.log(`Copied .env.keys from ${primaryKeysPath}`);
-    return;
+    return true;
   }
 
-  throw new Error(
-    "Missing dotenvx private key. Set DOTENV_PRIVATE_KEY or copy .env.keys into this worktree.",
-  );
+  return false;
 }
