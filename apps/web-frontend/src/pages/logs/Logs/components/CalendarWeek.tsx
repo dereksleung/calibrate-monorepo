@@ -1,5 +1,5 @@
-import { useSyncDayLogsForDateRange } from "#/pages/dashboard/DashboardV2/useSyncDayLogsForDateRange.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
+import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -95,12 +95,13 @@ function CalendarWeekDayCell({
       <CalorieRing dotted={dotted} fillRatio={day.fillRatio} />
     </>
   );
-  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${upcoming
-    ? "cursor-default text-on-surface-variant/40"
-    : day.selected
-      ? "text-on-surface"
-      : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    }`;
+  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${
+    upcoming
+      ? "cursor-default text-on-surface-variant/40"
+      : day.selected
+        ? "text-on-surface"
+        : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+  }`;
   const calories = Math.round(day.fillRatio * DAILY_TARGETS.calories);
   const ariaLabel = `${formatDate(day.date)}, ${calories.toLocaleString()} of ${DAILY_TARGETS.calories.toLocaleString()} calories${upcoming ? ", upcoming" : ""}`;
 
@@ -156,11 +157,7 @@ export function useKeepScrollPositionOnPrependWeeks<T>(
   return containerRef;
 }
 
-export function CalendarWeek({
-  accountId,
-  selectedDate,
-  todayDate,
-}: CalendarWeekProps) {
+export function CalendarWeek({ accountId, selectedDate, todayDate }: CalendarWeekProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const todayWeekStart = getWeekStart(todayDate);
@@ -219,7 +216,7 @@ export function CalendarWeek({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const id = entry.target.getAttribute('id');
+            const id = entry.target.getAttribute("id");
             if (id) {
               setActiveWeekStart(id);
             }
@@ -228,15 +225,15 @@ export function CalendarWeek({
       },
       {
         root: viewportRef.current,
-        rootMargin: '0px',
+        rootMargin: "0px",
         threshold: 0.6,
-      }
+      },
     );
 
     return () => {
       intersectionObserverRef.current?.disconnect();
-    }
-  }, [intersectionObserverRef, viewportRef.current])
+    };
+  }, [intersectionObserverRef, viewportRef.current]);
 
   useEffect(() => {
     if (!viewportRef.current || !intersectionObserverRef.current) return;

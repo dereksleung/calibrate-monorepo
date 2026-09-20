@@ -1,3 +1,5 @@
+import type { DayLogResponse } from "@calibrate/api-contracts";
+
 import { describe, expect, it } from "vitest";
 
 import { normalDayLogFixture, selectedDateFixture } from "./log-page-fixtures.ts";
@@ -14,7 +16,6 @@ import {
   toCalendarDays,
   toCalendarWeeks,
 } from "./log-page-helpers.ts";
-import type { DayLogResponse } from "@calibrate/api-contracts";
 
 describe("log page helpers", () => {
   it("defaults missing and invalid selected-date search to the local current day", () => {

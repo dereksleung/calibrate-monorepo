@@ -125,8 +125,8 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-      new Date(`${selectedDate}T00:00:00`),
-    );
+        new Date(`${selectedDate}T00:00:00`),
+      );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });
