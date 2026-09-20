@@ -70,7 +70,7 @@ If the server's version matches the client's version, the endpoint returns `204 
 
 Only when the versions differ does the client need the updated data.
 
-I considered treating older logs as permanently fresh after some threshold, such as one week. I chose the simpler one-hour freshness policy instead because lightweight version revalidation is inexpensive while still allowing changes from another client to propagate eventually.
+I considered treating older logs as permanently fresh after some threshold, such as one week. I chose the simpler one-hour freshness policy instead because lightweight version revalidation is inexpensive while still allowing changes from another client to propagate eventually. Users generally will only use a single device and platform to log food entries for each meal, more is inconvenient, so syncing between several clients can be deferred until the next meal.
 
 ### Avoiding unnecessary refetches after writes
 
@@ -88,7 +88,7 @@ The design assumes that the same account could eventually be used from more than
 
 A one-hour freshness window is a practical compromise.
 
-During a typical meal, a user is likely to log food and browse several related screens within a relatively short period. Keeping the data fresh during that session prevents those screens from repeatedly requesting information that is unlikely to change.
+During a typical meal, a user is likely to use only one device and platform to log food and browse several related screens within a relatively short period. Keeping the data fresh during that session prevents those screens from repeatedly requesting information that is unlikely to change.
 
 If the user later switches devices, the next session will generally occur far enough in the future—for example, at the next meal—that the cached data will have become stale and the lightweight synchronization check will run.
 
