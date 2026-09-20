@@ -1,16 +1,23 @@
+import { useSyncDayLogsForDateRange } from "#/pages/dashboard/DashboardV2/useSyncDayLogsForDateRange.ts";
+import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-import { DAILY_TARGETS, addDaysToIsoDate, type CalendarWeekGroup } from "../../log-page-helpers.ts";
+import {
+  DAILY_TARGETS,
+  addDaysToIsoDate,
+  toCalendarWeeks,
+  type CalendarWeekGroup,
+  type DayLogCacheRecord,
+} from "../../log-page-helpers.ts";
 
 type CalendarWeekDay = { date: string; fillRatio: number; selected: boolean };
 type CalendarWeekProps = {
-  weeks: CalendarWeekGroup[];
-  selectedWeekStart: string;
+  accountId: string;
+  selectedDate: string;
   todayDate: string;
-  viewedWeekStart: string;
-  onViewedWeekChange: (weekStart: string) => void;
 };
 
 function getWeekStart(date: string) {
@@ -150,14 +157,37 @@ export function useKeepScrollPositionOnPrependWeeks<T>(
 }
 
 export function CalendarWeek({
-  weeks,
-  selectedWeekStart,
+  accountId,
+  selectedDate,
   todayDate,
-  onViewedWeekChange,
 }: CalendarWeekProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const todayWeekStart = getWeekStart(todayDate);
+  const selectedWeekStart = getWeekStart(selectedDate > todayDate ? todayDate : selectedDate);
   const [activeWeekStart, setActiveWeekStart] = useState(selectedWeekStart);
+  const calendarWeek = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(activeWeekStart, index)),
+    [activeWeekStart],
+  );
+  const calendarRange = {
+    startDate: addDaysToIsoDate(activeWeekStart, -7),
+    endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
+  };
+  const calendarDaySync = useSyncDayLogsForDateRange({
+    accountId,
+    dateRange: calendarRange,
+    enabled: selectedDate <= todayDate,
+  });
+  const weeks = useMemo((): CalendarWeekGroup[] => {
+    const allDayLogs: DayLogCacheRecord[] = queryClient
+      .getQueriesData<DayLogCacheRecord["data"]>({
+        queryKey: dayLogSlotQueryKeyPrefix(accountId),
+      })
+      .map(([key, data]) => ({ key, data }));
+
+    return toCalendarWeeks(allDayLogs, selectedDate, todayDate);
+  }, [accountId, calendarDaySync.cached, queryClient, selectedDate, todayDate]);
   const weekStartForNavigation = activeWeekStart;
   const isViewingWeekContainingToday = isDateInWeek(todayDate, weekStartForNavigation);
 
@@ -192,7 +222,6 @@ export function CalendarWeek({
             const id = entry.target.getAttribute('id');
             if (id) {
               setActiveWeekStart(id);
-              onViewedWeekChange(id);
             }
           }
         });

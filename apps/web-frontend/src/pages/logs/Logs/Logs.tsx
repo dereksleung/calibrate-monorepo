@@ -12,7 +12,7 @@ import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-d
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 
 import {
@@ -20,12 +20,9 @@ import {
   addDaysToIsoDate,
   getDailyProgress,
   getDailyTotals,
-  getDateFromDayLogSlotQueryKey,
   getTodayDateString,
   isToday,
   normalizeDayLogForRender,
-  toCalendarWeeks,
-  type DayLogCacheRecord,
 } from "../log-page-helpers.ts";
 import { CalendarWeek } from "./components/CalendarWeek.tsx";
 import { DailySummary } from "./components/DailySummary.tsx";
@@ -101,51 +98,18 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
     getDayLogsWithStalenessState(queryClient, accountId, selectedDateRange),
     Date.now(),
   );
-  const todayWeekStart = addDaysToIsoDate(todayDate, -new Date(`${todayDate}T00:00:00`).getDay());
-  const selectedWeekStart = addDaysToIsoDate(
-    selectedDate > todayDate ? todayWeekStart : selectedDate,
-    -new Date(`${selectedDate > todayDate ? todayWeekStart : selectedDate}T00:00:00`).getDay(),
-  );
-  const [viewedWeekStart, setViewedWeekStart] = useState(selectedWeekStart);
-  const calendarWeek = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => addDaysToIsoDate(viewedWeekStart, index)),
-    [viewedWeekStart],
-  );
-  const calendarRange = {
-    startDate: addDaysToIsoDate(viewedWeekStart, -7),
-    endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
-  };
   const selectedDaySync = useSyncDayLogsForDateRange({
     accountId,
     dateRange: selectedRange,
     enabled: !isUpcoming && selectedDateNeedsValidation,
   });
-  const calendarDaySync = useSyncDayLogsForDateRange({
-    accountId,
-    dateRange: calendarRange,
-    enabled: !isUpcoming,
-  });
-  const allDayLogs = useMemo((): DayLogCacheRecord[] => {
-    return queryClient
-      .getQueriesData<DayLogCacheRecord["data"]>({
-        queryKey: dayLogSlotQueryKeyPrefix(accountId),
-      })
-      .map(([key, data]) => ({ key, data }));
-  }, [queryClient, accountId, calendarDaySync.cached]);
+  const data = selectedDaySync.cached.find((query) => query.data?.date === selectedDate)?.data?.data;
 
-  const calendarWeeks = toCalendarWeeks(allDayLogs, selectedDate, todayDate);
-  const data = allDayLogs.find((query) => {
-    return getDateFromDayLogSlotQueryKey(query.key) === selectedDate;
-  })?.data;
   const isPending =
     !isUpcoming &&
     data === undefined &&
     (selectedDaySync.syncResponse.isPending || selectedDaySync.syncResponse.isFetching);
   const error = selectedDaySync.syncResponse.error;
-
-  useEffect(() => {
-    setViewedWeekStart(selectedWeekStart);
-  }, [selectedWeekStart]);
 
   useEffect(() => {
     if (!isPending && error) {
@@ -161,8 +125,8 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-        new Date(`${selectedDate}T00:00:00`),
-      );
+      new Date(`${selectedDate}T00:00:00`),
+    );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });
@@ -176,13 +140,7 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
           <Typography as="h1" color="onSurface" variant="h1PageTitle">
             {title}
           </Typography>
-          <CalendarWeek
-            weeks={calendarWeeks}
-            onViewedWeekChange={setViewedWeekStart}
-            selectedWeekStart={selectedWeekStart}
-            todayDate={todayDate}
-            viewedWeekStart={viewedWeekStart}
-          />
+          <CalendarWeek accountId={accountId} selectedDate={selectedDate} todayDate={todayDate} />
         </section>
 
         {isUpcoming ? <p role="status">Upcoming</p> : null}
