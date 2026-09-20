@@ -5,7 +5,7 @@ import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.
 import { createDayLogSyncResponse } from "@calibrate/api-contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "../../../routeTree.gen.ts";
@@ -29,6 +29,22 @@ const dayLogMay18Response = {
   snacks: [],
   weight: 184.2,
 };
+const originalScrollIntoView = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollIntoView");
+let intersectionObserverCallbacks: IntersectionObserverCallback[] = [];
+
+class IntersectionObserverMock {
+  disconnect = vi.fn();
+  observe = vi.fn();
+  takeRecords = vi.fn(() => []);
+  unobserve = vi.fn();
+  root = null;
+  rootMargin = "";
+  thresholds = [];
+
+  constructor(callback: IntersectionObserverCallback) {
+    intersectionObserverCallbacks.push(callback);
+  }
+}
 
 function getFetchUrl(input: RequestInfo | URL): string {
   if (typeof input === "string") return input;
@@ -60,6 +76,14 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 beforeEach(() => {
+  intersectionObserverCallbacks = [];
+  vi.stubGlobal("IntersectionObserver", IntersectionObserverMock);
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  vi.setSystemTime(new Date("2026-09-15T12:00:00"));
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: vi.fn(),
+  });
   window.scrollTo = vi.fn();
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
     matches: false,
@@ -118,7 +142,14 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  vi.useRealTimers();
+  if (originalScrollIntoView) {
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", originalScrollIntoView);
+  } else {
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollIntoView;
+  }
 });
 
 function renderLogsRoute(
@@ -310,11 +341,12 @@ describe("Logs", () => {
     ).toHaveLength(0);
   });
 
-  it("renders a compact title and the selected Sunday-through-Saturday week", async () => {
+  it("renders a compact title and every cached calendar week", async () => {
     renderLogsRoute();
 
     expect(await screen.findByRole("heading", { name: "May 18" })).toBeTruthy();
-    expect(screen.getAllByRole("list", { name: "Calendar week" })).toHaveLength(2);
+    expect(screen.getAllByRole("list", { name: "Calendar week" })).toHaveLength(3);
+    expect(screen.getByTestId("calendar-week-2026-09-13")).toBeTruthy();
     expect(screen.getAllByRole("link", { name: /May/ })).toHaveLength(14);
     await screen.findAllByText("282");
     expect(
@@ -391,14 +423,26 @@ describe("Logs", () => {
     expect(router.state.location.search).toEqual({ date: "2026-09-15" });
   });
 
-  it("prefetches the snapped week and its previous week while mounting only the visible week and older overscan", async () => {
+  it("prefetches the snapped week while preserving every supplied calendar week", async () => {
     const fetchMock = vi.mocked(globalThis.fetch);
     renderLogsRoute(createQueryClient(), "/logs?date=2026-09-15");
 
     fireEvent.click(await screen.findByRole("button", { name: "Previous week" }));
     await screen.findByTestId("calendar-week-2026-09-06");
-
     expect(screen.getAllByTestId(/calendar-week-\d/)).toHaveLength(2);
+
+    await act(async () => {
+      intersectionObserverCallbacks.at(-1)?.(
+        [
+          {
+            isIntersecting: true,
+            target: screen.getByTestId("calendar-week-2026-09-06"),
+          } as any,
+        ],
+        {} as IntersectionObserver,
+      );
+    });
+
     await waitFor(() => {
       const syncBodies = fetchMock.mock.calls
         .filter(([request]) => getFetchUrl(request).includes("/daylogs:sync"))

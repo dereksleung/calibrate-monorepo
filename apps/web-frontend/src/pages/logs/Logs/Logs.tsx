@@ -25,6 +25,7 @@ import {
   isToday,
   normalizeDayLogForRender,
   toCalendarWeeks,
+  type DayLogCacheRecord,
 } from "../log-page-helpers.ts";
 import { CalendarWeek } from "./components/CalendarWeek.tsx";
 import { DailySummary } from "./components/DailySummary.tsx";
@@ -33,6 +34,7 @@ import { QuickLogDrawer } from "./components/QuickLogDrawer.tsx";
 
 type LogsProps = {
   selectedDate: string;
+  todayDate?: string;
 };
 
 function LogsOverviewSkeleton() {
@@ -83,7 +85,7 @@ function LogsOverviewSkeleton() {
   );
 }
 
-export function Logs({ selectedDate }: LogsProps) {
+export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsProps) {
   const navigate = useNavigate();
   const weightInputRef = useRef<HTMLInputElement>(null);
 
@@ -91,7 +93,6 @@ export function Logs({ selectedDate }: LogsProps) {
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
   const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
-  const todayDate = getTodayDateString();
   const isUpcoming = selectedDate > todayDate;
   const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
   const selectedDateRange = { startDate: selectedDate, endDate: selectedDate };
@@ -124,16 +125,18 @@ export function Logs({ selectedDate }: LogsProps) {
     dateRange: calendarRange,
     enabled: !isUpcoming,
   });
-  const allDayLogs = useMemo(() => {
-    return queryClient.getQueriesData(dayLogSlotQueryKeyPrefix(accountId));
+  const allDayLogs = useMemo((): DayLogCacheRecord[] => {
+    return queryClient
+      .getQueriesData<DayLogCacheRecord["data"]>({
+        queryKey: dayLogSlotQueryKeyPrefix(accountId),
+      })
+      .map(([key, data]) => ({ key, data }));
   }, [queryClient, accountId, calendarDaySync.cached]);
 
-  // console.log("🚀 ~ Logs ~ allDayLogs:", allDayLogs)
-  const calendarWeeks = toCalendarWeeks(allDayLogs, selectedDate);
+  const calendarWeeks = toCalendarWeeks(allDayLogs, selectedDate, todayDate);
   const data = allDayLogs.find((query) => {
-    // console.log("🚀 ~ Logs ~ query:", query)
-    return getDateFromDayLogSlotQueryKey(query[0]) === selectedDate;
-  });
+    return getDateFromDayLogSlotQueryKey(query.key) === selectedDate;
+  })?.data;
   const isPending =
     !isUpcoming &&
     data === undefined &&
@@ -158,8 +161,8 @@ export function Logs({ selectedDate }: LogsProps) {
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-      new Date(`${selectedDate}T00:00:00`),
-    );
+        new Date(`${selectedDate}T00:00:00`),
+      );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });

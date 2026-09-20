@@ -14,6 +14,7 @@ import {
   toCalendarDays,
   toCalendarWeeks,
 } from "./log-page-helpers.ts";
+import type { DayLogResponse } from "@calibrate/api-contracts";
 
 describe("log page helpers", () => {
   it("defaults missing and invalid selected-date search to the local current day", () => {
@@ -103,7 +104,7 @@ describe("log page helpers", () => {
   });
 
   it("maps cached day-log records to calendar day fill values", () => {
-    const laterDuplicate = { ...normalDayLogFixture, weight: 1 };
+    const laterDuplicate = { ...normalDayLogFixture, weight: 1 } as DayLogResponse;
 
     expect(
       toCalendarDays(
@@ -138,6 +139,7 @@ describe("log page helpers", () => {
           { key: ["dayLogs", "account", "slot", "2026-05-17"], data: null },
         ],
         "2026-05-18",
+        "2026-05-23",
       ),
     ).toEqual([
       {
@@ -149,14 +151,99 @@ describe("log page helpers", () => {
         days: [
           { date: "2026-05-17", fillRatio: 0, selected: false },
           { date: "2026-05-18", fillRatio: 282 / 1800, selected: true },
+          { date: "2026-05-19", fillRatio: 0, selected: false },
           { date: "2026-05-20", fillRatio: 0, selected: false },
+          { date: "2026-05-21", fillRatio: 0, selected: false },
+          { date: "2026-05-22", fillRatio: 0, selected: false },
+          { date: "2026-05-23", fillRatio: 0, selected: false },
         ],
       },
     ]);
   });
 
-  it("returns no calendar weeks when no slot records have a date", () => {
-    expect(toCalendarWeeks([], "2026-05-18")).toEqual([]);
-    expect(toCalendarWeeks([{ key: ["dayLogs", "account"], data: undefined }], "2026-05-18")).toEqual([]);
+  it("always includes today's week and fills upcoming days with empty placeholders", () => {
+    expect(
+      toCalendarWeeks(
+        [
+          { key: ["dayLogs", "account", "slot", "2026-05-17"], data: null },
+          { key: ["dayLogs", "account", "slot", "2026-05-18"], data: normalDayLogFixture },
+        ],
+        "2026-05-18",
+        "2026-05-18",
+      ),
+    ).toEqual([
+      {
+        weekStart: "2026-05-17",
+        days: [
+          { date: "2026-05-17", fillRatio: 0, selected: false },
+          { date: "2026-05-18", fillRatio: 282 / 1800, selected: true },
+          { date: "2026-05-19", fillRatio: 0, selected: false },
+          { date: "2026-05-20", fillRatio: 0, selected: false },
+          { date: "2026-05-21", fillRatio: 0, selected: false },
+          { date: "2026-05-22", fillRatio: 0, selected: false },
+          { date: "2026-05-23", fillRatio: 0, selected: false },
+        ],
+      },
+    ]);
+  });
+
+  it("creates today's week even when cached logs belong to an earlier week", () => {
+    expect(
+      toCalendarWeeks(
+        [{ key: ["dayLogs", "account", "slot", "2026-05-18"], data: normalDayLogFixture }],
+        "2026-05-18",
+        "2026-09-20",
+      ),
+    ).toEqual([
+      {
+        weekStart: "2026-05-17",
+        days: [{ date: "2026-05-18", fillRatio: 282 / 1800, selected: true }],
+      },
+      {
+        weekStart: "2026-09-20",
+        days: [
+          { date: "2026-09-20", fillRatio: 0, selected: false },
+          { date: "2026-09-21", fillRatio: 0, selected: false },
+          { date: "2026-09-22", fillRatio: 0, selected: false },
+          { date: "2026-09-23", fillRatio: 0, selected: false },
+          { date: "2026-09-24", fillRatio: 0, selected: false },
+          { date: "2026-09-25", fillRatio: 0, selected: false },
+          { date: "2026-09-26", fillRatio: 0, selected: false },
+        ],
+      },
+    ]);
+  });
+
+  it("creates today's week from empty cache with null upcoming day logs", () => {
+    expect(toCalendarWeeks([], "2026-05-18", "2026-05-18")).toEqual([
+      {
+        weekStart: "2026-05-17",
+        days: [
+          { date: "2026-05-17", fillRatio: 0, selected: false },
+          { date: "2026-05-18", fillRatio: 0, selected: true },
+          { date: "2026-05-19", fillRatio: 0, selected: false },
+          { date: "2026-05-20", fillRatio: 0, selected: false },
+          { date: "2026-05-21", fillRatio: 0, selected: false },
+          { date: "2026-05-22", fillRatio: 0, selected: false },
+          { date: "2026-05-23", fillRatio: 0, selected: false },
+        ],
+      },
+    ]);
+    expect(
+      toCalendarWeeks([{ key: ["dayLogs", "account"], data: undefined }], "2026-05-18", "2026-05-18"),
+    ).toEqual([
+      {
+        weekStart: "2026-05-17",
+        days: [
+          { date: "2026-05-17", fillRatio: 0, selected: false },
+          { date: "2026-05-18", fillRatio: 0, selected: true },
+          { date: "2026-05-19", fillRatio: 0, selected: false },
+          { date: "2026-05-20", fillRatio: 0, selected: false },
+          { date: "2026-05-21", fillRatio: 0, selected: false },
+          { date: "2026-05-22", fillRatio: 0, selected: false },
+          { date: "2026-05-23", fillRatio: 0, selected: false },
+        ],
+      },
+    ]);
   });
 });

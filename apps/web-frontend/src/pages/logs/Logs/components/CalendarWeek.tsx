@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
@@ -14,9 +13,12 @@ type CalendarWeekProps = {
   onViewedWeekChange: (weekStart: string) => void;
 };
 
-
 function getWeekStart(date: string) {
   return addDaysToIsoDate(date, -new Date(`${date}T00:00:00`).getDay());
+}
+
+function isDateInWeek(date: string, weekStart: string) {
+  return date >= weekStart && date <= addDaysToIsoDate(weekStart, 6);
 }
 
 function formatDate(date: string) {
@@ -38,7 +40,7 @@ function CalorieRing({ fillRatio, dotted }: { fillRatio: number; dotted: boolean
   const clampedRatio = Math.min(Math.max(fillRatio, 0), 1);
 
   return (
-    <svg aria-hidden="true" className="size-[1.125rem]" viewBox="0 0 24 24">
+    <svg aria-hidden="true" className="size-[1.125rem] -rotate-90" viewBox="0 0 24 24">
       <circle
         cx="12"
         cy="12"
@@ -49,7 +51,7 @@ function CalorieRing({ fillRatio, dotted }: { fillRatio: number; dotted: boolean
         strokeWidth="2"
       />
       <circle
-        className="progress-ring-circle origin-center -rotate-90"
+        className="progress-ring-circle"
         cx="12"
         cy="12"
         data-dotted={dotted || undefined}
@@ -75,13 +77,12 @@ function CalendarWeekDayCell({
   showWeekdayLabels: boolean;
 }) {
   const upcoming = day.date > todayDate;
-  const isSelectedToday = day.selected && day.date === todayDate;
   const dotted = day.date === todayDate && day.fillRatio === 0;
   const label = formatDayLabel(day.date, showWeekdayLabels);
   const content = (
     <>
       <span aria-hidden="true" className="flex h-2 items-center justify-center">
-        {isSelectedToday ? <span className="size-1 rounded-full bg-current" /> : null}
+        {day.date === todayDate ? <span className="size-1 rounded-full bg-current" /> : null}
       </span>
       <span className="text-sm font-medium leading-none">{label}</span>
       <CalorieRing dotted={dotted} fillRatio={day.fillRatio} />
@@ -91,7 +92,7 @@ function CalendarWeekDayCell({
     ? "cursor-default text-on-surface-variant/40"
     : day.selected
       ? "text-on-surface"
-      : "text-on-surface-variant hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     }`;
   const calories = Math.round(day.fillRatio * DAILY_TARGETS.calories);
   const ariaLabel = `${formatDate(day.date)}, ${calories.toLocaleString()} of ${DAILY_TARGETS.calories.toLocaleString()} calories${upcoming ? ", upcoming" : ""}`;
@@ -117,8 +118,10 @@ function CalendarWeekDayCell({
   );
 }
 
-export function useHorizontalScrollAnchor<T>(dependencies: T, containerRef: React.RefObject<HTMLDivElement | null>) {
-  // const containerRef = useRef<HTMLDivElement | null>(null);
+export function useKeepScrollPositionOnPrependWeeks<T>(
+  dependencies: T,
+  containerRef: React.RefObject<HTMLDivElement | null>,
+) {
   const prevScrollWidthRef = useRef<number>(0);
 
   // Capture the scrollWidth immediately before the layout updates
@@ -133,16 +136,15 @@ export function useHorizontalScrollAnchor<T>(dependencies: T, containerRef: Reac
     const prevScrollWidth = prevScrollWidthRef.current;
     const currentScrollWidth = container.scrollWidth;
 
-    // If items were prepended, currentScrollWidth will be larger
     if (prevScrollWidth > 0 && currentScrollWidth > prevScrollWidth) {
       const widthDifference = currentScrollWidth - prevScrollWidth;
 
       // Shift the scrollLeft forward by exactly how much width was added to the start
       requestAnimationFrame(() => {
         container.scrollLeft += widthDifference;
-      })
+      });
     }
-  }, [dependencies]); // Triggers when data/items change
+  }, [dependencies]);
 
   return containerRef;
 }
@@ -153,47 +155,79 @@ export function CalendarWeek({
   todayDate,
   onViewedWeekChange,
 }: CalendarWeekProps) {
-  console.log("🚀 ~ CalendarWeek ~ weeks:", weeks)
   const viewportRef = useRef<HTMLDivElement>(null);
   const todayWeekStart = getWeekStart(todayDate);
-  const [activeWeekStart, setActiveWeekStart] = useState<string | null>(null);
+  const [activeWeekStart, setActiveWeekStart] = useState(selectedWeekStart);
+  const weekStartForNavigation = activeWeekStart;
+  const isViewingWeekContainingToday = isDateInWeek(todayDate, weekStartForNavigation);
 
   const weekNodesRef = useRef(new Map<string, HTMLOListElement>());
-  const scrollToItem = (id: string) => {
-    const viewport = viewportRef.current;
+  const scrollToItem = (id: string, behavior: ScrollBehavior) => {
     const node = weekNodesRef.current.get(id);
-    if (!viewport || !node) return;
+    if (!node) return;
 
-    const left =
-      node.getBoundingClientRect().left - viewport.getBoundingClientRect().left + viewport.scrollLeft;
-
-    // viewport.scrollTo({
-    //   behavior: "smooth",
-    //   left,
-    // });
     node.scrollIntoView({
-      behavior: 'smooth',
-      inline: 'start',
-      block: 'nearest'
-    })
+      behavior,
+      inline: "end",
+      block: "nearest",
+    });
   };
 
-  useHorizontalScrollAnchor(weeks, viewportRef);
+  useKeepScrollPositionOnPrependWeeks(weeks, viewportRef);
 
   useEffect(() => {
-    scrollToItem(selectedWeekStart);
-  }, [])
+    // setTimeout(() => {
+    requestAnimationFrame(() => {
+      scrollToItem(activeWeekStart, "instant");
+    });
+    // setHasMounted(true);
+    // }, 500)
+  }, []);
+
+  // const intersectionObserverRef = useRef<IntersectionObserver>(null);
+
+  // useEffect(() => {
+  //   if (!viewportRef.current) return;
+  //   intersectionObserverRef.current = new IntersectionObserver(
+  //     (entries) => {
+  //       entries.forEach((entry) => {
+  //         if (entry.isIntersecting) {
+  //           const id = entry.target.getAttribute('id');
+  //           setActiveWeekStart(id);
+  //           if (hasMounted && id) {
+  //             onViewedWeekChange(id);
+  //           }
+  //         }
+  //       });
+  //     },
+  //     {
+  //       root: viewportRef.current,
+  //       rootMargin: '0px',
+  //       threshold: 0.6,
+  //     }
+  //   );
+
+  //   return () => {
+  //     intersectionObserverRef.current?.disconnect();
+  //   }
+  // }, [intersectionObserverRef, viewportRef.current])
+
+  // useEffect(() => {
+  //   if (!viewportRef.current || !intersectionObserverRef.current) return;
+  //   weekNodesRef.current.forEach((node) => {
+  //     intersectionObserverRef.current?.observe(node);
+  //   });
+  // }, [weeks, viewportRef.current, intersectionObserverRef]);
 
   useEffect(() => {
     if (!viewportRef.current) return;
-    // 1. Create the observer instance
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const id = entry.target.getAttribute('id');
-            setActiveWeekStart(id);
+            const id = entry.target.getAttribute("id");
             if (id) {
+              setActiveWeekStart(id);
               onViewedWeekChange(id);
             }
           }
@@ -201,49 +235,38 @@ export function CalendarWeek({
       },
       {
         root: viewportRef.current,
-        rootMargin: '0px',
+        rootMargin: "0px",
         threshold: 0.6,
-      }
+      },
     );
 
-    // 2. Start observing all the current DOM nodes in our Map
     weekNodesRef.current.forEach((node) => {
       observer.observe(node);
     });
 
-    // 3. Clean up the observer when items change or component unmounts
     return () => {
       observer.disconnect();
     };
   }, [weeks, viewportRef.current]);
 
-
-  useLayoutEffect(() => {
-    if (!viewportRef.current) return;
-    const viewportWidth = viewportRef.current.clientWidth;
-    setWeekWidth(viewportWidth);
-  }, [viewportRef.current])
-
-
   return (
     <div className="flex items-center gap-1 md:gap-3">
       <button
         aria-label="Previous week"
-        className="hidden size-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant md:flex"
+        className="hidden size-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-primary/10 md:flex"
         onClick={() => {
-          const prevWeekStart = addDaysToIsoDate(activeWeekStart!, -7);
-          console.log("onClick | prevWeekStart:", prevWeekStart)
-          scrollToItem(prevWeekStart);
+          const prevWeekStart = addDaysToIsoDate(activeWeekStart, -7);
+          // setActiveWeekStart(prevWeekStart);
           // onViewedWeekChange(prevWeekStart);
+          scrollToItem(prevWeekStart, "smooth");
         }}
         type="button"
       >
-        <ChevronLeft aria-hidden className="size-4" />
+        <ChevronLeft aria-hidden className="size-4 hover:text-primary" />
       </button>
       <div aria-label="Calendar weeks" className="min-w-0 flex-1" role="region">
         <div
-          // className="[scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-[88px] overflow-x-auto overscroll-x-contain scroll-smooth snap-x snap-mandatory overflow-y-hidden"
-          className="flex w-full flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-[88px] overflow-x-auto overscroll-x-contain snap-x snap-mandatory overflow-y-hidden"
+          className="flex w-full flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-22 overflow-x-auto overscroll-x-contain snap-x snap-mandatory overflow-y-hidden"
           data-testid="calendar-week-scroller"
           ref={viewportRef}
         >
@@ -263,6 +286,8 @@ export function CalendarWeek({
                   const map = weekNodesRef.current;
                   if (node) {
                     map.set(weekStart, node);
+                  } else {
+                    map.delete(weekStart);
                   }
                 }}
               >
@@ -279,15 +304,17 @@ export function CalendarWeek({
             );
           })}
         </div>
-        {/* </div> */}
       </div>
       <button
         aria-label="Next week"
         className="hidden size-8 shrink-0 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container disabled:cursor-default disabled:opacity-35 md:flex"
-        // disabled={isInitialVirtualizedList || indexes[indexes.length - 2] >= weeks.length - 1}
+        disabled={isViewingWeekContainingToday}
         onClick={() => {
-          const nextWeekStart = addDaysToIsoDate(activeWeekStart!, 7);
-          scrollToItem(nextWeekStart);
+          const nextWeekStart = addDaysToIsoDate(activeWeekStart, 7);
+          if (nextWeekStart > todayWeekStart) return;
+          // setActiveWeekStart(nextWeekStart);
+          // onViewedWeekChange(nextWeekStart);
+          scrollToItem(nextWeekStart, "smooth");
         }}
         type="button"
       >

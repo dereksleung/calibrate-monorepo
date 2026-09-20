@@ -154,7 +154,7 @@ export function toCalendarDays(
   const seenDates = new Set<string>();
 
   for (const query of allDayLogs) {
-    const date = getDateFromDayLogSlotQueryKey(query[0]);
+    const date = getDateFromDayLogSlotQueryKey(query.key);
     if (date === undefined || seenDates.has(date)) {
       continue;
     }
@@ -178,11 +178,35 @@ function getSundayWeekStart(date: string): string {
 export function toCalendarWeeks(
   allDayLogs: ReadonlyArray<DayLogCacheRecord> | undefined,
   selectedDate: string,
+  todayDate = getTodayDateString(),
 ): CalendarWeekGroup[] {
-  if (!allDayLogs || allDayLogs.length === 0) return [];
+  const todayWeekStart = getSundayWeekStart(todayDate);
+  const records: DayLogCacheRecord[] = [...(allDayLogs ?? [])];
+  const knownDates = new Set<string>();
+
+  for (const query of records) {
+    const date = getDateFromDayLogSlotQueryKey(query.key);
+    if (date !== undefined) {
+      knownDates.add(date);
+    }
+  }
+
+  for (let index = 0; index < 7; index += 1) {
+    const date = addDaysToIsoDate(todayWeekStart, index);
+    if (knownDates.has(date)) {
+      continue;
+    }
+
+    // Upcoming days cannot have logs yet; fill remaining holes so today's week stays Sunday–Saturday.
+    records.push({
+      key: ["dayLogs", "placeholder", "slot", date],
+      data: null,
+    });
+  }
+
   const weeks = new Map<string, CalendarWeekDay[]>();
 
-  for (const day of toCalendarDays(allDayLogs, selectedDate)) {
+  for (const day of toCalendarDays(records, selectedDate)) {
     const weekStart = getSundayWeekStart(day.date);
     const days = weeks.get(weekStart);
 
@@ -195,10 +219,10 @@ export function toCalendarWeeks(
   }
 
   return [...weeks.entries()]
-    .toSorted(([leftWeekStart], [rightWeekStart]) => leftWeekStart.localeCompare(rightWeekStart))
+    .sort(([leftWeekStart], [rightWeekStart]) => leftWeekStart.localeCompare(rightWeekStart))
     .map(([weekStart, days]) => ({
       weekStart,
-      days: days.toSorted((left, right) => left.date.localeCompare(right.date)),
+      days: [...days].sort((left, right) => left.date.localeCompare(right.date)),
     }));
 }
 
