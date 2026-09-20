@@ -176,56 +176,20 @@ export function CalendarWeek({
   useKeepScrollPositionOnPrependWeeks(weeks, viewportRef);
 
   useEffect(() => {
-    // setTimeout(() => {
     requestAnimationFrame(() => {
       scrollToItem(activeWeekStart, "instant");
     });
-    // setHasMounted(true);
-    // }, 500)
   }, []);
 
-  // const intersectionObserverRef = useRef<IntersectionObserver>(null);
-
-  // useEffect(() => {
-  //   if (!viewportRef.current) return;
-  //   intersectionObserverRef.current = new IntersectionObserver(
-  //     (entries) => {
-  //       entries.forEach((entry) => {
-  //         if (entry.isIntersecting) {
-  //           const id = entry.target.getAttribute('id');
-  //           setActiveWeekStart(id);
-  //           if (hasMounted && id) {
-  //             onViewedWeekChange(id);
-  //           }
-  //         }
-  //       });
-  //     },
-  //     {
-  //       root: viewportRef.current,
-  //       rootMargin: '0px',
-  //       threshold: 0.6,
-  //     }
-  //   );
-
-  //   return () => {
-  //     intersectionObserverRef.current?.disconnect();
-  //   }
-  // }, [intersectionObserverRef, viewportRef.current])
-
-  // useEffect(() => {
-  //   if (!viewportRef.current || !intersectionObserverRef.current) return;
-  //   weekNodesRef.current.forEach((node) => {
-  //     intersectionObserverRef.current?.observe(node);
-  //   });
-  // }, [weeks, viewportRef.current, intersectionObserverRef]);
+  const intersectionObserverRef = useRef<IntersectionObserver>(null);
 
   useEffect(() => {
     if (!viewportRef.current) return;
-    const observer = new IntersectionObserver(
+    intersectionObserverRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const id = entry.target.getAttribute("id");
+            const id = entry.target.getAttribute('id');
             if (id) {
               setActiveWeekStart(id);
               onViewedWeekChange(id);
@@ -235,19 +199,22 @@ export function CalendarWeek({
       },
       {
         root: viewportRef.current,
-        rootMargin: "0px",
+        rootMargin: '0px',
         threshold: 0.6,
-      },
+      }
     );
 
-    weekNodesRef.current.forEach((node) => {
-      observer.observe(node);
-    });
-
     return () => {
-      observer.disconnect();
-    };
-  }, [weeks, viewportRef.current]);
+      intersectionObserverRef.current?.disconnect();
+    }
+  }, [intersectionObserverRef, viewportRef.current])
+
+  useEffect(() => {
+    if (!viewportRef.current || !intersectionObserverRef.current) return;
+    weekNodesRef.current.forEach((node) => {
+      intersectionObserverRef.current?.observe(node);
+    });
+  }, [weeks, viewportRef.current, intersectionObserverRef]);
 
   return (
     <div className="flex items-center gap-1 md:gap-3">
