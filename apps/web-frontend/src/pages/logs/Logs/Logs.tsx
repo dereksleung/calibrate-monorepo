@@ -6,6 +6,7 @@ import {
   applyWeightObservationToDayLogCache,
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
+  dayLogSlotQueryKeyPrefix,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
@@ -16,13 +17,14 @@ import { toast } from "sonner";
 
 import {
   MEAL_SECTIONS,
-  DAILY_TARGETS,
   addDaysToIsoDate,
   getDailyProgress,
   getDailyTotals,
+  getDateFromDayLogSlotQueryKey,
   getTodayDateString,
   isToday,
   normalizeDayLogForRender,
+  toCalendarWeeks,
 } from "../log-page-helpers.ts";
 import { CalendarWeek } from "./components/CalendarWeek.tsx";
 import { DailySummary } from "./components/DailySummary.tsx";
@@ -117,15 +119,21 @@ export function Logs({ selectedDate }: LogsProps) {
     dateRange: selectedRange,
     enabled: !isUpcoming && selectedDateNeedsValidation,
   });
-  const calendarWeekSync = useSyncDayLogsForDateRange({
+  const calendarDaySync = useSyncDayLogsForDateRange({
     accountId,
     dateRange: calendarRange,
     enabled: !isUpcoming,
   });
-  const cachedDayLogs = [...selectedDaySync.cached, ...calendarWeekSync.cached];
-  const getCachedDayLog = (date: string) =>
-    cachedDayLogs.find((query) => query.data?.date === date)?.data?.data;
-  const data = getCachedDayLog(selectedDate);
+  const allDayLogs = useMemo(() => {
+    return queryClient.getQueriesData(dayLogSlotQueryKeyPrefix(accountId));
+  }, [queryClient, accountId, calendarDaySync.cached]);
+
+  // console.log("🚀 ~ Logs ~ allDayLogs:", allDayLogs)
+  const calendarWeeks = toCalendarWeeks(allDayLogs, selectedDate);
+  const data = allDayLogs.find((query) => {
+    // console.log("🚀 ~ Logs ~ query:", query)
+    return getDateFromDayLogSlotQueryKey(query[0]) === selectedDate;
+  });
   const isPending =
     !isUpcoming &&
     data === undefined &&
@@ -147,16 +155,6 @@ export function Logs({ selectedDate }: LogsProps) {
   const dayLog = useMemo(() => normalizeDayLogForRender(data ?? null, selectedDate), [data, selectedDate]);
   const totals = getDailyTotals(dayLog);
   const progress = getDailyProgress(totals);
-  const getCalendarDay = (date: string) => {
-    const cachedDayLog = getCachedDayLog(date);
-    const calories = getDailyTotals(normalizeDayLogForRender(cachedDayLog ?? null, date)).calories;
-
-    return {
-      date,
-      fillRatio: Math.min(calories / DAILY_TARGETS.calories, 1),
-      selected: date === selectedDate,
-    };
-  };
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
@@ -176,7 +174,7 @@ export function Logs({ selectedDate }: LogsProps) {
             {title}
           </Typography>
           <CalendarWeek
-            getDay={getCalendarDay}
+            weeks={calendarWeeks}
             onViewedWeekChange={setViewedWeekStart}
             selectedWeekStart={selectedWeekStart}
             todayDate={todayDate}

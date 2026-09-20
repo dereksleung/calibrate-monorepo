@@ -39,6 +39,22 @@ export type ProgressValue = {
   isOverTarget: boolean;
 };
 
+export type CalendarWeekDay = {
+  date: string;
+  fillRatio: number;
+  selected: boolean;
+};
+
+export type CalendarWeekGroup = {
+  weekStart: string;
+  days: CalendarWeekDay[];
+};
+
+export type DayLogCacheRecord = {
+  data: DayLogResponse | null | undefined;
+  key: readonly unknown[];
+};
+
 export type NormalizedDayLog = {
   id: string | null;
   date: Date;
@@ -119,6 +135,71 @@ export function addDaysToIsoDate(date: string, days: number): string {
   localDate.setDate(localDate.getDate() + days);
 
   return formatLocalDate(localDate);
+}
+
+export function getDateFromDayLogSlotQueryKey(queryKey: readonly unknown[]): string | undefined {
+  const date = queryKey[3];
+  if (queryKey[2] !== "slot" || typeof date !== "string") {
+    return undefined;
+  }
+
+  return date;
+}
+
+export function toCalendarDays(
+  allDayLogs: ReadonlyArray<DayLogCacheRecord>,
+  selectedDate: string,
+): CalendarWeekDay[] {
+  const calendarDays: CalendarWeekDay[] = [];
+  const seenDates = new Set<string>();
+
+  for (const query of allDayLogs) {
+    const date = getDateFromDayLogSlotQueryKey(query[0]);
+    if (date === undefined || seenDates.has(date)) {
+      continue;
+    }
+
+    seenDates.add(date);
+    const calories = getDailyTotals(normalizeDayLogForRender(query.data ?? null, date)).calories;
+    calendarDays.push({
+      date,
+      fillRatio: Math.min(calories / DAILY_TARGETS.calories, 1),
+      selected: date === selectedDate,
+    });
+  }
+
+  return calendarDays;
+}
+
+function getSundayWeekStart(date: string): string {
+  return addDaysToIsoDate(date, -new Date(`${date}T00:00:00`).getDay());
+}
+
+export function toCalendarWeeks(
+  allDayLogs: ReadonlyArray<DayLogCacheRecord> | undefined,
+  selectedDate: string,
+): CalendarWeekGroup[] {
+  if (!allDayLogs || allDayLogs.length === 0) return [];
+  const weeks = new Map<string, CalendarWeekDay[]>();
+
+  for (const day of toCalendarDays(allDayLogs, selectedDate)) {
+    const weekStart = getSundayWeekStart(day.date);
+    const days = weeks.get(weekStart);
+
+    if (days === undefined) {
+      weeks.set(weekStart, [day]);
+      continue;
+    }
+
+    days.push(day);
+  }
+
+  return [...weeks.entries()]
+    .toSorted(([leftWeekStart], [rightWeekStart]) => leftWeekStart.localeCompare(rightWeekStart))
+    .map(([weekStart, days]) => ({
+      weekStart,
+      days: days.toSorted((left, right) => left.date.localeCompare(right.date)),
+    }));
 }
 
 export function normalizeDayLogForRender(
