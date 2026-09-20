@@ -143,13 +143,15 @@ There are some planned "Daily Insights" and "Smart Swap" features, if they show 
 ### Daily Logs Page
 
 - Each day starts with a compact summary of calories eaten, calories remaining, and macros with line graphs to give the user a quick sense of if their day is on the right track, and what they can still afford. As they are working on building new habits, it helps to know this information so they can quickly adjust in the same day.
+- The week scroller also shows a ring of the percent of calories eaten of the limit per day that week, to also help keep that information top of mind in a compact interface that works with the feel of the design.
 - Logging can be done via the floating Plus button, or an Add Item button under the specific meal to quickly reach logging for it, which a user will frequently do.
 - Will revisit this page's design further, it is an older page I have harmonized partially with the new Dashboard's design.
   <br></br>
 
 <table>
   <tr>
-    <td><img width="1225" height="915" src="https://github.com/user-attachments/assets/0d215884-2055-43fe-9b5c-3973a2aecfb6" /></td>
+    <td><img width="1190" height="1010" src="https://github.com/user-attachments/assets/ef640302-4af4-478c-8220-4549f2e75bdf" /></td>
+    <td><img width="378" height="672" src="https://github.com/user-attachments/assets/00674ac0-db41-43f1-9e24-333ba6ce1051" /></td>
   </tr>
 </table>
 
