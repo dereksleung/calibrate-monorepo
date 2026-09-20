@@ -95,13 +95,12 @@ function CalendarWeekDayCell({
       <CalorieRing dotted={dotted} fillRatio={day.fillRatio} />
     </>
   );
-  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${
-    upcoming
-      ? "cursor-default text-on-surface-variant/40"
-      : day.selected
-        ? "text-on-surface"
-        : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-  }`;
+  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${upcoming
+    ? "cursor-default text-on-surface-variant/40"
+    : day.selected
+      ? "text-on-surface"
+      : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    }`;
   const calories = Math.round(day.fillRatio * DAILY_TARGETS.calories);
   const ariaLabel = `${formatDate(day.date)}, ${calories.toLocaleString()} of ${DAILY_TARGETS.calories.toLocaleString()} calories${upcoming ? ", upcoming" : ""}`;
 
@@ -259,7 +258,7 @@ export function CalendarWeek({ accountId, selectedDate, todayDate }: CalendarWee
       </button>
       <div aria-label="Calendar weeks" className="min-w-0 flex-1" role="region">
         <div
-          className="flex w-full flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-22 overflow-x-auto overscroll-x-contain snap-x snap-mandatory overflow-y-hidden"
+          className="flex w-full flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overflow-x-auto overscroll-x-contain snap-x snap-mandatory overflow-y-hidden"
           data-testid="calendar-week-scroller"
           ref={viewportRef}
         >
@@ -270,7 +269,7 @@ export function CalendarWeek({ accountId, selectedDate, todayDate }: CalendarWee
             return (
               <ol
                 aria-label="Calendar week"
-                className="grid h-[88px] w-full min-w-full shrink-0 basis-full grid-cols-7 gap-1 snap-start snap-always"
+                className="grid w-full min-w-full shrink-0 basis-full grid-cols-7 gap-1 snap-start snap-always"
                 data-testid={`calendar-week-${weekStart}`}
                 id={weekStart}
                 key={weekStart}

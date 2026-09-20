@@ -6,7 +6,6 @@ import {
   applyWeightObservationToDayLogCache,
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
-  dayLogSlotQueryKeyPrefix,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useUpdateDayLogWeight } from "@calibrate/api-client";
@@ -125,8 +124,8 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-        new Date(`${selectedDate}T00:00:00`),
-      );
+      new Date(`${selectedDate}T00:00:00`),
+    );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });
@@ -134,10 +133,14 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   }
 
   return (
-    <main className="min-h-screen bg-surface pb-24 pt-8 antialiased md:pb-20 md:pt-16 subtle-aurora-fade-page-background">
-      <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-10 md:gap-9`}>
-        <section aria-label="Selected day" className="space-y-3">
-          <Typography as="h1" color="onSurface" variant="h1PageTitle">
+    <main className="min-h-screen bg-surface pb-24 pt-6 antialiased md:pb-20 md:pt-12 subtle-aurora-fade-page-background">
+      <div className={`${APP_CONTENT_FRAME_CLASS_NAME} flex flex-col gap-6 md:gap-9`}>
+        <section aria-label="Selected day" className="space-y-4">
+          <Typography
+            as="h1"
+            className="font-heading text-[1.75rem] font-bold leading-8 tracking-[-0.03em]"
+            color="onPrimaryFixed"
+          >
             {title}
           </Typography>
           <CalendarWeek accountId={accountId} selectedDate={selectedDate} todayDate={todayDate} />

@@ -6,9 +6,9 @@ import "../styles.css";
 import Header from "#/shared/components/Header.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
 import { SessionRestorationGate } from "#/verticals/auth/session-restoration-gate.tsx";
-import { TanStackDevtools } from "@tanstack/react-devtools";
+// import { TanStackDevtools } from "@tanstack/react-devtools";
 import { Outlet, createRootRoute, useRouterState } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+// import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -59,7 +59,7 @@ function RootComponent() {
           </div>
         )}
       </div>
-      <TanStackDevtools
+      {/* <TanStackDevtools
         config={{
           position: "bottom-right",
         }}
@@ -69,7 +69,7 @@ function RootComponent() {
             render: <TanStackRouterDevtoolsPanel />,
           },
         ]}
-      />
+      /> */}
     </TooltipProvider>
   );
 
