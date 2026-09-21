@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Frontend Core Refactor — Review</title>
+    <style>
+      :root { color-scheme: light dark; --surface:#f9f9f9; --ink:#1a1c1c; --primary:#334f2b; --accent:#caecbc; --line:#c3c8bd; --muted:#434840; --card:rgba(255,255,255,.68); --wash:#dee4e0; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-width:320px; color:var(--ink); background:radial-gradient(circle at 0 0,var(--accent) 0,transparent 34rem),radial-gradient(circle at 100% 100%,var(--wash),var(--surface) 42rem); font-family:Inter,ui-sans-serif,system-ui,sans-serif; }
+      main { max-width:1160px; margin:auto; padding:3rem 1.25rem 5rem; }
+      h1,h2,h3 { font-family:Manrope,ui-sans-serif,system-ui,sans-serif; color:var(--primary); letter-spacing:-.035em; }
+      h1 { font-size:clamp(2.35rem,7vw,4.9rem); font-weight:400; line-height:.98; margin:.3rem 0 1.25rem; max-width:900px; }
+      h2 { font-size:1.5rem; margin:0 0 .9rem; }
+      h3 { font-size:1.05rem; margin:.1rem 0 .45rem; }
+      p,li { line-height:1.55; }
+      .eyebrow { color:var(--primary); font-size:.8rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+      .lede { max-width:770px; color:var(--muted); font-size:1.12rem; }
+      .glass { background:var(--card); border:1px solid rgba(255,255,255,.8); box-shadow:0 20px 40px -18px rgba(0,0,0,.14); backdrop-filter:blur(18px); border-radius:1.5rem; }
+      .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.85rem; margin:2rem 0 3rem; }
+      .stat { padding:1.25rem; }
+      .stat strong { display:block; font-family:Manrope,sans-serif; color:var(--primary); font-size:2rem; font-weight:400; }
+      .stat span { color:var(--muted); font-size:.88rem; }
+      section { margin-top:2.5rem; }
+      .diagram-wrap { overflow:auto; padding:1.25rem; }
+      .mermaid { min-width:720px; }
+      .rule-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+      .rule { padding:1.25rem; }
+      .rule code,.path { background:rgba(51,79,43,.09); border-radius:.4rem; padding:.12rem .3rem; overflow-wrap:anywhere; }
+      .good { border-left:4px solid #4a6741; }
+      .keep { border-left:4px solid #73796f; }
+      .stage { display:grid; grid-template-columns:3.2rem minmax(0,1fr); gap:1rem; padding:1rem 0; border-top:1px solid rgba(67,72,64,.2); }
+      .stage:first-child { border-top:0; }
+      .number { display:grid; place-items:center; width:3.2rem; height:3.2rem; border-radius:999px; background:var(--primary); color:white; font-family:Manrope,sans-serif; font-size:1.3rem; }
+      table { width:100%; border-collapse:collapse; font-size:.93rem; }
+      th,td { padding:.8rem; text-align:left; vertical-align:top; border-top:1px solid rgba(67,72,64,.2); overflow-wrap:anywhere; }
+      th { color:var(--primary); }
+      .callout { padding:1.25rem; border:1px solid rgba(51,79,43,.26); background:rgba(202,236,188,.35); }
+      .muted { color:var(--muted); }
+      @media (max-width:720px) { .stats,.rule-grid { grid-template-columns:1fr; } main { padding-top:2rem; } }
+      @media (prefers-color-scheme: dark) { :root { --surface:#2f3131; --ink:#f0f1f1; --primary:#afd0a1; --accent:#4a6741; --line:#73796f; --muted:#dee4e0; --card:rgba(26,28,28,.74); --wash:#434947; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Calibrate / ADR-0007</div>
+      <h1>Frontend core refactor</h1>
+      <p class="lede">Rename the shared package, stop API contracts at a private boundary, and reuse portable workflows across web and mobile without pulling browser persistence or UI into core.</p>
+
+      <div class="stats">
+        <div class="stat glass"><strong>1</strong><span>new package identity: <code>@calibrate/frontend-core</code></span></div>
+        <div class="stat glass"><strong>0</strong><span>public root barrels or public <code>api/**</code> imports</span></div>
+        <div class="stat glass"><strong>9</strong><span>small, ordered implementation tickets</span></div>
+      </div>
+
+      <section>
+        <h2>What crosses each boundary?</h2>
+        <div class="glass diagram-wrap">
+          <pre class="mermaid">flowchart LR
+  W[Web runtime\ntransport • QueryClient\nIndexedDB • router] --> F[Public feature workflows\ncommand mapping • response mapping\nportable cache orchestration]
+  M[Future mobile runtime\ntransport • QueryClient] --> F
+  F --> A[Private API modules\nendpoint details • schema validation]
+  A --> C[@calibrate/api-contracts]
+  F --> D[Domain models & projections\nDayLogSnapshot • nutrition • dashboard]
+  F --> Q[TanStack Query\naccount-scoped Day Log slots]
+  Q --> W
+          </pre>
+        </div>
+      </section>
+
+      <section>
+        <h2>Decisions that are now fixed</h2>
+        <div class="rule-grid">
+          <article class="rule glass good"><h3>Public, direct leaves</h3><p>Consumers import an approved workflow or model path directly. The export map is an allowlist; the package has no root public barrel.</p><span class="path">feature-workflows/day-logs/save-food-entry</span></article>
+          <article class="rule glass good"><h3>Contract firewall</h3><p>Private API modules form and validate HTTP requests. Feature workflows map private API values to public frontend-domain models and command inputs.</p><span class="path">api/** is not exported</span></article>
+          <article class="rule glass good"><h3>Portable cache behavior</h3><p>Core owns keys, snapshot composition, mutations, and conditional reconciliation. Apps inject transport, account identity, and QueryClient.</p><span class="path">DayLogSnapshot = DayLog | null | undefined</span></article>
+          <article class="rule glass keep"><h3>Platform code stays put</h3><p>IndexedDB persistence, cache lifecycle fences, browser events, router state, WebAuthn adapters, and UI components remain in web.</p><span class="path">ADR-0004 privacy fence unchanged</span></article>
+        </div>
+      </section>
+
+      <section class="glass callout">
+        <h2>Day Log semantics are preserved</h2>
+        <p><strong>Loaded</strong> is a <code>DayLog</code>; <strong>Known-empty</strong> is <code>null</code>; <strong>unloaded</strong> is <code>undefined</code>. The refactor does not normalize nullable meal collections yet. It creates the mapper seam first, without changing the cache language that Logs already relies on.</p>
+      </section>
+
+      <section>
+        <h2>Implementation sequence</h2>
+        <div class="glass" style="padding:1.25rem">
+          <div class="stage"><div class="number">1</div><div><h3>Mechanical rename</h3><p class="muted">Rename package/workspace metadata and replace root imports with direct temporary leaf adapters. Prove Nx and TypeScript resolution before behavior changes.</p></div></div>
+          <div class="stage"><div class="number">2</div><div><h3>Seal the boundary</h3><p class="muted">Create private API modules, explicit exports, and configurable credential behavior while retaining today’s <code>include</code> default.</p></div></div>
+          <div class="stage"><div class="number">3</div><div><h3>Day Log model and workflows</h3><p class="muted">Create domain models/mappers, then move sync, slot composition, food-write, weight-write, and reconciliation logic into portable workflows.</p></div></div>
+          <div class="stage"><div class="number">4</div><div><h3>Migrate feature consumers</h3><p class="muted">Move Logs/Food Search and Dashboard onto core models; remove the unused legacy dashboard nutrition model only after an import audit.</p></div></div>
+          <div class="stage"><div class="number">5</div><div><h3>Complete authentication and harden</h3><p class="muted">Introduce <code>AuthenticatedUserContext</code>, keep web session fencing/navigation local, then remove transitional adapters and audit the contract firewall.</p></div></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Pressure-test outcomes</h2>
+        <div class="glass" style="padding:.25rem 1rem; overflow:auto">
+          <table>
+            <thead><tr><th>Area</th><th>Moves to core</th><th>Stays in web</th><th>Invariant</th></tr></thead>
+            <tbody>
+              <tr><td>Logs</td><td>Day Log/food models, save workflows, nutrition, recents ranking</td><td>Routes, date display, components, confirmation route state</td><td>No idle recents fetch; cache-only ranking remains</td></tr>
+              <tr><td>Dashboard</td><td>Snapshot-input analytics and nutrition projection</td><td>Chart props/components, drawer state, page layout</td><td>Seven-/28-day calculation behavior remains</td></tr>
+              <tr><td>Day Log cache</td><td>Keys, sync, patching, reconciliation</td><td>IndexedDB, provider, BroadcastChannel, durable lifecycle fence</td><td>Known-empty, account isolation, 30-day retention, fence safety remain</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="glass callout">
+        <h2>Review focus</h2>
+        <p>The deliberately hard-to-reverse choices are recorded in <code>ADR-0007</code>: package identity, no-barrel export rule, private API boundary, feature-workflow mapping, cache ownership, and the web/mobile runtime split. The detailed file-level work is in the staged plan and nine tickets.</p>
+      </section>
+    </main>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.15.0/dist/mermaid.esm.min.mjs";
+      const query = window.matchMedia("(prefers-color-scheme: dark)");
+      const source = [...document.querySelectorAll(".mermaid")].map((node) => ({ node, text: node.textContent }));
+      let theme;
+      async function render() {
+        const next = query.matches ? "dark" : "default";
+        if (next === theme) return;
+        theme = next;
+        mermaid.initialize({ startOnLoad:false, theme, securityLevel:"strict" });
+        for (const item of source) { item.node.removeAttribute("data-processed"); item.node.textContent = item.text; }
+        await mermaid.run({ nodes: source.map((item) => item.node) });
+      }
+      window.addEventListener("load", () => void render(), { once:true });
+      query.addEventListener("change", () => void render());
+    </script>
+  </body>
+</html>
