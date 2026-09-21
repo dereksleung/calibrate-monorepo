@@ -11,11 +11,11 @@ import {
   type BrowserPasskeyRegistrationAdapter,
 } from "#/verticals/auth/browser-passkey-registration-adapter";
 import {
-  ApiError,
   parsePasskeyRegistrationError,
   requestPasskeyRegistrationOptions,
   verifyPasskeyRegistration,
-} from "@calibrate/api-client";
+} from "@calibrate/frontend-core/auth/signup-passkey-registration";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";

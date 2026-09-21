@@ -1,0 +1,88 @@
+{
+  "name": "@calibrate/frontend-core",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./transport": {
+      "types": "./src/transport.ts",
+      "default": "./src/transport.ts"
+    },
+    "./errors": {
+      "types": "./src/errors.ts",
+      "default": "./src/errors.ts"
+    },
+    "./auth/account-email-verification": {
+      "types": "./src/auth/account-email-verification.ts",
+      "default": "./src/auth/account-email-verification.ts"
+    },
+    "./auth/signup-passkey-registration": {
+      "types": "./src/auth/signup-passkey-registration.ts",
+      "default": "./src/auth/signup-passkey-registration.ts"
+    },
+    "./auth/local-development-passkey-enrollment": {
+      "types": "./src/auth/local-development-passkey-enrollment.ts",
+      "default": "./src/auth/local-development-passkey-enrollment.ts"
+    },
+    "./auth/passkey-authentication": {
+      "types": "./src/auth/passkey-authentication.ts",
+      "default": "./src/auth/passkey-authentication.ts"
+    },
+    "./auth/session": {
+      "types": "./src/auth/session.ts",
+      "default": "./src/auth/session.ts"
+    },
+    "./day-logs/get-day-log": {
+      "types": "./src/day-logs/get-day-log.ts",
+      "default": "./src/day-logs/get-day-log.ts"
+    },
+    "./day-logs/get-day-log-range": {
+      "types": "./src/day-logs/get-day-log-range.ts",
+      "default": "./src/day-logs/get-day-log-range.ts"
+    },
+    "./day-logs/sync-day-logs": {
+      "types": "./src/day-logs/sync-day-logs.ts",
+      "default": "./src/day-logs/sync-day-logs.ts"
+    },
+    "./day-logs/save-food-entry": {
+      "types": "./src/day-logs/save-food-entry.ts",
+      "default": "./src/day-logs/save-food-entry.ts"
+    },
+    "./day-logs/update-day-log-weight": {
+      "types": "./src/day-logs/update-day-log-weight.ts",
+      "default": "./src/day-logs/update-day-log-weight.ts"
+    },
+    "./foods/search-foods": {
+      "types": "./src/foods/search-foods.ts",
+      "default": "./src/foods/search-foods.ts"
+    }
+  },
+  "dependencies": {
+    "@calibrate/api-contracts": "1.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "5.100.5"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "5.100.5"
+  },
+  "nx": {
+    "targets": {
+      "test": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "cwd": "packages/frontend-core",
+          "command": "vitest run src"
+        }
+      },
+      "typecheck": {
+        "executor": "nx:run-commands",
+        "cache": true,
+        "options": {
+          "cwd": "packages/frontend-core",
+          "command": "tsc --noEmit -p tsconfig.json"
+        }
+      }
+    }
+  }
+}

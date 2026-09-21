@@ -4,7 +4,7 @@ import type { BrowserPasskeyRegistrationAdapter } from "#/verticals/auth/browser
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { authenticatedSessionQueryKey } from "#/verticals/auth/authenticated-session.ts";
-import { ApiError } from "@calibrate/api-client";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,7 +15,7 @@ const mockRequestOptions = vi.fn();
 const mockVerifyRegistration = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("@calibrate/api-client", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/auth/signup-passkey-registration", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,

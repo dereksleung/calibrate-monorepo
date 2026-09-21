@@ -1,5 +1,5 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
-import { syncDayLogs } from "@calibrate/api-client";
+import { syncDayLogs } from "@calibrate/frontend-core/day-logs/sync-day-logs";
 import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 

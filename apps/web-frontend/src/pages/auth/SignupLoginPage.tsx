@@ -27,19 +27,19 @@ import {
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
 import {
-  ApiError,
-  parsePasskeyAuthenticationError,
-  requestLocalDevelopmentPasskeyEnrollment,
-  requestPasskeyAuthenticationOptions,
-  startLocalDevelopmentTestSession,
-  useRequestAccountEmailVerification,
-  verifyPasskeyAuthentication,
-} from "@calibrate/api-client";
-import {
   RequestAccountEmailVerificationRequestBodySchema,
   type PasskeyAuthenticationErrorCode,
   type RequestAccountEmailVerificationRequestBody,
 } from "@calibrate/api-contracts";
+import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/auth/account-email-verification";
+import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/auth/local-development-passkey-enrollment";
+import {
+  parsePasskeyAuthenticationError,
+  requestPasskeyAuthenticationOptions,
+  verifyPasskeyAuthentication,
+} from "@calibrate/frontend-core/auth/passkey-authentication";
+import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/auth/session";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";

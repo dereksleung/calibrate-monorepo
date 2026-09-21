@@ -1,6 +1,7 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
-import { syncDayLogs, useSaveFoodEntry as useSaveFoodEntryRequest } from "@calibrate/api-client";
+import { useSaveFoodEntry as useSaveFoodEntryRequest } from "@calibrate/frontend-core/day-logs/save-food-entry";
+import { syncDayLogs } from "@calibrate/frontend-core/day-logs/sync-day-logs";
 import { useQueryClient } from "@tanstack/react-query";
 
 import {

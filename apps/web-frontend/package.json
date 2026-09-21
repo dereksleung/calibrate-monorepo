@@ -22,7 +22,7 @@
     "fmt:check": "cd ../.. && oxfmt --check --config .oxfmtrc.json apps/web-frontend"
   },
   "dependencies": {
-    "@calibrate/api-client": "*",
+    "@calibrate/frontend-core": "*",
     "@calibrate/api-contracts": "*",
     "@fontsource-variable/inter": "5.2.8",
     "@fontsource-variable/manrope": "5.2.8",
