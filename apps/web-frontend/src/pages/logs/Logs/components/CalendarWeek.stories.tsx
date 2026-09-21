@@ -2,7 +2,6 @@ import type { DayLogResponse } from "@calibrate/api-contracts";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 
-import { useSyncDayLogsForDateRange } from "#/pages/dashboard/DashboardV2/useSyncDayLogsForDateRange.ts";
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { dayLogSlotQueryKey } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +11,7 @@ import { mocked } from "storybook/test";
 
 import "../../../../styles.css";
 import { CalendarWeek } from "./CalendarWeek.tsx";
+import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 
 type CalendarDay = {
   date: string;
@@ -42,38 +42,38 @@ function createCalendarDays(
         calories === undefined
           ? null
           : {
-              id: `day-log-${isoDate}`,
-              date: isoDate,
-              breakfast: [
-                {
-                  id: `entry-${isoDate}`,
-                  name: "Storybook meal",
-                  brand: null,
-                  calories,
-                  totalFatGrams: 0,
-                  saturatedFatGrams: null,
-                  cholesterolMg: null,
-                  sodiumMg: 0,
-                  totalCarbohydrateGrams: 0,
-                  fiberGrams: null,
-                  sugarGrams: null,
-                  proteinGrams: 0,
-                  chosenQuantity: 1,
-                  chosenUnit: "serving",
-                  quantityServing: 1,
-                  servingLabel: "serving",
-                  quantityMass: null,
-                  massUnit: null,
-                  quantityVolume: null,
-                  volumeUnit: null,
-                  meal: "BREAKFAST",
-                },
-              ],
-              lunch: [],
-              dinner: [],
-              snacks: [],
-              weight: null,
-            },
+            id: `day-log-${isoDate}`,
+            date: isoDate,
+            breakfast: [
+              {
+                id: `entry-${isoDate}`,
+                name: "Storybook meal",
+                brand: null,
+                calories,
+                totalFatGrams: 0,
+                saturatedFatGrams: null,
+                cholesterolMg: null,
+                sodiumMg: 0,
+                totalCarbohydrateGrams: 0,
+                fiberGrams: null,
+                sugarGrams: null,
+                proteinGrams: 0,
+                chosenQuantity: 1,
+                chosenUnit: "serving",
+                quantityServing: 1,
+                servingLabel: "serving",
+                quantityMass: null,
+                massUnit: null,
+                quantityVolume: null,
+                volumeUnit: null,
+                meal: "BREAKFAST",
+              },
+            ],
+            lunch: [],
+            dinner: [],
+            snacks: [],
+            weight: null,
+          },
     };
   });
 }
