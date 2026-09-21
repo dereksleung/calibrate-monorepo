@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR-0007](./0007-frontend-core-package-and-workflow-boundaries.md).
 
 ## Date
 
