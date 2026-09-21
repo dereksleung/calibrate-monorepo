@@ -38,6 +38,16 @@ function isRevocation(value: unknown): value is DayLogCacheRevocation & { type: 
   );
 }
 
+/**
+ * Waits until the cache is finished restoring from IndexedDB before rendering children.
+ * Checks the fence one last time after finishing restoring, and before rendering private
+ * UI, to see if it should revoke cache access. 
+ * 
+ * After that, privacy is protected by the CacheAccessLifecycleGate detecting revocation
+ * while the app is running and every 15 seconds while visible, and the fenced IndexedDB
+ * persistence adapter independently preventing stale access from restoring, writing or
+ * deleting a private cache snapshot.
+ */
 function HydratedCacheAccessGate({
   children,
   cacheAccess,
@@ -74,6 +84,13 @@ function HydratedCacheAccessGate({
   return <>{children}</>;
 }
 
+/**
+ * Sets up page lifecycle moments that can check the fence and revoke cache access. 
+ * The current moments are on page show, page focus, page visibility change to visible
+ * and every 15 seconds, and BroadcastChannel listeners.  
+ * 
+ * Gates restoring the Tanstack cache by gating rendering TanStack's PersistQueryClientProvider.
+ */
 function CacheAccessLifecycleGate({
   accountId,
   children,
@@ -212,6 +229,12 @@ function CacheAccessLifecycleGate({
   );
 }
 
+/**
+ * Acquires a generation-fenced IndexedDB cache adapter for this account.
+ * It initializes missing lifecycle state and normalizes the legacy
+ * confirmed-account marker when necessary. The adapter is used by TanStack
+ * Query to restore, persist, and remove this account's fenced cache snapshot.
+ */
 export function PrivateDayLogCacheProvider({
   accountId,
   children,
@@ -227,6 +250,10 @@ export function PrivateDayLogCacheProvider({
     let active = true;
     setCacheAccess(undefined);
     void acquireDayLogCacheAccess(accountId).then(async (acquiredCacheAccess) => {
+      // From closures, the useEffect cleanup function will set active to false if 
+      // something triggers the effect again, like the accountId changing.
+      // This makes the effect ignore an acquisition that resolves after
+      // an account change or unmount.
       if (!active) return;
       const isCurrent = await acquiredCacheAccess.isCurrent().catch(() => false);
       if (!active) return;

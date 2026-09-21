@@ -81,6 +81,13 @@ function LogsOverviewSkeleton() {
   );
 }
 
+/**
+ * On clicking to view a day without fresh cache data, it syncs that day and
+ * the previous 6 days as the likeliest next days to be browsed, to reduce 
+ * network round trips.
+ * When updating logs, most users will not go much farther than that, 
+ * it is hard to remember what you ate past 1 week ago.
+ */
 export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsProps) {
   const navigate = useNavigate();
   const weightInputRef = useRef<HTMLInputElement>(null);
@@ -90,16 +97,16 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const queryClient = useQueryClient();
   const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
   const isUpcoming = selectedDate > todayDate;
-  const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
-  const selectedDateRange = { startDate: selectedDate, endDate: selectedDate };
+  const selectedDayWithPastWeek = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
+  const selectedDateOnlyAsRange = { startDate: selectedDate, endDate: selectedDate };
   const selectedDateNeedsValidation = doesDayLogRangeNeedValidation(
-    selectedDateRange,
-    getDayLogsWithStalenessState(queryClient, accountId, selectedDateRange),
+    selectedDateOnlyAsRange,
+    getDayLogsWithStalenessState(queryClient, accountId, selectedDateOnlyAsRange),
     Date.now(),
   );
   const selectedDaySync = useSyncDayLogsForDateRange({
     accountId,
-    dateRange: selectedRange,
+    dateRange: selectedDayWithPastWeek,
     enabled: !isUpcoming && selectedDateNeedsValidation,
   });
   const data = selectedDaySync.cached.find((query) => query.data?.date === selectedDate)?.data?.data;
