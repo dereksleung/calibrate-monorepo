@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { createQueryClient } from "#/shared/api/query-client";
-import { ApiError } from "@calibrate/api-client";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -38,17 +38,38 @@ const {
   mockVerifyPasskeyAuthentication: vi.fn(),
 }));
 
-vi.mock("@calibrate/api-client", async (importOriginal) => {
-  const original = (await importOriginal()) as any;
+vi.mock("@calibrate/frontend-core/auth/account-email-verification", async (importOriginal) => {
+  const original = (await importOriginal()) as object;
   return {
     ...original,
     useRequestAccountEmailVerification: vi.fn(() => ({
       mutateAsync: mockMutateAsync,
     })),
-    requestPasskeyAuthenticationOptions: mockRequestPasskeyAuthenticationOptions,
+  };
+});
+
+vi.mock("@calibrate/frontend-core/auth/local-development-passkey-enrollment", async (importOriginal) => {
+  const original = (await importOriginal()) as object;
+  return {
+    ...original,
     requestLocalDevelopmentPasskeyEnrollment: mockRequestLocalDevelopmentPasskeyEnrollment,
-    startLocalDevelopmentTestSession: mockStartLocalDevelopmentTestSession,
+  };
+});
+
+vi.mock("@calibrate/frontend-core/auth/passkey-authentication", async (importOriginal) => {
+  const original = (await importOriginal()) as object;
+  return {
+    ...original,
+    requestPasskeyAuthenticationOptions: mockRequestPasskeyAuthenticationOptions,
     verifyPasskeyAuthentication: mockVerifyPasskeyAuthentication,
+  };
+});
+
+vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => {
+  const original = (await importOriginal()) as object;
+  return {
+    ...original,
+    startLocalDevelopmentTestSession: mockStartLocalDevelopmentTestSession,
   };
 });
 

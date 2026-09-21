@@ -6,7 +6,7 @@ import {
   authenticatedSessionQueryKey,
   setAuthenticatedSession,
 } from "#/verticals/auth/authenticated-session.ts";
-import { ApiError } from "@calibrate/api-client";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterContextProvider,
@@ -33,8 +33,8 @@ const {
   mockDeleteCurrentSession: vi.fn(),
 }));
 
-vi.mock("@calibrate/api-client", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@calibrate/api-client")>()),
+vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@calibrate/frontend-core/auth/session")>()),
   deleteCurrentSession: mockDeleteCurrentSession,
 }));
 

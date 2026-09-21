@@ -5,7 +5,7 @@
     { "path": "./apps/backend" },
     { "path": "./apps/web-frontend" },
     { "path": "./packages/api-contracts" },
-    { "path": "./packages/api-client" },
+    { "path": "./packages/frontend-core" },
     { "path": "./packages/dev-bindings" },
     { "path": "./packages/local-runtime-config" },
     {
