@@ -4,7 +4,7 @@
   "include": ["**/*.ts", "**/*.tsx"],
   "outDir": "./dist",
   "rootDir": ".",
-  "references": [{ "path": "../../packages/api-contracts" }, { "path": "../../packages/api-client" }],
+  "references": [{ "path": "../../packages/api-contracts" }, { "path": "../../packages/frontend-core" }],
   "compilerOptions": {
     "composite": false,
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
@@ -14,7 +14,7 @@
     "paths": {
       "#/*": ["./src/*"],
       "@/*": ["./src/*"],
-      "@calibrate/api-client": ["../../packages/api-client/src/index.ts"],
+      "@calibrate/frontend-core/*": ["../../packages/frontend-core/src/*"],
       "@calibrate/api-contracts": ["../../packages/api-contracts/src/index.ts"]
     },
     "lib": ["ES2022", "DOM", "DOM.Iterable"],

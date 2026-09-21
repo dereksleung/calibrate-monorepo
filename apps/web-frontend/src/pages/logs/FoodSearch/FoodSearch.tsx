@@ -2,7 +2,6 @@ import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSaveFoodEntry } from "#/verticals/day-log-cache/use-save-food-entry.ts";
-import { useFoodSearch } from "@calibrate/api-client";
 import {
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
@@ -11,6 +10,7 @@ import {
   type FoodSearchResult,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
+import { useFoodSearch } from "@calibrate/frontend-core/foods/search-foods";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";

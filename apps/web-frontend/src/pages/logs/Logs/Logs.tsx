@@ -8,7 +8,7 @@ import {
   getDayLogsWithStalenessState,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
-import { useUpdateDayLogWeight } from "@calibrate/api-client";
+import { useUpdateDayLogWeight } from "@calibrate/frontend-core/day-logs/update-day-log-weight";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
@@ -124,8 +124,8 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const title = isToday(selectedDate)
     ? "Today"
     : new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(
-      new Date(`${selectedDate}T00:00:00`),
-    );
+        new Date(`${selectedDate}T00:00:00`),
+      );
 
   async function saveWeight(weight: number) {
     const result = await weightMutation.mutateAsync({ weight });

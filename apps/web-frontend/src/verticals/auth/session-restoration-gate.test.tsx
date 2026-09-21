@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { ApiError } from "@calibrate/api-client";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterContextProvider,
@@ -33,8 +33,8 @@ const {
   revokeLastConfirmedDayLogCache: vi.fn(),
 }));
 
-vi.mock("@calibrate/api-client", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@calibrate/api-client")>()),
+vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@calibrate/frontend-core/auth/session")>()),
   getCurrentSession,
   refreshSession,
 }));

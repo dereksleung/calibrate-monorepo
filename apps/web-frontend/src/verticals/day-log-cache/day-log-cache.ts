@@ -1,10 +1,6 @@
 import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
 import {
-  dayLogSlotQueryKey as createDayLogSlotQueryKey,
-  type DayLogSyncRequest,
-} from "@calibrate/api-client";
-import {
   DayLogResponseSchema,
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
@@ -15,6 +11,8 @@ import {
   type MealNameEnumType,
   type UpdateDayLogWeightResponse,
 } from "@calibrate/api-contracts";
+import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/frontend-core/day-logs/get-day-log";
+import { type DayLogSyncRequest } from "@calibrate/frontend-core/day-logs/sync-day-logs";
 
 export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;

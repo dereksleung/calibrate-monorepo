@@ -13,7 +13,7 @@ const { mockMutateAsync, mockVerifyMutateAsync, mockNavigate } = vi.hoisted(() =
   mockNavigate: vi.fn(),
 }));
 
-vi.mock("@calibrate/api-client", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/auth/account-email-verification", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,
