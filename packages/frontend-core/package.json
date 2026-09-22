@@ -19,6 +19,8 @@
       "types": "./src/verticals/day-logs/models/food-search.ts",
       "default": "./src/verticals/day-logs/models/food-search.ts"
     },
+    "./verticals/day-logs/models/nutrition": { "types": "./src/verticals/day-logs/models/nutrition.ts", "default": "./src/verticals/day-logs/models/nutrition.ts" },
+    "./verticals/day-logs/models/recent-foods": { "types": "./src/verticals/day-logs/models/recent-foods.ts", "default": "./src/verticals/day-logs/models/recent-foods.ts" },
     "./verticals/day-logs/models/__mocks__/day-log": {
       "types": "./src/verticals/day-logs/models/__mocks__/day-log.ts",
       "default": "./src/verticals/day-logs/models/__mocks__/day-log.ts"
@@ -39,6 +41,7 @@
       "types": "./src/feature-workflows/day-logs/update-day-log-weight.ts",
       "default": "./src/feature-workflows/day-logs/update-day-log-weight.ts"
     },
+    "./feature-workflows/day-logs/search-foods": { "types": "./src/feature-workflows/day-logs/search-foods.ts", "default": "./src/feature-workflows/day-logs/search-foods.ts" },
     "./auth/account-email-verification": {
       "types": "./src/auth/account-email-verification.ts",
       "default": "./src/auth/account-email-verification.ts"

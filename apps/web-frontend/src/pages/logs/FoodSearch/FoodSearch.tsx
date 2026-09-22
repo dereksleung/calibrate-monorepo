@@ -2,15 +2,9 @@ import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSaveFoodEntry } from "#/verticals/day-log-cache/use-save-food-entry.ts";
-import {
-  normalizeFoodEntryForStorage,
-  type CreateFoodEntryRequest,
-  type DayLogResponse,
-  type FoodEntryResponse,
-  type FoodSearchResult,
-  type MealNameEnumType,
-} from "@calibrate/api-contracts";
-import { useFoodSearch } from "@calibrate/frontend-core/foods/search-foods";
+import { searchFoods as searchFoodWorkflow } from "@calibrate/frontend-core/feature-workflows/day-logs/search-foods";
+import type { DayLog, FoodEntry, MealName } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
+import type { FoodSearchResult, SaveFoodEntryCommand } from "@calibrate/frontend-core/verticals/day-logs/models/food-search";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -37,8 +31,8 @@ function formatRecentFoodDate(date: string): string {
 
 export function toFoodEntry(
   food: SelectedFoodForConfirmation,
-  meal: MealNameEnumType,
-): CreateFoodEntryRequest {
+  meal: MealName,
+): SaveFoodEntryCommand {
   const recentUnit =
     food.chosenQuantity !== undefined && food.chosenUnit !== undefined
       ? { unit: food.chosenUnit, baseQuantity: food.chosenQuantity }
@@ -48,7 +42,7 @@ export function toFoodEntry(
     : (getFoodUnitOptions(food)[0] ?? { unit: food.servingLabel, baseQuantity: food.quantityServing });
   const nutrition = recentUnit ? food : scaleFoodNutrition(food, unit.baseQuantity, unit.unit);
 
-  return normalizeFoodEntryForStorage({
+  return {
     name: food.name,
     brand: food.brand ?? null,
     meal,
@@ -61,17 +55,17 @@ export function toFoodEntry(
     massUnit: food.massUnit,
     quantityVolume: food.quantityVolume,
     volumeUnit: food.volumeUnit,
-  });
+  };
 }
 
 function isRecentSearchResult(
-  food: FoodSearchResult | FoodEntryResponse,
+  food: FoodSearchResult | FoodEntry,
 ): food is Extract<FoodSearchResult, { source: "recent" }> {
   return "source" in food && food.source === "recent";
 }
 
 function toConfirmationFood(
-  food: FoodSearchResult | FoodEntryResponse,
+  food: FoodSearchResult | FoodEntry,
   lastUsedLabel?: string,
 ): SelectedFoodForConfirmation {
   const recentSearch = isRecentSearchResult(food) ? food : null;
@@ -117,7 +111,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
     },
   });
 
-  async function quickAdd(food: SelectedFoodForConfirmation, meal: MealNameEnumType) {
+  async function quickAdd(food: SelectedFoodForConfirmation, meal: MealName) {
     setAddingFoodIds((ids) => new Set(ids).add(food.id));
     try {
       await save.mutateAsync(toFoodEntry(food, meal));
@@ -140,7 +134,8 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   }, [query]);
 
   const activeSearch = debouncedQuery.length >= 3 ? { query: debouncedQuery } : null;
-  const search = useFoodSearch(apiTransport, activeSearch);
+  const [search, setSearch] = useState<{ data?: { results: FoodSearchResult[] }; isPending: boolean; isError: boolean }>({ isPending: false, isError: false });
+  useEffect(() => { if (!activeSearch) { setSearch({ isPending: false, isError: false }); return; } let cancelled = false; setSearch({ isPending: true, isError: false }); void searchFoodWorkflow(apiTransport, activeSearch).then((data) => !cancelled && setSearch({ data, isPending: false, isError: false }), () => !cancelled && setSearch({ isPending: false, isError: true })); return () => { cancelled = true; }; }, [activeSearch?.query]);
   const searchFoods = useMemo(
     () =>
       search.data?.results.map((food) =>
@@ -155,7 +150,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const cachedFoods = useMemo(() => {
     if (!session) return [];
     const slots = queryClient
-      .getQueriesData<DayLogResponse | null | undefined>({
+      .getQueriesData<DayLog | null | undefined>({
         queryKey: dayLogSlotQueryKeyPrefix(session.user.id),
       })
       .map(([queryKey, data]) => ({ date: String(queryKey[3]), data }));

@@ -1,4 +1,4 @@
-import type { MealNameEnumType } from "@calibrate/api-contracts";
+import type { MealName } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 
 export type SelectedFoodForConfirmation = {
   id: string;
@@ -27,7 +27,7 @@ export type SelectedFoodForConfirmation = {
 
 export type FoodConfirmationState = {
   food: SelectedFoodForConfirmation;
-  preselectedMeal?: MealNameEnumType;
+  preselectedMeal?: MealName;
 };
 
 declare module "@tanstack/history" {
