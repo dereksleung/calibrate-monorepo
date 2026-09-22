@@ -8,6 +8,7 @@
 
 - [ ] Do not treat current-user context as token storage.
 - [ ] Preserve session transport information needed by the client.
+- [ ] Let portable workflows receive or resolve account context supplied by the host app; do not import web's authenticated-session hook from core. A workflow may consume auth and Day Log models without being nested under either vertical.
 - [ ] Keep WebAuthn/browser adapters and router transitions in web.
 - [ ] Ensure auth API response types no longer escape public core operations.
 

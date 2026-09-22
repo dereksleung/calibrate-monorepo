@@ -18,7 +18,7 @@ flowchart LR
   Mobile[Future mobile runtime\ntransport, QueryClient] --> Workflow
   Workflow --> API[Private API operation\nURL, method, schema validation]
   API --> Contracts[@calibrate/api-contracts]
-  Workflow --> Models[Frontend domain models\nand pure projections]
+  Workflow --> Models[Frontend domain models\nfrom one or more verticals]
   Workflow --> Query[TanStack Query\naccount-scoped slot cache]
   Query --> Web
 ```
@@ -33,15 +33,19 @@ Verify `@calibrate/frontend-core` and web typecheck/test targets before beginnin
 
 ### 2. Seal the API boundary and define the public module topology
 
-Create the private `api/<area>` modules and move request details there. Make `package.json` exports a narrow allowlist for public model, workflow, transport/error, and test leaf paths. Add configurable `credentials` to `ApiTransport`, defaulting to `"include"`.
+Create the private `api/<area>` modules and move only network-request details there: route/path/query, HTTP method, request-body validation, transport execution, and response validation. For example, `src/api/day-logs/save-food-entry.ts` owns `saveFoodEntry(transport, date, input)` and returns the validated API response. It has no React Query import, cache writes, or fallback policy. A change to network protocol details, transport technology, or validation technology belongs here; a change to the Save Food Entry goal does not.
 
-Public feature-workflow inputs are frontend command types. Public successful outputs are frontend-domain models. Private API operation tests can use relative imports; app code cannot import their paths.
+Make `package.json` exports a narrow allowlist for public model, workflow, transport/error, and test leaf paths. `src/api/**` is a private filesystem path, not an importable `@calibrate/frontend-core/api/**` package subpath. Add configurable `credentials` to `ApiTransport`, defaulting to `"include"`.
+
+The public `src/feature-workflows/<workflow-group>/<goal>.ts` modules own TanStack Query options/hooks and application-layer orchestration. A workflow receives or resolves host-supplied account context, maps frontend command inputs to API request shapes, calls one or more private API operations, maps validated responses into frontend-domain values, updates shared cache/client state, reconciles when needed, and defines fallback behavior. Name each leaf for the cohesive user goal; choose a discoverable group without requiring it to match a vertical or endpoint. A workflow may depend on models from multiple verticals. Public successful outputs are frontend-domain models. Private API operation tests can use relative imports; app code cannot import their paths.
+
+For the Save Food Entry migration, move `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` from the old combined API-client file to `src/feature-workflows/day-logs/save-food-entry.ts`. Fold the portable behavior of `apps/web-frontend/src/verticals/day-log-cache/use-save-food-entry.ts` into that same workflow: obtain injected account context and the app-owned `QueryClient`, execute the save command, map the acknowledgement, patch the account-scoped Day Log slot, conditionally sync one date, and retain the locally acknowledged entry for later validation if sync fails. Keep the web hook only as a thin adapter for web's account/transport setup if one remains useful. Put the response mapper in the workflow folder, optionally in a separate `save-food-entry-mappers.ts` so a response-shape change has a focused edit.
 
 ### 3. Migrate Day Log and food data first
 
 Create Day Log, Food Entry, Meal, food-search, and Day Log sync/write-acknowledgement models under `verticals/day-logs/models`. Keep `DayLog` meal nullability unchanged. Define `DayLogSnapshot` as `{ date, data: DayLog | null | undefined }` and use its `null`/`undefined` meanings consistently.
 
-Implement mappers beside Day Log and food feature workflows. Move the date-key family, validation helpers, sync acceptance, write patching, and conditional single-date reconciliation into portable workflows. The web cache retains persistence filtering and lifecycle fence ownership but calls core for portable composition.
+Implement mappers beside Day Log and food feature workflows, not in `verticals/<area>/models`. Move the date-key family, validation helpers, sync acceptance, write patching, and conditional single-date reconciliation into portable workflows. The web cache retains persistence filtering and lifecycle fence ownership but calls core for portable composition.
 
 ### 4. Migrate Logs and Dashboard consumers
 
@@ -72,7 +76,8 @@ Tasks 4 and 5 share Day Log model work but can proceed after task 3. Logs and Da
 
 | Risk | Mitigation |
 | --- | --- |
-| A mapper accidentally becomes another public contract leak | Keep API modules unexported; test workflow output types and search app source for contract response imports. |
+| A mapper accidentally becomes another public contract leak | Keep API modules unexported; place response mappers in workflow folders, test workflow output types, and search app source for contract response imports. |
+| Mutation options and hooks implement different save behavior | Put the user-goal policy behind one workflow interface and test both entry points against cache patching, conditional sync, and fallback cases. |
 | A mechanical rename breaks TypeScript/Nx workspace resolution | Make it the first isolated checkpoint; update package, project references, paths, and lockfile together. |
 | Moving cache logic changes Known-empty or unverified behavior | Characterize current query-key, timestamp, predecessor-version, sync-204, and fallback behavior before moving it. |
 | Browser cache fence moves into core | Keep all IndexedDB, BroadcastChannel, document/window, and provider lifecycle files in web; test this boundary by imports. |

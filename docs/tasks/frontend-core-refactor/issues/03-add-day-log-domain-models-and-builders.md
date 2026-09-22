@@ -4,11 +4,11 @@
 
 **Status:** ready-for-agent
 
-**What to build:** Define frontend Day Log, Food Entry, Meal, food-search, sync, and write-acknowledgement models under `verticals/day-logs/models`. Add co-located `__mocks__` builders and response-to-domain mappers in Day Log feature-workflow modules.
+**What to build:** Define frontend Day Log, Food Entry, Meal, food-search, sync, and write-acknowledgement models under `verticals/day-logs/models`. Add co-located `__mocks__` builders. Put API-response-to-domain mappers in `feature-workflows/day-logs/`, optionally in dedicated mapper files so an API response change has one focused edit. Pure vertical models must not know API response types.
 
 - [ ] Keep `DayLog` meal fields nullable for this refactor.
 - [ ] Define `DayLogSnapshot` as `{ date, data: DayLog | null | undefined }`; document `null` as Known-empty and `undefined` as unloaded.
-- [ ] Keep API contract imports inside the mapper/workflow files, never the model files.
+- [ ] Keep API contract imports inside private API or mapper/workflow files, never the model files. Name workflow leaves for user goals; their grouping need not match a vertical, and they may use models from more than one vertical.
 - [ ] Add mapper tests that prove field-by-field conversion and null/undefined slot meanings.
 
 **Acceptance:** Core consumers can use Day Log types and builders without importing `@calibrate/api-contracts`.

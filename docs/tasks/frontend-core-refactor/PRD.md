@@ -11,7 +11,8 @@ The purpose is to stop API contract response shapes from flowing through web fea
 - `@calibrate/frontend-core` replaces `@calibrate/api-client`; no compatibility package remains.
 - Application imports use approved direct leaf paths only; there is no public root barrel and no application import of a private `api/**` module.
 - Every existing API-client operation, including authentication, is available through a public domain-model or feature-workflow surface. No public operation result exposes `@calibrate/api-contracts` response types.
-- Private `api/<area>` modules own endpoint details and schema validation. Feature workflows own request/response mapping and may compose multiple operations to finish a user goal.
+- Private `api/<area>` modules own network requests: request-body validation, URL/path/query construction, HTTP method, and validation of the returned response. They contain no TanStack Query options, hooks, cache writes, or user-goal policy. Their reasons to change are transport/validator technology or network-request details such as routes, parameters, and payload schemas.
+- Public `feature-workflows/<workflow-group>/<goal>` modules own the application-layer orchestration for a cohesive user goal. They map frontend inputs to requests and validated API responses to frontend-domain types; their TanStack Query options and hooks can coordinate account context, server commands, cache updates, reconciliation, and fallback behavior. The workflow group is chosen for discoverability and need not match a vertical or an endpoint; a workflow may use models from several verticals.
 - Day Log cache data uses shared `DayLogSnapshot` with `DayLog | null | undefined`; this preserves loaded, Known-empty, and unloaded semantics. The existing one-hour validation, version reconciliation, 30-day retention, and account-scoped privacy fence remain behaviorally unchanged.
 - Core owns portable query keys, query options/hooks, cache patching, and conditional synchronization. Web retains IndexedDB, `window`/`document`/BroadcastChannel behavior, routing, and UI.
 - Core exports portable nutrition, meal, recent-food, and Dashboard V2 analytics projections. Web-only route parsing, date presentation, chart-component props, and visual components remain in web.
@@ -36,22 +37,32 @@ Run the narrow package or colocated test before broader web checks. Do not run a
 ```text
 packages/frontend-core/
   src/
-    api/<area>/                         private HTTP operations and schemas
-    feature-workflows/<area>/           public portable hooks/options/mappers
+    api/<area>/                         private network operations and schemas
+    feature-workflows/<group>/<goal>.ts  public user-goal orchestration, hooks/options/mappers
     verticals/<area>/models/             domain types, pure area projections, __mocks__
     shared/models/                       cross-vertical pure transforms and __mocks__
     transport.ts                         injected, runtime-neutral transport
     errors.ts                            transport errors
 ```
 
-`api/<area>` is intentionally not an exported package path. Public consumers use specific leaf modules, for example:
+`api/<area>` is a source-code location, not an exported package path. Public consumers use specific leaf modules, for example:
 
 ```ts
 import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
 import type { DayLogSnapshot } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 ```
 
-Inside a feature workflow, raw contract values end at the mapper boundary:
+The existing `packages/api-client/src/day-logs/save-food-entry.ts` combines three responsibilities. Split it as follows:
+
+| Source file after migration | Responsibility | Example exports |
+| --- | --- | --- |
+| `src/api/day-logs/save-food-entry.ts` | Validate/form `POST /daylogs/{date}/food-entries`, execute it through `ApiTransport`, and return the validated API response. | `saveFoodEntry` |
+| `src/feature-workflows/day-logs/save-food-entry.ts` | Complete the Save Food Entry goal through TanStack Query options/hooks, domain mapping, Day Log cache patching, conditional sync, and fallback behavior. | `getSaveFoodEntryMutationOptions`, `useSaveFoodEntry` |
+| `src/feature-workflows/day-logs/save-food-entry-mappers.ts` (optional) | Convert the validated response and frontend command input to frontend-domain values. Keep this separate when it makes contract changes local and easy to test. | Response/request mapper functions |
+
+The workflow resolves account context through a portable input or host-supplied accessor; web may pass the current account from its authenticated-session hook. It does not import that web hook. The workflow can obtain the app's `QueryClient` through TanStack Query or receive it as an input. After the server accepts the save, it maps the acknowledgement, patches the account-scoped Day Log slot, synchronizes one date when the cached version cannot be trusted, and keeps the locally acknowledged entry eligible for later validation if reconciliation fails. The option factory and hook share this policy so they do not offer different save semantics.
+
+Inside a feature workflow, raw contract values end at the mapper seam:
 
 ```ts
 export function toDayLogSnapshot(response: DayLogResponse | null | undefined, date: string): DayLogSnapshot {
@@ -59,11 +70,12 @@ export function toDayLogSnapshot(response: DayLogResponse | null | undefined, da
 }
 ```
 
-The API contract type in this example remains private to the feature-workflow implementation. The public `DayLogSnapshot` and `DayLog` types do not import it.
+The API contract type in this example remains private to the feature-workflow implementation. The public `DayLogSnapshot` and `DayLog` types do not import it. The workflow depends on private `api/**` modules and the models it needs; pure vertical models do not depend on either.
 
 ## Testing strategy
 
-- Unit-test each API request operation's method, path, request mapping, schema failure, and response mapping at the core boundary.
+- Unit-test each private API request operation's method, path, request-body and response validation; test domain mapping in the workflow mapper.
+- Exercise `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` through their public behavior so both paths complete the same cache and reconciliation policy.
 - Unit-test domain mappers and pure projections with co-located domain builders.
 - Test query-key identity, sync acceptance, cache patching, predecessor-version behavior, and reconciliation fallback without browser persistence.
 - Keep browser-level IndexedDB, cache-fence, BroadcastChannel, router, and UI integration tests in `apps/web-frontend`.
