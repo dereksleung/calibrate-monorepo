@@ -27,6 +27,14 @@
       "types": "./src/verticals/day-logs/models/food-search.ts",
       "default": "./src/verticals/day-logs/models/food-search.ts"
     },
+    "./verticals/day-logs/models/nutrition": {
+      "types": "./src/verticals/day-logs/models/nutrition.ts",
+      "default": "./src/verticals/day-logs/models/nutrition.ts"
+    },
+    "./verticals/day-logs/models/recent-foods": {
+      "types": "./src/verticals/day-logs/models/recent-foods.ts",
+      "default": "./src/verticals/day-logs/models/recent-foods.ts"
+    },
     "./verticals/day-logs/models/sync": {
       "types": "./src/verticals/day-logs/models/sync.ts",
       "default": "./src/verticals/day-logs/models/sync.ts"
@@ -79,9 +87,9 @@
       "types": "./src/feature-workflows/day-logs/update-day-log-weight.ts",
       "default": "./src/feature-workflows/day-logs/update-day-log-weight.ts"
     },
-    "./foods/search-foods": {
-      "types": "./src/foods/search-foods.ts",
-      "default": "./src/foods/search-foods.ts"
+    "./feature-workflows/foods/search-foods": {
+      "types": "./src/feature-workflows/foods/search-foods.ts",
+      "default": "./src/feature-workflows/foods/search-foods.ts"
     }
   },
   "dependencies": {

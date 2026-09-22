@@ -1,6 +1,5 @@
-import type { DayLogResponse } from "@calibrate/api-contracts";
-
 import { describe, expect, it } from "vitest";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 
 import { normalDayLogFixture, selectedDateFixture } from "./log-page-fixtures.ts";
 import {
@@ -105,7 +104,7 @@ describe("log page helpers", () => {
   });
 
   it("maps cached day-log records to calendar day fill values", () => {
-    const laterDuplicate = { ...normalDayLogFixture, weight: 1 } as DayLogResponse;
+    const laterDuplicate = { ...normalDayLogFixture, weight: 1 } as DayLog;
 
     expect(
       toCalendarDays(

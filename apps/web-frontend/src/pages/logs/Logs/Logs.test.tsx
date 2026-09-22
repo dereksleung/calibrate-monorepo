@@ -2,7 +2,6 @@
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
-import { createDayLogSyncResponse } from "@calibrate/api-contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -73,6 +72,10 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { "content-type": "application/json" },
   });
+}
+
+function createDayLogSyncResponse(slots: unknown[]) {
+  return { slots };
 }
 
 beforeEach(() => {

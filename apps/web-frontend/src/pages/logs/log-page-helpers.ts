@@ -1,10 +1,11 @@
-import type { DayLogResponse, FoodEntryResponse, MealNameEnumType } from "@calibrate/api-contracts";
-
 import {
   DAILY_TARGETS,
   getFoodEntryNutritionTotals,
   type NutritionTotals,
-} from "#/shared/nutrition/nutrition-totals.ts";
+} from "@calibrate/frontend-core/verticals/day-logs/models/nutrition";
+import { mealSections, type Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
+import type { FoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/food-entry";
 
 export { DAILY_TARGETS };
 
@@ -15,19 +16,14 @@ export const MACRO_PROGRESS_COLORS = {
   totalFatGrams: "#7209B7",
 } as const;
 
-export const MEAL_SECTIONS: ReadonlyArray<{ meal: MealNameEnumType; title: string }> = [
-  { meal: "BREAKFAST", title: "Breakfast" },
-  { meal: "LUNCH", title: "Lunch" },
-  { meal: "DINNER", title: "Dinner" },
-  { meal: "SNACKS", title: "Snacks" },
-];
+export const MEAL_SECTIONS = mealSections;
 
 export type LogsSearch = {
   date: string;
 };
 
 export type FoodSearchRouteSearch = LogsSearch & {
-  meal?: MealNameEnumType;
+  meal?: Meal;
 };
 
 export type { NutritionTotals };
@@ -51,7 +47,7 @@ export type CalendarWeekGroup = {
 };
 
 export type DayLogCacheRecord = {
-  data: DayLogResponse | null | undefined;
+  data: DayLog | null | undefined;
   key: readonly unknown[];
 };
 
@@ -59,7 +55,7 @@ export type NormalizedDayLog = {
   id: string | null;
   date: Date;
   selectedDate: string;
-  meals: Record<MealNameEnumType, FoodEntryResponse[]>;
+  meals: Record<Meal, FoodEntry[]>;
   weight: number | null;
   isEmpty: boolean;
 };
@@ -227,7 +223,7 @@ export function toCalendarWeeks(
 }
 
 export function normalizeDayLogForRender(
-  dayLog: DayLogResponse | null,
+  dayLog: DayLog | null,
   selectedDate: string,
 ): NormalizedDayLog {
   const date = dayLog?.date ? new Date(dayLog.date) : new Date(`${selectedDate}T00:00:00`);
@@ -251,7 +247,7 @@ export function normalizeDayLogForRender(
   };
 }
 
-export function getMealTotals(entries: FoodEntryResponse[]): NutritionTotals {
+export function getMealTotals(entries: FoodEntry[]): NutritionTotals {
   return getFoodEntryNutritionTotals(entries);
 }
 

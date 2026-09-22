@@ -1,4 +1,4 @@
-import type { MealNameEnumType } from "@calibrate/api-contracts";
+import type { Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
 
 import { WarningBanner } from "#/shared/components/base/WarningBanner.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
@@ -16,8 +16,8 @@ type FoodSearchPageProps = {
   query?: string;
   onQueryChange?: (query: string) => void;
   onSelectFood?: (state: FoodConfirmationState) => void;
-  onQuickAdd?: (food: SelectedFoodForConfirmation, meal: MealNameEnumType) => void;
-  preselectedMeal?: MealNameEnumType;
+  onQuickAdd?: (food: SelectedFoodForConfirmation, meal: Meal) => void;
+  preselectedMeal?: Meal;
   addingFoodIds?: ReadonlySet<string>;
 };
 

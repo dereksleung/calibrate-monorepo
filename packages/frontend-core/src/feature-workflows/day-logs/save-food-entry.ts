@@ -1,4 +1,3 @@
-import { type CreateFoodEntryRequest } from "@calibrate/api-contracts";
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import type { ApiTransport } from "../../transport.js";
@@ -21,10 +20,6 @@ export type DayLogWorkflowContext = {
 
 type SaveFoodEntryDependencies = DayLogWorkflowContext & { queryClient: ReturnType<typeof useQueryClient> };
 
-function toCreateFoodEntryRequest(command: SaveFoodEntryCommand): CreateFoodEntryRequest {
-  return { ...command };
-}
-
 async function reconcileSingleDate(dependencies: SaveFoodEntryDependencies, date: string): Promise<void> {
   const range = { startDate: date, endDate: date };
   try {
@@ -44,7 +39,7 @@ async function saveAndReconcile(
   command: SaveFoodEntryCommand,
 ): Promise<FoodEntryWriteAcknowledgement> {
   const acknowledgement = toFoodEntryWriteAcknowledgement(
-    await saveFoodEntry(dependencies.transport, date, toCreateFoodEntryRequest(command)),
+    await saveFoodEntry(dependencies.transport, date, command),
   );
   const { needsSingleDateSync } = await applyFoodEntryAcknowledgement(
     dependencies.queryClient,

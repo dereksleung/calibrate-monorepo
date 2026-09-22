@@ -1,4 +1,4 @@
-import { normalizeFoodEntryNutrition, type CreateFoodEntryRequest } from "@calibrate/api-contracts";
+import { scaleFoodEntryNutrition, type FoodEntryNutrition } from "@calibrate/frontend-core/verticals/day-logs/models/nutrition";
 
 import type { SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
 
@@ -7,18 +7,7 @@ export type FoodUnitOption = {
   baseQuantity: number;
 };
 
-export type ScaledFoodNutrition = Pick<
-  SelectedFoodForConfirmation,
-  | "calories"
-  | "totalFatGrams"
-  | "saturatedFatGrams"
-  | "cholesterolMg"
-  | "sodiumMg"
-  | "totalCarbohydrateGrams"
-  | "fiberGrams"
-  | "sugarGrams"
-  | "proteinGrams"
->;
+export type ScaledFoodNutrition = FoodEntryNutrition;
 
 function createUnitOption(quantity: number | null, unit: string | null): FoodUnitOption | null {
   if (quantity === null || !Number.isFinite(quantity) || quantity <= 0 || !unit?.trim()) {
@@ -93,15 +82,5 @@ export function scaleFoodNutrition(
       ? chosenQuantity / selectedUnit.baseQuantity
       : 0;
 
-  return normalizeFoodEntryNutrition({
-    calories: food.calories * scale,
-    totalFatGrams: food.totalFatGrams * scale,
-    saturatedFatGrams: scaleNullableNutrition(food.saturatedFatGrams, scale),
-    cholesterolMg: scaleNullableNutrition(food.cholesterolMg, scale),
-    sodiumMg: scaleNullableNutrition(food.sodiumMg, scale),
-    totalCarbohydrateGrams: food.totalCarbohydrateGrams * scale,
-    fiberGrams: scaleNullableNutrition(food.fiberGrams, scale),
-    sugarGrams: scaleNullableNutrition(food.sugarGrams, scale),
-    proteinGrams: food.proteinGrams * scale,
-  } satisfies Pick<CreateFoodEntryRequest, keyof ScaledFoodNutrition>);
+  return scaleFoodEntryNutrition(food, scale);
 }

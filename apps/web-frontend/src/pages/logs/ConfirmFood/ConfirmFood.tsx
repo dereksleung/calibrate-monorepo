@@ -3,9 +3,9 @@ import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.
 import {
   normalizeFoodEntryForStorage,
   normalizeFoodEntryQuantity,
-  type CreateFoodEntryRequest,
-  type MealNameEnumType,
-} from "@calibrate/api-contracts";
+} from "@calibrate/frontend-core/verticals/day-logs/models/nutrition";
+import type { SaveFoodEntryCommand } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
+import { mealSections, type Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -23,15 +23,10 @@ type ConfirmFoodProps = {
   confirmation: FoodConfirmationState;
   isSaving?: boolean;
   onCancel: () => void;
-  onSave: (entry: CreateFoodEntryRequest) => void;
+  onSave: (entry: SaveFoodEntryCommand) => void;
 };
 
-const meals: Array<{ value: MealNameEnumType; label: string }> = [
-  { value: "BREAKFAST", label: "Breakfast" },
-  { value: "LUNCH", label: "Lunch" },
-  { value: "DINNER", label: "Dinner" },
-  { value: "SNACKS", label: "Snacks" },
-];
+const meals = mealSections.map(({ meal, title }) => ({ value: meal, label: title }));
 
 function hasAtMostTwoFractionDigits(value: string): boolean {
   const match = value.match(/^[+-]?(?:\d+(?:\.(\d*))?|\.(\d+))(?:[eE]([+-]?\d+))?$/);
@@ -57,7 +52,7 @@ export function ConfirmFood({ confirmation, isSaving, onCancel, onSave }: Confir
     ),
   );
   const [unit, setUnit] = useState(initialUnit ?? units[0]?.unit ?? food.servingLabel);
-  const [meal, setMeal] = useState<MealNameEnumType>(confirmation.preselectedMeal ?? "BREAKFAST");
+  const [meal, setMeal] = useState<Meal>(confirmation.preselectedMeal ?? "BREAKFAST");
   const [quantityError, setQuantityError] = useState<string | null>(null);
   const quantityInputRef = useRef<HTMLInputElement>(null);
   const enteredQuantity = Number(quantity);

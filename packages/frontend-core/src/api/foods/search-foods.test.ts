@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
+
 import { searchFoods } from "./search-foods.js";
 
 describe("searchFoods", () => {

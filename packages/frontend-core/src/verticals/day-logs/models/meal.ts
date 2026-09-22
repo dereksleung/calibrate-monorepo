@@ -9,3 +9,10 @@ export const dayLogMealFieldByMeal: Record<Meal, DayLogMealField> = {
   DINNER: "dinner",
   SNACKS: "snacks",
 };
+
+export const mealSections: ReadonlyArray<{ meal: Meal; title: string }> = [
+  { meal: "BREAKFAST", title: "Breakfast" },
+  { meal: "LUNCH", title: "Lunch" },
+  { meal: "DINNER", title: "Dinner" },
+  { meal: "SNACKS", title: "Snacks" },
+];

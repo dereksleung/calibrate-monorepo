@@ -1,7 +1,6 @@
-import { normalizeFoodEntryForStorage } from "@calibrate/api-contracts";
-
 import type { DayLog } from "../../verticals/day-logs/models/day-log.js";
 import type { FoodEntry } from "../../verticals/day-logs/models/food-entry.js";
+import { normalizeFoodEntryForStorage } from "../../verticals/day-logs/models/nutrition.js";
 import type {
   FoodEntryWriteAcknowledgement,
   WeightWriteAcknowledgement,

@@ -1,4 +1,5 @@
-import type { FoodEntryResponse, MealNameEnumType } from "@calibrate/api-contracts";
+import type { FoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/food-entry";
+import type { Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
 
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { Flame } from "lucide-react";
@@ -6,10 +7,10 @@ import { Flame } from "lucide-react";
 import { getMealTotals } from "../../log-page-helpers.ts";
 
 type MealSectionProps = {
-  meal: MealNameEnumType;
+  meal: Meal;
   title: string;
-  entries: FoodEntryResponse[];
-  onAddFood: (meal: MealNameEnumType) => void;
+  entries: FoodEntry[];
+  onAddFood: (meal: Meal) => void;
 };
 
 type NutrientSummaryProps = {
@@ -24,7 +25,7 @@ function formatWholeNumber(value: number): string {
   return String(Math.round(value));
 }
 
-function formatPortion(entry: FoodEntryResponse): string {
+function formatPortion(entry: FoodEntry): string {
   if (entry.quantityMass != null && entry.massUnit) {
     return `${formatWholeNumber(entry.quantityMass)} ${entry.massUnit}`;
   }
@@ -32,7 +33,7 @@ function formatPortion(entry: FoodEntryResponse): string {
   return `${formatWholeNumber(entry.chosenQuantity)} ${entry.chosenUnit}`;
 }
 
-function foodItemTitle(entry: FoodEntryResponse): string {
+function foodItemTitle(entry: FoodEntry): string {
   return entry.brand ? `${entry.name} - ${entry.brand}` : entry.name;
 }
 

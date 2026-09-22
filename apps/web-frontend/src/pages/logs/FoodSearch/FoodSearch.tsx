@@ -1,16 +1,15 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { useSaveFoodEntry } from "#/verticals/day-log-cache/use-save-food-entry.ts";
 import {
   normalizeFoodEntryForStorage,
-  type CreateFoodEntryRequest,
-  type DayLogResponse,
-  type FoodEntryResponse,
-  type FoodSearchResult,
-  type MealNameEnumType,
-} from "@calibrate/api-contracts";
-import { useFoodSearch } from "@calibrate/frontend-core/foods/search-foods";
+} from "@calibrate/frontend-core/verticals/day-logs/models/nutrition";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
+import type { FoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/food-entry";
+import type { FoodSearchResult } from "@calibrate/frontend-core/verticals/day-logs/models/food-search";
+import type { Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
+import { useFoodSearch } from "@calibrate/frontend-core/feature-workflows/foods/search-foods";
+import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -37,8 +36,8 @@ function formatRecentFoodDate(date: string): string {
 
 export function toFoodEntry(
   food: SelectedFoodForConfirmation,
-  meal: MealNameEnumType,
-): CreateFoodEntryRequest {
+  meal: Meal,
+): Omit<FoodEntry, "id"> {
   const recentUnit =
     food.chosenQuantity !== undefined && food.chosenUnit !== undefined
       ? { unit: food.chosenUnit, baseQuantity: food.chosenQuantity }
@@ -64,14 +63,12 @@ export function toFoodEntry(
   });
 }
 
-function isRecentSearchResult(
-  food: FoodSearchResult | FoodEntryResponse,
-): food is Extract<FoodSearchResult, { source: "recent" }> {
+function isRecentSearchResult(food: FoodSearchResult | FoodEntry): food is Extract<FoodSearchResult, { source: "recent" }> {
   return "source" in food && food.source === "recent";
 }
 
 function toConfirmationFood(
-  food: FoodSearchResult | FoodEntryResponse,
+  food: FoodSearchResult | FoodEntry,
   lastUsedLabel?: string,
 ): SelectedFoodForConfirmation {
   const recentSearch = isRecentSearchResult(food) ? food : null;
@@ -111,13 +108,13 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [addingFoodIds, setAddingFoodIds] = useState<ReadonlySet<string>>(new Set());
   const [recentFoodsRevision, setRecentFoodsRevision] = useState(0);
-  const save = useSaveFoodEntry(selectedDate, {
+  const save = useSaveFoodEntry({ accountId: session!.user.id, transport: apiTransport }, selectedDate, {
     onError: () => {
       toast.error("We couldn't save that food.", { closeButton: true });
     },
   });
 
-  async function quickAdd(food: SelectedFoodForConfirmation, meal: MealNameEnumType) {
+  async function quickAdd(food: SelectedFoodForConfirmation, meal: Meal) {
     setAddingFoodIds((ids) => new Set(ids).add(food.id));
     try {
       await save.mutateAsync(toFoodEntry(food, meal));
@@ -155,7 +152,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const cachedFoods = useMemo(() => {
     if (!session) return [];
     const slots = queryClient
-      .getQueriesData<DayLogResponse | null | undefined>({
+      .getQueriesData<DayLog | null | undefined>({
         queryKey: dayLogSlotQueryKeyPrefix(session.user.id),
       })
       .map(([queryKey, data]) => ({ date: String(queryKey[3]), data }));

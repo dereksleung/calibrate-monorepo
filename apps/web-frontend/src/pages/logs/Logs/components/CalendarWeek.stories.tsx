@@ -1,4 +1,4 @@
-import type { DayLogResponse } from "@calibrate/api-contracts";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 
@@ -15,7 +15,7 @@ import { CalendarWeek } from "./CalendarWeek.tsx";
 
 type CalendarDay = {
   date: string;
-  dayLog: DayLogResponse | null;
+  dayLog: DayLog | null;
 };
 
 type CalendarWeekStoryProps = ComponentProps<typeof CalendarWeek> & {

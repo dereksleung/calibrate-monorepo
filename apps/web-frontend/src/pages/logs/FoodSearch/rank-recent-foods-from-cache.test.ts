@@ -1,10 +1,12 @@
-import type { DayLogResponse, FoodEntryResponse, MealNameEnumType } from "@calibrate/api-contracts";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
+import type { FoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/food-entry";
+import type { Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
 
 import { describe, expect, it } from "vitest";
 
 import { rankRecentFoodsFromCache } from "./rank-recent-foods-from-cache.ts";
 
-function entry(id: string, name: string, brand: string | null, meal: MealNameEnumType): FoodEntryResponse {
+function entry(id: string, name: string, brand: string | null, meal: Meal): FoodEntry {
   return {
     id,
     name,
@@ -32,8 +34,8 @@ function entry(id: string, name: string, brand: string | null, meal: MealNameEnu
 
 function dayLog(
   date: string,
-  meals: Partial<Record<"breakfast" | "lunch" | "dinner" | "snacks", FoodEntryResponse[]>>,
-): DayLogResponse {
+  meals: Partial<Record<"breakfast" | "lunch" | "dinner" | "snacks", FoodEntry[]>>,
+): DayLog {
   return {
     id: `log-${date}`,
     date,

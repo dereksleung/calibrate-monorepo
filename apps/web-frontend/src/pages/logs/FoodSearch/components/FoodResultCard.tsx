@@ -1,4 +1,4 @@
-import type { MealNameEnumType } from "@calibrate/api-contracts";
+import type { Meal } from "@calibrate/frontend-core/verticals/day-logs/models/meal";
 
 import { cn } from "#/lib/utils.ts";
 import { Select } from "@base-ui/react/select";
@@ -11,8 +11,8 @@ import { MEAL_SECTIONS } from "../../log-page-helpers.ts";
 type FoodResultCardProps = {
   food: SelectedFoodForConfirmation;
   onSelect: (food: SelectedFoodForConfirmation) => void;
-  onQuickAdd?: (food: SelectedFoodForConfirmation, meal: MealNameEnumType) => void;
-  preselectedMeal?: MealNameEnumType;
+  onQuickAdd?: (food: SelectedFoodForConfirmation, meal: Meal) => void;
+  preselectedMeal?: Meal;
   isAdding?: boolean;
 };
 
@@ -74,7 +74,7 @@ export function FoodResultCard({
         <Select.Root
           modal={false}
           onValueChange={(meal) => {
-            if (meal) onQuickAdd?.(food, meal as MealNameEnumType);
+            if (meal) onQuickAdd?.(food, meal as Meal);
           }}
         >
           <Select.Trigger

@@ -1,14 +1,15 @@
-import type { DayLogResponse, FoodEntryResponse } from "@calibrate/api-contracts";
+import { buildDayLog, buildFoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/__mocks__/day-log";
+import type { DayLog } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 
 export type LogPageFixtureState =
-  | { status: "loaded"; dayLog: DayLogResponse }
+  | { status: "loaded"; dayLog: DayLog }
   | { status: "empty"; dayLog: null }
   | { status: "loading"; dayLog: null }
   | { status: "error"; dayLog: null; message: string };
 
 export const selectedDateFixture = "2026-05-21";
 
-export const oatmealFixture: FoodEntryResponse = {
+export const oatmealFixture = buildFoodEntry({
   id: "entry-oatmeal",
   meal: "BREAKFAST",
   name: "Oatmeal",
@@ -30,9 +31,9 @@ export const oatmealFixture: FoodEntryResponse = {
   massUnit: null,
   quantityVolume: null,
   volumeUnit: null,
-};
+});
 
-export const coffeeFixture: FoodEntryResponse = {
+export const coffeeFixture = buildFoodEntry({
   id: "entry-coffee",
   meal: "BREAKFAST",
   name: "Black coffee",
@@ -54,9 +55,9 @@ export const coffeeFixture: FoodEntryResponse = {
   massUnit: null,
   quantityVolume: 250,
   volumeUnit: "ml",
-};
+});
 
-export const normalDayLogFixture: DayLogResponse = {
+export const normalDayLogFixture: DayLog = buildDayLog({
   id: "day-log-today",
   date: selectedDateFixture,
   breakfast: [oatmealFixture, coffeeFixture],
@@ -64,7 +65,7 @@ export const normalDayLogFixture: DayLogResponse = {
   dinner: [],
   snacks: [],
   weight: 184.2,
-};
+});
 
 export const logPageFixtures = {
   normal: {

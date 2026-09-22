@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { FoodEntryResponse } from "@calibrate/api-contracts";
+import type { FoodEntry } from "@calibrate/frontend-core/verticals/day-logs/models/food-entry";
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { dayLogSlotQueryKey, dayLogSlotVersionQueryKey } from "#/verticals/day-log-cache/day-log-cache.ts";
@@ -121,7 +121,7 @@ afterEach(() => {
 
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
 
-const cachedFood: FoodEntryResponse = {
+const cachedFood: FoodEntry = {
   id: "cached-oat",
   meal: "BREAKFAST",
   name: "Cached oat",
@@ -149,7 +149,7 @@ function renderFoodSearchRoute(
   queryClient = createQueryClient(),
   includeCachedFood = true,
   preselectedMeal: "BREAKFAST" | "LUNCH" | "DINNER" | "SNACKS" | null = "BREAKFAST",
-  cachedFoods: FoodEntryResponse[] = [cachedFood],
+  cachedFoods: FoodEntry[] = [cachedFood],
 ) {
   if (includeCachedFood) {
     queryClient.setQueryData(dayLogSlotQueryKey(accountId, "2026-05-17"), {
