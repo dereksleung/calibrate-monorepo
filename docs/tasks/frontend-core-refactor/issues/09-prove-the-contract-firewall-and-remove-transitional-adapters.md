@@ -7,6 +7,7 @@
 **What to build:** Remove temporary package-rename adapters, verify the explicit export allowlist, and prove the intended dependency boundary with tests and source audits.
 
 - [ ] Assert approved core leaves resolve and private `api/**` leaves do not.
+- [ ] Audit private `api/**` for TanStack Query hooks/options, cache writes, and reconciliation policy; those belong in feature workflows. Audit workflows for response mapping before returning or caching domain data.
 - [ ] Audit web feature source for API response/request-type imports that core now owns; retain direct API-contract imports only where a presentation contract genuinely belongs to web and document each exception.
 - [ ] Confirm all reusable fixtures use co-located `__mocks__` builders and that no production entry exports them.
 - [ ] Keep documentation and ADR links current; do not rewrite completed historical task artifacts merely because they name the old package.
