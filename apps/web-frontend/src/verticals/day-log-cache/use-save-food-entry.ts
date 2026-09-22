@@ -1,14 +1,8 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
-import { useSaveFoodEntry as useSaveFoodEntryRequest } from "@calibrate/frontend-core/day-logs/save-food-entry";
-import { syncDayLogs } from "@calibrate/frontend-core/day-logs/sync-day-logs";
-import { useQueryClient } from "@tanstack/react-query";
-
-import {
-  applyDayLogSyncResult,
-  applyFoodEntryCreateToDayLogCache,
-  getDayLogSyncManifest,
-} from "./day-log-cache.ts";
+import { saveFoodEntryAndReconcile } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
+import type { SaveFoodEntryCommand } from "@calibrate/frontend-core/verticals/day-logs/models/food-search";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useSaveFoodEntry(
   date: string,
@@ -21,31 +15,11 @@ export function useSaveFoodEntry(
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
 
-  return useSaveFoodEntryRequest(apiTransport, date, {
+  return useMutation({
+    mutationFn: (command: SaveFoodEntryCommand) =>
+      saveFoodEntryAndReconcile(apiTransport, queryClient, accountId, date, command),
     onError: options?.onError,
-    onSuccess: async (result, variables) => {
-      const { needsSingleDateSync } = await applyFoodEntryCreateToDayLogCache(
-        queryClient,
-        accountId,
-        date,
-        variables,
-        result,
-      );
-
-      if (needsSingleDateSync) {
-        const range = { startDate: date, endDate: date };
-        try {
-          const response = await syncDayLogs(apiTransport, {
-            ...range,
-            known: getDayLogSyncManifest(queryClient, accountId, range),
-          });
-          applyDayLogSyncResult(queryClient, accountId, range, response, Date.now());
-        } catch {
-          // Keep the locally acknowledged entry. The unverified slot remains
-          // eligible for the next ordinary single-date or view sync.
-        }
-      }
-
+    onSuccess: async () => {
       options?.onSuccess?.();
     },
   });

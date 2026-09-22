@@ -31,6 +31,14 @@
       "types": "./src/feature-workflows/day-logs/day-log-sync.ts",
       "default": "./src/feature-workflows/day-logs/day-log-sync.ts"
     },
+    "./feature-workflows/day-logs/save-food-entry": {
+      "types": "./src/feature-workflows/day-logs/save-food-entry.ts",
+      "default": "./src/feature-workflows/day-logs/save-food-entry.ts"
+    },
+    "./feature-workflows/day-logs/update-day-log-weight": {
+      "types": "./src/feature-workflows/day-logs/update-day-log-weight.ts",
+      "default": "./src/feature-workflows/day-logs/update-day-log-weight.ts"
+    },
     "./auth/account-email-verification": {
       "types": "./src/auth/account-email-verification.ts",
       "default": "./src/auth/account-email-verification.ts"

@@ -8,6 +8,7 @@ export interface DayLogQueryCache {
   getQueryState<T>(queryKey: readonly unknown[]): { data?: T; dataUpdatedAt?: number; isInvalidated?: boolean; status?: string } | undefined;
   getQueryData<T>(queryKey: readonly unknown[]): T | undefined;
   setQueryData<T>(queryKey: readonly unknown[], data: T, options?: { updatedAt?: number }): unknown;
+  invalidateQueries(filters: { queryKey: readonly unknown[] }): Promise<unknown>;
   removeQueries(filters: { queryKey: readonly unknown[] }): unknown;
 }
 

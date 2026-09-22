@@ -49,4 +49,5 @@ export interface DayLogSyncSlot {
 export interface DayLogWriteAcknowledgement {
   versionNumber: number;
   createdDayLogId?: string;
+  foodEntryId?: string;
 }
