@@ -1,3 +1,4 @@
+import type { DayLog, DayLogSnapshot } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 import type { DehydratedState, QueryClient } from "@tanstack/react-query";
 
 import {
@@ -5,34 +6,33 @@ import {
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
   type CreateFoodEntryResponse,
-  type DayLogResponse,
-  type DayLogSyncResponse,
   type FoodEntryResponse,
   type MealNameEnumType,
   type UpdateDayLogWeightResponse,
 } from "@calibrate/api-contracts";
-import { dayLogSlotQueryKey as createDayLogSlotQueryKey } from "@calibrate/frontend-core/day-logs/get-day-log";
-import { type DayLogSyncRequest } from "@calibrate/frontend-core/day-logs/sync-day-logs";
+import {
+  applyDayLogSyncResult,
+  dateRange,
+  DAY_LOG_VALIDATION_FRESHNESS_MS,
+  dayLogSlotQueryKey,
+  dayLogSlotQueryKeyPrefix,
+  dayLogSlotVersionQueryKey,
+  dayLogSlotVersionQueryKeyPrefix,
+  dayLogSyncQueryKey,
+  doesDayLogRangeNeedValidation,
+  doesDayLogSlotNeedValidation,
+  getDayLogSyncManifest,
+  getDayLogsWithStalenessState,
+  type DayLogSlotSnapshot,
+} from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 
-export const DAY_LOG_VALIDATION_FRESHNESS_MS = 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_RETENTION_MS = 30 * 24 * 60 * 60 * 1_000;
 export const DAY_LOG_CACHE_BUSTER = "day-log-cache-v1";
 
 export type KnownEmptyResponse = null;
 export type NotYetLoaded = undefined;
-export type CachedDayLog = DayLogResponse | KnownEmptyResponse;
+export type CachedDayLog = DayLog | KnownEmptyResponse;
 export type DayLogSlotResult = CachedDayLog | NotYetLoaded;
-
-export type DayLogSlotSnapshot = {
-  date: string;
-  data: DayLogSlotResult;
-  dataUpdatedAt: number;
-  isError: boolean;
-  isInvalidated: boolean;
-};
-
-/** Observed slot payload for Dashboard queries. Date is owned here so callers do not zip query keys. */
-export type DayLogSnapshot = Pick<DayLogSlotSnapshot, "date" | "data">;
 
 export type PersistedDayLogClient = {
   buster: string;
@@ -57,130 +57,21 @@ export function isPersistedDayLogClient(value: unknown): value is PersistedDayLo
   );
 }
 
-export const dayLogSlotQueryKeyPrefix = (accountId: string) => ["dayLogs", accountId, "slot"] as const;
-
-export const dayLogSlotQueryKey = createDayLogSlotQueryKey;
-
-/** Sync manifest metadata is stored separately from raw API-response slot payloads. */
-export const dayLogSlotVersionQueryKey = (accountId: string, date: string) =>
-  ["dayLogs", accountId, "slotVersion", date] as const;
-
-export const dayLogSlotVersionQueryKeyPrefix = (accountId: string) =>
-  ["dayLogs", accountId, "slotVersion"] as const;
-
-export const dayLogSyncQueryKey = (accountId: string, range: { startDate: string; endDate: string }) =>
-  ["dayLogs", accountId, "sync", range.startDate, range.endDate] as const;
-
-export function getDayLogSyncManifest(
-  queryClient: QueryClient,
-  accountId: string,
-  range: { startDate: string; endDate: string },
-): DayLogSyncRequest["known"] {
-  const known: DayLogSyncRequest["known"] = {};
-  for (const date of dateRange(range.startDate, range.endDate)) {
-    const queryState = queryClient.getQueryState<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
-    if (queryState?.status === "error") continue;
-    const data = queryState?.data;
-    if (data === undefined) continue;
-    if (data === null) {
-      known[date] = null;
-      continue;
-    }
-    const version = queryClient.getQueryData<number>(dayLogSlotVersionQueryKey(accountId, date));
-    if (version !== undefined) known[date] = version;
-  }
-  return known;
-}
-
-export function dateRange(startDate: string, endDate: string): string[] {
-  const dates: string[] = [];
-  const cursor = new Date(`${startDate}T00:00:00.000Z`);
-
-  while (cursor.toISOString().slice(0, 10) <= endDate) {
-    dates.push(cursor.toISOString().slice(0, 10));
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-  }
-
-  return dates;
-}
-
-export function getDayLogsWithStalenessState(
-  queryClient: QueryClient,
-  accountId: string,
-  range: { startDate: string; endDate: string },
-): DayLogSlotSnapshot[] {
-  return dateRange(range.startDate, range.endDate).map((date) => {
-    const queryState = queryClient.getQueryState<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
-
-    return {
-      date,
-      data: queryState?.data,
-      dataUpdatedAt: queryState?.dataUpdatedAt ?? 0,
-      isError: queryState?.status === "error",
-      isInvalidated: queryState?.isInvalidated ?? false,
-    };
-  });
-}
-
-/**
- * Avoids redundant Day Log API requests when every date in a requested range
- * already has a fresh, trusted cache slot. The Dashboard initially fetches today and
- * the prior six days; when Logs opens a missing day, it fetches that day and
- * the preceding six likely next visits.
- */
-export function doesDayLogRangeNeedValidation(
-  range: { startDate: string; endDate: string },
-  slots: readonly DayLogSlotSnapshot[],
-  now: number,
-): boolean {
-  const slotsByDate = new Map(slots.map((slot) => [slot.date, slot]));
-
-  return dateRange(range.startDate, range.endDate).some((date) => {
-    const slot = slotsByDate.get(date);
-    return slot === undefined || doesDayLogSlotNeedValidation(slot, now);
-  });
-}
-
-export function doesDayLogSlotNeedValidation(slot: DayLogSlotSnapshot, now: number): boolean {
-  return (
-    slot.data === undefined ||
-    slot.isError ||
-    slot.isInvalidated ||
-    now - slot.dataUpdatedAt >= DAY_LOG_VALIDATION_FRESHNESS_MS
-  );
-}
-
-/**
- * Applies only an accepted sync response. TanStack's query state remains the
- * single source for a slot's validation timestamp and invalidation flag.
- */
-export function applyDayLogSyncResult(
-  queryClient: QueryClient,
-  accountId: string,
-  range: { startDate: string; endDate: string },
-  response: DayLogSyncResponse | null,
-  dataUpdatedAt: number,
-): void {
-  const returnedByDate = new Map(response?.slots.map((slot) => [slot.date, slot]));
-
-  for (const date of dateRange(range.startDate, range.endDate)) {
-    const returned = returnedByDate.get(date);
-    const current = queryClient.getQueryData<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
-    const next = returned ? returned.dayLog : current;
-
-    if (next === undefined) continue;
-
-    queryClient.setQueryData(dayLogSlotQueryKey(accountId, date), next, { updatedAt: dataUpdatedAt });
-
-    if (returned?.dayLog === null) {
-      queryClient.removeQueries({ queryKey: dayLogSlotVersionQueryKey(accountId, date) });
-    } else if (returned) {
-      queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, date), returned.versionNumber, {
-        updatedAt: dataUpdatedAt,
-      });
-    }
-  }
-}
+export {
+  applyDayLogSyncResult,
+  dateRange,
+  DAY_LOG_VALIDATION_FRESHNESS_MS,
+  dayLogSlotQueryKey,
+  dayLogSlotQueryKeyPrefix,
+  dayLogSlotVersionQueryKey,
+  dayLogSlotVersionQueryKeyPrefix,
+  dayLogSyncQueryKey,
+  doesDayLogRangeNeedValidation,
+  doesDayLogSlotNeedValidation,
+  getDayLogSyncManifest,
+  getDayLogsWithStalenessState,
+};
+export type { DayLogSlotSnapshot, DayLogSnapshot };
 
 const MEAL_SLOT_BY_NAME = {
   BREAKFAST: "breakfast",
@@ -189,7 +80,7 @@ const MEAL_SLOT_BY_NAME = {
   SNACKS: "snacks",
 } as const satisfies Record<MealNameEnumType, "breakfast" | "lunch" | "dinner" | "snacks">;
 
-type PresentDayLog = Exclude<DayLogResponse, null>;
+type PresentDayLog = DayLog;
 
 function emptyPresentDayLog(date: string, dayLogId?: string): PresentDayLog {
   return {

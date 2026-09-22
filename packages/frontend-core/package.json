@@ -67,9 +67,9 @@
       "types": "./src/day-logs/get-day-log-range.ts",
       "default": "./src/day-logs/get-day-log-range.ts"
     },
-    "./day-logs/sync-day-logs": {
-      "types": "./src/day-logs/sync-day-logs.ts",
-      "default": "./src/day-logs/sync-day-logs.ts"
+    "./feature-workflows/day-logs/sync-day-logs": {
+      "types": "./src/feature-workflows/day-logs/sync-day-logs.ts",
+      "default": "./src/feature-workflows/day-logs/sync-day-logs.ts"
     },
     "./day-logs/save-food-entry": {
       "types": "./src/day-logs/save-food-entry.ts",

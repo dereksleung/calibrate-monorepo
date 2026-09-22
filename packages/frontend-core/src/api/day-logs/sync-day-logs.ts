@@ -6,18 +6,11 @@ import {
 } from "@calibrate/api-contracts";
 import { z } from "zod";
 
-import type { ApiTransport } from "../transport.js";
-
-export type { DayLogSyncRequest };
+import type { ApiTransport } from "../../transport.js";
 
 const DayLogSyncResultSchema = z.union([DayLogSyncResponseSchema, z.null()]);
 
-export const dayLogSyncQueryKeyPrefix = (accountId: string) => ["dayLogs", accountId, "sync"] as const;
-
-/**
- * Reconciles a bounded, inclusive Day Log date range. `null` represents the
- * protocol's bodyless 204 response: every supplied known slot still matches.
- */
+/** Private network operation for POST /daylogs:sync. */
 export function syncDayLogs(
   transport: ApiTransport,
   input: DayLogSyncRequest,
