@@ -35,6 +35,14 @@
       "types": "./src/verticals/day-logs/models/write-acknowledgement.ts",
       "default": "./src/verticals/day-logs/models/write-acknowledgement.ts"
     },
+    "./verticals/day-logs/models/nutrition": {
+      "types": "./src/verticals/day-logs/models/nutrition.ts",
+      "default": "./src/verticals/day-logs/models/nutrition.ts"
+    },
+    "./verticals/dashboard/models/dashboard-v2": {
+      "types": "./src/verticals/dashboard/models/dashboard-v2.ts",
+      "default": "./src/verticals/dashboard/models/dashboard-v2.ts"
+    },
     "./verticals/day-logs/models/__mocks__/day-log": {
       "types": "./src/verticals/day-logs/models/__mocks__/day-log.ts",
       "default": "./src/verticals/day-logs/models/__mocks__/day-log.ts"

@@ -3,8 +3,9 @@ import {
   getRollingTwentyEightDayDateRange,
 } from "#/shared/date/local-date-range.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
-import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import { toDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
+import { buildDashboardV2Projection } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 import { useIsRestoring } from "@tanstack/react-query";
 import { useState } from "react";
 
@@ -36,13 +37,15 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
     enabled: shouldFetch28DayRange,
   });
   const viewModel = cached.some((query) => query.data !== undefined)
-    ? buildDashboardV2ViewModel({
-        endDate: initialDataDateRange.endDate,
-        initialSevenDayData: cached,
-        twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
-          ? twentyEightDayData
-          : undefined,
-      })
+    ? toDashboardV2ViewModel(
+        buildDashboardV2Projection({
+          endDate: initialDataDateRange.endDate,
+          initialSevenDayData: cached.map(({ data }) => data),
+          twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
+            ? twentyEightDayData.map(({ data }) => data)
+            : undefined,
+        }),
+      )
     : undefined;
 
   return (
