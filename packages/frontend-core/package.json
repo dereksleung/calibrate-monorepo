@@ -11,6 +11,22 @@
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
     },
+    "./verticals/day-logs/models/day-log": {
+      "types": "./src/verticals/day-logs/models/day-log.ts",
+      "default": "./src/verticals/day-logs/models/day-log.ts"
+    },
+    "./verticals/day-logs/models/food-search": {
+      "types": "./src/verticals/day-logs/models/food-search.ts",
+      "default": "./src/verticals/day-logs/models/food-search.ts"
+    },
+    "./verticals/day-logs/models/__mocks__/day-log": {
+      "types": "./src/verticals/day-logs/models/__mocks__/day-log.ts",
+      "default": "./src/verticals/day-logs/models/__mocks__/day-log.ts"
+    },
+    "./feature-workflows/day-logs/day-log-mappers": {
+      "types": "./src/feature-workflows/day-logs/day-log-mappers.ts",
+      "default": "./src/feature-workflows/day-logs/day-log-mappers.ts"
+    },
     "./auth/account-email-verification": {
       "types": "./src/auth/account-email-verification.ts",
       "default": "./src/auth/account-email-verification.ts"
