@@ -15,7 +15,7 @@ const mockRequestOptions = vi.fn();
 const mockVerifyRegistration = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("@calibrate/frontend-core/auth/signup-passkey-registration", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/passkey-registration", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,

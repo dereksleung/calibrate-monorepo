@@ -33,8 +33,8 @@ const {
   revokeLastConfirmedDayLogCache: vi.fn(),
 }));
 
-vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@calibrate/frontend-core/auth/session")>()),
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/session", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@calibrate/frontend-core/feature-workflows/auth/session")>()),
   getCurrentSession,
   refreshSession,
 }));

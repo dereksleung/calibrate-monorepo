@@ -9,9 +9,9 @@ import {
 } from "#/verticals/auth/account-email-verification-handoff";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "#/verticals/auth/components/InputOtp.tsx";
 import {
-  useRequestAccountEmailVerification,
-  useVerifyAccountEmailVerification,
-} from "@calibrate/frontend-core/auth/account-email-verification";
+  useRequestEmailVerification,
+  useVerifyEmailVerification,
+} from "@calibrate/frontend-core/feature-workflows/auth/email-verification";
 import { useNavigate } from "@tanstack/react-router";
 import { MailCheck } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -29,9 +29,9 @@ function getResendCountdown(handoff: AccountEmailVerificationHandoff): number {
 function OtpPage({ handoff }: OtpPageProps) {
   const navigate = useNavigate();
   const { isPending, mutateAsync: requestAccountEmailVerification } =
-    useRequestAccountEmailVerification(apiTransport);
+    useRequestEmailVerification(apiTransport);
   const { isPending: isVerifying, mutateAsync: verifyAccountEmailVerification } =
-    useVerifyAccountEmailVerification(apiTransport);
+    useVerifyEmailVerification(apiTransport);
   const [otpCode, setOtpCode] = useState("");
   const [resendCountdown, setResendCountdown] = useState(() => getResendCountdown(handoff));
   const isResendLocked = resendCountdown > 0;

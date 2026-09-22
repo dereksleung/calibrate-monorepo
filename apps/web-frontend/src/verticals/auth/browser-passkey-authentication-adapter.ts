@@ -1,4 +1,7 @@
-import type { PasskeyAuthenticationOptionsResponse } from "@calibrate/api-contracts";
+import type {
+  PasskeyAuthenticationCredential,
+  PasskeyAuthenticationOptions,
+} from "@calibrate/frontend-core/verticals/auth/models/passkeys";
 
 import {
   startAuthentication,
@@ -20,13 +23,13 @@ export async function isConditionalPasskeyAuthenticationSupported(): Promise<boo
 }
 
 export function startPasskeyAuthentication(
-  options: PasskeyAuthenticationOptionsResponse["options"],
+  options: PasskeyAuthenticationOptions["options"],
   mode: "conditional" | "explicit",
-): Promise<AuthenticationResponseJSON> {
+): Promise<PasskeyAuthenticationCredential> {
   return startAuthentication({
     optionsJSON: options as PublicKeyCredentialRequestOptionsJSON,
     useBrowserAutofill: mode === "conditional",
-  }) as Promise<AuthenticationResponseJSON>;
+  }) as Promise<PasskeyAuthenticationCredential>;
 }
 
 export function cancelPasskeyAuthentication(): void {

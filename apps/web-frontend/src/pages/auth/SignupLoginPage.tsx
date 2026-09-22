@@ -27,25 +27,25 @@ import {
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
 import {
-  RequestAccountEmailVerificationRequestBodySchema,
-  type PasskeyAuthenticationErrorCode,
-  type RequestAccountEmailVerificationRequestBody,
-} from "@calibrate/api-contracts";
-import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/auth/account-email-verification";
-import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/auth/local-development-passkey-enrollment";
+  getEmailVerificationEmailError,
+  useRequestEmailVerification,
+} from "@calibrate/frontend-core/feature-workflows/auth/email-verification";
+import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/feature-workflows/auth/local-development-passkey-enrollment";
 import {
   parsePasskeyAuthenticationError,
   requestPasskeyAuthenticationOptions,
   verifyPasskeyAuthentication,
-} from "@calibrate/frontend-core/auth/passkey-authentication";
-import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/auth/session";
+} from "@calibrate/frontend-core/feature-workflows/auth/passkey-authentication";
+import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/feature-workflows/auth/session";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import type { RequestEmailVerificationInput } from "@calibrate/frontend-core/verticals/auth/models/email-verification";
+import type { PasskeyAuthenticationErrorCode } from "@calibrate/frontend-core/verticals/auth/models/passkeys";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-type SignUpLoginFormValues = RequestAccountEmailVerificationRequestBody;
+type SignUpLoginFormValues = RequestEmailVerificationInput;
 
 const PASSKEY_AUTHENTICATION_ERROR_MESSAGES: Partial<Record<PasskeyAuthenticationErrorCode, string>> = {
   ORIGIN_NOT_ALLOWED: "Passkey sign-in is unavailable from this site.",
@@ -55,9 +55,8 @@ const PASSKEY_AUTHENTICATION_ERROR_MESSAGES: Partial<Record<PasskeyAuthenticatio
 const DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE =
   "We couldn't verify that passkey. Try the Log in with Passkey button again, or use the email field to verify and recover your account.";
 
-function firstContractError(field: "email", value: string): string | undefined {
-  const result = RequestAccountEmailVerificationRequestBodySchema.shape[field].safeParse(value);
-  return result.success ? undefined : result.error.issues[0]?.message;
+function firstEmailError(value: string): string | undefined {
+  return getEmailVerificationEmailError(value);
 }
 
 function fieldErrors(errors: unknown[]): Array<{ message?: string }> {
@@ -74,7 +73,7 @@ function fieldErrors(errors: unknown[]): Array<{ message?: string }> {
 function SignUpLoginForm({ onSubmitStart = () => undefined }: { onSubmitStart?: () => void }) {
   const [requestError, setRequestError] = useState<string>();
   const navigate = useNavigate();
-  const { mutateAsync: requestAccountEmailVerification } = useRequestAccountEmailVerification(apiTransport);
+  const { mutateAsync: requestAccountEmailVerification } = useRequestEmailVerification(apiTransport);
 
   const form = useForm({
     defaultValues: {
@@ -115,8 +114,8 @@ function SignUpLoginForm({ onSubmitStart = () => undefined }: { onSubmitStart?: 
         <form.Field
           name="email"
           validators={{
-            onBlur: ({ value }) => firstContractError("email", value),
-            onSubmit: ({ value }) => firstContractError("email", value),
+            onBlur: ({ value }) => firstEmailError(value),
+            onSubmit: ({ value }) => firstEmailError(value),
           }}
         >
           {(field) => {

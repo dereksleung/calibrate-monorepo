@@ -14,7 +14,7 @@ import {
   parsePasskeyRegistrationError,
   requestPasskeyRegistrationOptions,
   verifyPasskeyRegistration,
-} from "@calibrate/frontend-core/auth/signup-passkey-registration";
+} from "@calibrate/frontend-core/feature-workflows/auth/passkey-registration";
 import { ApiError } from "@calibrate/frontend-core/errors";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";

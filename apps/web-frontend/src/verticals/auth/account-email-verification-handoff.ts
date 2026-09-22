@@ -1,11 +1,15 @@
+import type {
+  EmailVerificationChallenge,
+  PasskeyRegistrationContinuation,
+} from "@calibrate/frontend-core/verticals/auth/models/email-verification";
 import {
-  RequestAccountEmailVerificationRequestBodySchema,
-  RequestAccountEmailVerificationResponseSchema,
-  VerifyAccountEmailVerificationResponseSchema,
-  type RequestAccountEmailVerificationResponse,
-} from "@calibrate/api-contracts";
+  isEmailVerificationChallenge,
+  isPasskeyRegistrationContinuation,
+  normalizeEmailVerificationEmail,
+  parseEmailVerificationEmail,
+} from "@calibrate/frontend-core/feature-workflows/auth/email-verification";
 
-export interface AccountEmailVerificationHandoff extends RequestAccountEmailVerificationResponse {
+export interface AccountEmailVerificationHandoff extends EmailVerificationChallenge {
   email: string;
   requestedAtEpochMs: number;
 }
@@ -31,13 +35,13 @@ declare module "@tanstack/history" {
 
 export function createPasskeyEnrollmentHandoff(
   email: string,
-  response: { next: "passkey-registration"; expiresAt: string },
+  response: PasskeyRegistrationContinuation,
 ): PasskeyEnrollmentHandoff {
-  const parsed = VerifyAccountEmailVerificationResponseSchema.parse(response);
-  if (parsed.next !== "passkey-registration") throw new Error("Invalid passkey enrollment continuation");
+  if (!isPasskeyRegistrationContinuation(response)) throw new Error("Invalid passkey enrollment continuation");
+  const normalizedEmail = normalizeEmailVerificationEmail(email);
   return {
-    email: RequestAccountEmailVerificationRequestBodySchema.parse({ email }).email,
-    ...parsed,
+    email: normalizedEmail,
+    ...response,
   };
 }
 
@@ -45,19 +49,20 @@ export function parsePasskeyEnrollmentHandoff(value: unknown): PasskeyEnrollment
   if (!value || typeof value !== "object") return null;
   const candidate = value as Record<string, unknown>;
   if (Object.keys(candidate).some((key) => !["email", "next", "expiresAt"].includes(key))) return null;
-  const email = RequestAccountEmailVerificationRequestBodySchema.safeParse({ email: candidate.email });
-  const response = VerifyAccountEmailVerificationResponseSchema.safeParse({
+  const email = parseEmailVerificationEmail(candidate.email);
+  const response = {
     next: candidate.next,
     expiresAt: candidate.expiresAt,
-  });
-  return email.success && response.success && response.data.next === "passkey-registration"
-    ? { email: email.data.email, ...response.data }
+  };
+  return email && isPasskeyRegistrationContinuation(response)
+    ? { email, ...response }
     : null;
 }
 
 export function createLoginRecoveryHandoff(email: string): LoginRecoveryHandoff {
+  const normalizedEmail = normalizeEmailVerificationEmail(email);
   return {
-    email: RequestAccountEmailVerificationRequestBodySchema.parse({ email }).email,
+    email: normalizedEmail,
     next: "login-or-recovery",
   };
 }
@@ -66,21 +71,19 @@ export function parseLoginRecoveryHandoff(value: unknown): LoginRecoveryHandoff 
   if (!value || typeof value !== "object") return null;
   const candidate = value as Record<string, unknown>;
   if (Object.keys(candidate).some((key) => !["email", "next"].includes(key))) return null;
-  const email = RequestAccountEmailVerificationRequestBodySchema.safeParse({ email: candidate.email });
-  return email.success && candidate.next === "login-or-recovery"
-    ? { email: email.data.email, next: "login-or-recovery" }
+  const email = parseEmailVerificationEmail(candidate.email);
+  return email && candidate.next === "login-or-recovery"
+    ? { email, next: "login-or-recovery" }
     : null;
 }
 
 export function createAccountEmailVerificationHandoff(
   email: string,
-  response: RequestAccountEmailVerificationResponse,
+  response: EmailVerificationChallenge,
   requestedAtEpochMs = Date.now(),
 ): AccountEmailVerificationHandoff {
-  const normalizedEmail = RequestAccountEmailVerificationRequestBodySchema.parse({
-    email,
-  }).email;
-  const metadata = RequestAccountEmailVerificationResponseSchema.parse(response);
+  const normalizedEmail = normalizeEmailVerificationEmail(email);
+  if (!isEmailVerificationChallenge(response)) throw new Error("Invalid email verification handoff");
 
   if (!Number.isSafeInteger(requestedAtEpochMs) || requestedAtEpochMs < 0) {
     throw new Error("Invalid signup email verification request timestamp");
@@ -88,7 +91,7 @@ export function createAccountEmailVerificationHandoff(
 
   return {
     email: normalizedEmail,
-    ...metadata,
+    ...response,
     requestedAtEpochMs,
   };
 }
@@ -107,18 +110,16 @@ export function parseAccountEmailVerificationHandoff(value: unknown): AccountEma
 
   if (Object.keys(candidate).some((key) => !expectedKeys.has(key))) return null;
 
-  const email = RequestAccountEmailVerificationRequestBodySchema.safeParse({
-    email: candidate.email,
-  });
-  const metadata = RequestAccountEmailVerificationResponseSchema.safeParse({
+  const email = parseEmailVerificationEmail(candidate.email);
+  const metadata = {
     challengeId: candidate.challengeId,
     expiresInSeconds: candidate.expiresInSeconds,
     resendAfterSeconds: candidate.resendAfterSeconds,
-  });
+  };
 
   if (
-    !email.success ||
-    !metadata.success ||
+    !email ||
+    !isEmailVerificationChallenge(metadata) ||
     typeof candidate.requestedAtEpochMs !== "number" ||
     !Number.isSafeInteger(candidate.requestedAtEpochMs) ||
     candidate.requestedAtEpochMs < 0
@@ -127,8 +128,8 @@ export function parseAccountEmailVerificationHandoff(value: unknown): AccountEma
   }
 
   return {
-    email: email.data.email,
-    ...metadata.data,
+    email,
+    ...metadata,
     requestedAtEpochMs: candidate.requestedAtEpochMs,
   };
 }

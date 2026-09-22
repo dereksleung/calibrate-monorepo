@@ -11,25 +11,37 @@
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
     },
-    "./auth/account-email-verification": {
-      "types": "./src/auth/account-email-verification.ts",
-      "default": "./src/auth/account-email-verification.ts"
+    "./feature-workflows/auth/email-verification": {
+      "types": "./src/feature-workflows/auth/email-verification.ts",
+      "default": "./src/feature-workflows/auth/email-verification.ts"
     },
-    "./auth/signup-passkey-registration": {
-      "types": "./src/auth/signup-passkey-registration.ts",
-      "default": "./src/auth/signup-passkey-registration.ts"
+    "./feature-workflows/auth/passkey-registration": {
+      "types": "./src/feature-workflows/auth/passkey-registration.ts",
+      "default": "./src/feature-workflows/auth/passkey-registration.ts"
     },
-    "./auth/local-development-passkey-enrollment": {
-      "types": "./src/auth/local-development-passkey-enrollment.ts",
-      "default": "./src/auth/local-development-passkey-enrollment.ts"
+    "./feature-workflows/auth/local-development-passkey-enrollment": {
+      "types": "./src/feature-workflows/auth/local-development-passkey-enrollment.ts",
+      "default": "./src/feature-workflows/auth/local-development-passkey-enrollment.ts"
     },
-    "./auth/passkey-authentication": {
-      "types": "./src/auth/passkey-authentication.ts",
-      "default": "./src/auth/passkey-authentication.ts"
+    "./feature-workflows/auth/passkey-authentication": {
+      "types": "./src/feature-workflows/auth/passkey-authentication.ts",
+      "default": "./src/feature-workflows/auth/passkey-authentication.ts"
     },
-    "./auth/session": {
-      "types": "./src/auth/session.ts",
-      "default": "./src/auth/session.ts"
+    "./feature-workflows/auth/session": {
+      "types": "./src/feature-workflows/auth/session.ts",
+      "default": "./src/feature-workflows/auth/session.ts"
+    },
+    "./verticals/auth/models/authenticated-user-context": {
+      "types": "./src/verticals/auth/models/authenticated-user-context.ts",
+      "default": "./src/verticals/auth/models/authenticated-user-context.ts"
+    },
+    "./verticals/auth/models/email-verification": {
+      "types": "./src/verticals/auth/models/email-verification.ts",
+      "default": "./src/verticals/auth/models/email-verification.ts"
+    },
+    "./verticals/auth/models/passkeys": {
+      "types": "./src/verticals/auth/models/passkeys.ts",
+      "default": "./src/verticals/auth/models/passkeys.ts"
     },
     "./day-logs/get-day-log": {
       "types": "./src/day-logs/get-day-log.ts",

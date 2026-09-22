@@ -1,10 +1,9 @@
-import type { AuthenticatedSessionResponse } from "@calibrate/api-contracts";
-
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { Button } from "#/shared/components/base/Button.tsx";
 import { WarningBanner } from "#/shared/components/base/WarningBanner.tsx";
-import { getCurrentSession, refreshSession } from "@calibrate/frontend-core/auth/session";
+import { getCurrentSession, refreshSession } from "@calibrate/frontend-core/feature-workflows/auth/session";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import type { AuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/authenticated-user-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -28,13 +27,13 @@ type State = "checking" | "refreshing" | "available" | "unavailable";
 
 export function SessionRestorationGate({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<State>("checking");
-  const [session, setSession] = useState<AuthenticatedSessionResponse>();
+  const [session, setSession] = useState<AuthenticatedUserContext>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const restore = useCallback(async () => {
     const sessionAccountId = getAuthenticatedSession(queryClient)?.user.id;
     const establishConfirmedSession = async (
-      confirmedSession: AuthenticatedSessionResponse,
+      confirmedSession: AuthenticatedUserContext,
     ): Promise<boolean> => {
       const transition = await establishAuthenticatedSession(queryClient, confirmedSession);
       if (!transition) {

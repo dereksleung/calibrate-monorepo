@@ -13,15 +13,15 @@ const { mockMutateAsync, mockVerifyMutateAsync, mockNavigate } = vi.hoisted(() =
   mockNavigate: vi.fn(),
 }));
 
-vi.mock("@calibrate/frontend-core/auth/account-email-verification", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/email-verification", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,
-    useRequestAccountEmailVerification: vi.fn(() => ({
+    useRequestEmailVerification: vi.fn(() => ({
       isPending: false,
       mutateAsync: mockMutateAsync,
     })),
-    useVerifyAccountEmailVerification: vi.fn(() => ({
+    useVerifyEmailVerification: vi.fn(() => ({
       isPending: false,
       mutateAsync: mockVerifyMutateAsync,
     })),

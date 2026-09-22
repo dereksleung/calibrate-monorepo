@@ -1,9 +1,12 @@
-import type { PasskeyRegistrationOptionsResponse, RegistrationResponseJSON } from "@calibrate/api-contracts";
+import type {
+  PasskeyRegistrationCredential,
+  PasskeyRegistrationOptions,
+} from "@calibrate/frontend-core/verticals/auth/models/passkeys";
 
 import { startRegistration, type PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/browser";
 
 export interface BrowserPasskeyRegistrationAdapter {
-  createPasskey(options: PasskeyRegistrationOptionsResponse): Promise<RegistrationResponseJSON>;
+  createPasskey(options: PasskeyRegistrationOptions): Promise<PasskeyRegistrationCredential>;
 }
 
 export function isBrowserPasskeyRegistrationSupported(): boolean {
@@ -20,7 +23,7 @@ export function createBrowserPasskeyRegistrationAdapter(): BrowserPasskeyRegistr
       const credential = await startRegistration({
         optionsJSON: options as unknown as PublicKeyCredentialCreationOptionsJSON,
       });
-      return credential as RegistrationResponseJSON;
+      return credential as PasskeyRegistrationCredential;
     },
   };
 }
