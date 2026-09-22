@@ -5,9 +5,8 @@ import {
   type UpdateDayLogWeightRequestBody,
   type UpdateDayLogWeightResponse,
 } from "@calibrate/api-contracts";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
 
 export function updateDayLogWeight(
   transport: ApiTransport,
@@ -22,25 +21,5 @@ export function updateDayLogWeight(
     method: "PUT",
     body,
     responseBodySchema: UpdateDayLogWeightResponseSchema,
-  });
-}
-
-export function getUpdateDayLogWeightMutationOptions(transport: ApiTransport, date: string) {
-  return {
-    mutationFn: (input: UpdateDayLogWeightRequestBody) => updateDayLogWeight(transport, date, input),
-  };
-}
-
-export function useUpdateDayLogWeight(
-  transport: ApiTransport,
-  date: string,
-  options?: Omit<
-    UseMutationOptions<UpdateDayLogWeightResponse, Error, UpdateDayLogWeightRequestBody>,
-    "mutationFn"
-  >,
-) {
-  return useMutation({
-    ...getUpdateDayLogWeightMutationOptions(transport, date),
-    ...options,
   });
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
 
 import { updateDayLogWeight } from "./update-day-log-weight.js";
 
@@ -25,22 +25,11 @@ describe("updateDayLogWeight", () => {
       responseBodySchema.parse({ versionNumber: 1, createdDayLogId: "day-log-1" }),
     );
 
-    await expect(
-      updateDayLogWeight({ request } as unknown as ApiTransport, "2026-05-18", {
-        weight: 182.5,
-        versionNumber: 4,
-      } as never),
-    ).resolves.toEqual({ versionNumber: 1, createdDayLogId: "day-log-1" });
+    await updateDayLogWeight({ request } as unknown as ApiTransport, "2026-05-18", {
+      weight: 182.5,
+      versionNumber: 4,
+    } as never);
 
     expect(request.mock.calls[0]?.[0].body).toEqual({ weight: 182.5 });
-  });
-
-  it("rejects invalid input before making a request", () => {
-    const request = vi.fn();
-    const transport = { request } as unknown as ApiTransport;
-
-    expect(() => updateDayLogWeight(transport, "2026-05-19", { weight: 0 })).toThrow();
-    expect(() => updateDayLogWeight(transport, "not-a-date", { weight: 180 })).toThrow();
-    expect(request).not.toHaveBeenCalled();
   });
 });

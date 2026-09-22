@@ -3,12 +3,11 @@ import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
-  applyWeightObservationToDayLogCache,
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
-import { useUpdateDayLogWeight } from "@calibrate/frontend-core/day-logs/update-day-log-weight";
+import { useUpdateDayLogWeight } from "@calibrate/frontend-core/feature-workflows/day-logs/update-day-log-weight";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
@@ -88,7 +87,10 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
-  const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
+  const weightMutation = useUpdateDayLogWeight(
+    { accountId: session!.user.id, transport: apiTransport },
+    selectedDate,
+  );
   const isUpcoming = selectedDate > todayDate;
   const selectedRange = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
   const selectedDateRange = { startDate: selectedDate, endDate: selectedDate };
@@ -128,8 +130,7 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
       );
 
   async function saveWeight(weight: number) {
-    const result = await weightMutation.mutateAsync({ weight });
-    await applyWeightObservationToDayLogCache(queryClient, accountId, selectedDate, weight, result);
+    await weightMutation.mutateAsync({ weight });
   }
 
   return (

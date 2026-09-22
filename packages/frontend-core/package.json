@@ -71,13 +71,13 @@
       "types": "./src/feature-workflows/day-logs/sync-day-logs.ts",
       "default": "./src/feature-workflows/day-logs/sync-day-logs.ts"
     },
-    "./day-logs/save-food-entry": {
-      "types": "./src/day-logs/save-food-entry.ts",
-      "default": "./src/day-logs/save-food-entry.ts"
+    "./feature-workflows/day-logs/save-food-entry": {
+      "types": "./src/feature-workflows/day-logs/save-food-entry.ts",
+      "default": "./src/feature-workflows/day-logs/save-food-entry.ts"
     },
-    "./day-logs/update-day-log-weight": {
-      "types": "./src/day-logs/update-day-log-weight.ts",
-      "default": "./src/day-logs/update-day-log-weight.ts"
+    "./feature-workflows/day-logs/update-day-log-weight": {
+      "types": "./src/feature-workflows/day-logs/update-day-log-weight.ts",
+      "default": "./src/feature-workflows/day-logs/update-day-log-weight.ts"
     },
     "./foods/search-foods": {
       "types": "./src/foods/search-foods.ts",

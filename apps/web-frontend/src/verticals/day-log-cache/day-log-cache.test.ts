@@ -1,3 +1,5 @@
+import { applyFoodEntryCreateToDayLogCache } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
+import { applyWeightObservationToDayLogCache } from "@calibrate/frontend-core/feature-workflows/day-logs/update-day-log-weight";
 import { QueryClient, dehydrate, hydrate } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 
@@ -5,8 +7,6 @@ import {
   DAY_LOG_CACHE_RETENTION_MS,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   applyDayLogSyncResult,
-  applyFoodEntryCreateToDayLogCache,
-  applyWeightObservationToDayLogCache,
   dateRange,
   getDayLogSyncManifest,
   getDayLogsWithStalenessState,
