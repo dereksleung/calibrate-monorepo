@@ -9,6 +9,7 @@ export type ApiHeaders = HeadersInit | Promise<HeadersInit>;
 export interface ApiTransportOptions {
   baseUrl: string;
   fetch?: FetchLike;
+  credentials?: RequestCredentials;
   getAccessToken?: () => string | null | Promise<string | null>;
   getHeaders?: () => ApiHeaders;
 }
@@ -93,7 +94,7 @@ export function createApiTransport(options: ApiTransportOptions): ApiTransport {
 
       const response = await fetchImplementation(buildUrl(options.baseUrl, path, query), {
         method,
-        credentials: "include",
+        credentials: options.credentials ?? "include",
         headers: await buildHeaders(options, requestHeaders, body),
         body: body === undefined ? undefined : JSON.stringify(body),
         signal,

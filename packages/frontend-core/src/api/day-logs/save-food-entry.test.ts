@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
 
 import { saveFoodEntry } from "./save-food-entry.js";
 
