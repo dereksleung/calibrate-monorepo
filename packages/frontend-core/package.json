@@ -11,6 +11,34 @@
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
     },
+    "./verticals/day-logs/models/meal": {
+      "types": "./src/verticals/day-logs/models/meal.ts",
+      "default": "./src/verticals/day-logs/models/meal.ts"
+    },
+    "./verticals/day-logs/models/food-entry": {
+      "types": "./src/verticals/day-logs/models/food-entry.ts",
+      "default": "./src/verticals/day-logs/models/food-entry.ts"
+    },
+    "./verticals/day-logs/models/day-log": {
+      "types": "./src/verticals/day-logs/models/day-log.ts",
+      "default": "./src/verticals/day-logs/models/day-log.ts"
+    },
+    "./verticals/day-logs/models/food-search": {
+      "types": "./src/verticals/day-logs/models/food-search.ts",
+      "default": "./src/verticals/day-logs/models/food-search.ts"
+    },
+    "./verticals/day-logs/models/sync": {
+      "types": "./src/verticals/day-logs/models/sync.ts",
+      "default": "./src/verticals/day-logs/models/sync.ts"
+    },
+    "./verticals/day-logs/models/write-acknowledgement": {
+      "types": "./src/verticals/day-logs/models/write-acknowledgement.ts",
+      "default": "./src/verticals/day-logs/models/write-acknowledgement.ts"
+    },
+    "./verticals/day-logs/models/__mocks__/day-log": {
+      "types": "./src/verticals/day-logs/models/__mocks__/day-log.ts",
+      "default": "./src/verticals/day-logs/models/__mocks__/day-log.ts"
+    },
     "./auth/account-email-verification": {
       "types": "./src/auth/account-email-verification.ts",
       "default": "./src/auth/account-email-verification.ts"
