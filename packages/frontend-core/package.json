@@ -27,6 +27,10 @@
       "types": "./src/feature-workflows/day-logs/day-log-mappers.ts",
       "default": "./src/feature-workflows/day-logs/day-log-mappers.ts"
     },
+    "./feature-workflows/day-logs/day-log-sync": {
+      "types": "./src/feature-workflows/day-logs/day-log-sync.ts",
+      "default": "./src/feature-workflows/day-logs/day-log-sync.ts"
+    },
     "./auth/account-email-verification": {
       "types": "./src/auth/account-email-verification.ts",
       "default": "./src/auth/account-email-verification.ts"

@@ -1,8 +1,5 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { syncDayLogs } from "@calibrate/frontend-core/day-logs/sync-day-logs";
-import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-
 import {
   applyDayLogSyncResult,
   dateRange,
@@ -12,9 +9,12 @@ import {
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
   getDayLogSyncManifest,
-  type DayLogSlotResult,
-  type DayLogSnapshot,
-} from "./day-log-cache.ts";
+} from "@calibrate/frontend-core/feature-workflows/day-logs/day-log-sync";
+import { toDayLogSyncSlot } from "@calibrate/frontend-core/feature-workflows/day-logs/day-log-mappers";
+import { skipToken, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+
+import { type DayLogSlotResult, type DayLogSnapshot } from "./day-log-cache.ts";
 
 type DayLogDateRange = {
   endDate: string;
@@ -75,7 +75,13 @@ export function useSyncDayLogsForDateRange({
         ...requestedRange,
         known: getDayLogSyncManifest(queryClient, accountId, requestedRange),
       });
-      applyDayLogSyncResult(queryClient, accountId, requestedRange, response, Date.now());
+      applyDayLogSyncResult(
+        queryClient,
+        accountId,
+        requestedRange,
+        response?.slots.map(toDayLogSyncSlot) ?? null,
+        Date.now(),
+      );
       return response;
     },
     queryKey: dayLogSyncQueryKey(accountId, requestedRange),
