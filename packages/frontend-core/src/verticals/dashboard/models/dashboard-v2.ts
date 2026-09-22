@@ -63,6 +63,14 @@ export type NutritionCardModel = {
   unit: NutrientConfiguration["unit"];
 };
 
+/** View-only card contract retained for legacy Dashboard components. */
+export type DashboardNutritionCardModel = {
+  title: "Calories" | "Fats" | "Protein" | "Carbs";
+  unit: "calorie" | "gram";
+  today: { eaten: number; limit: number };
+  weeklyData: Array<{ label: string; eaten: number; limit: number }>;
+};
+
 export type FoodContribution = {
   amount: number;
   name: string;

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ChangeEntry, NutrientAnalyticsModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { ChangeEntry, NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";

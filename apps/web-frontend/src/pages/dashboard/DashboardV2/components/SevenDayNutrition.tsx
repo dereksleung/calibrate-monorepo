@@ -1,4 +1,4 @@
-import type { SevenDayNutritionRowModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { SevenDayNutritionRowModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { Flame } from "lucide-react";
 import { Bar, BarChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from "recharts";

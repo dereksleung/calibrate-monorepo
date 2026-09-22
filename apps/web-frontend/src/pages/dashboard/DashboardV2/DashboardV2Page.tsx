@@ -3,7 +3,7 @@ import type {
   DashboardV2ViewModel,
   HabitCardModel,
   NutritionCardModel,
-} from "#/verticals/dashboard/dashboard-v2-model.ts";
+} from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";

@@ -1,4 +1,4 @@
-import type { NutrientAnalyticsModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import "../../../../styles.css";

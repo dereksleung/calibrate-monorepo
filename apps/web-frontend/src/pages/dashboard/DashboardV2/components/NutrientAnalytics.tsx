@@ -1,4 +1,4 @@
-import type { ChangeEntry, NutrientAnalyticsModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { ChangeEntry, NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { Card, CardContent } from "#/shared/components/base/Card.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
