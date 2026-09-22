@@ -1,4 +1,4 @@
-import type { DashboardNutritionCardModel } from "#/verticals/dashboard/dashboard-nutrition-model.ts";
+import type { NutritionCardModel as DashboardNutritionCardModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { Card } from "#/shared/components/base/Card.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";

@@ -3,7 +3,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { DashboardNutritionCardModel } from "../dashboard-nutrition-model.ts";
+import type { NutritionCardModel as DashboardNutritionCardModel } from "@calibrate/frontend-core/verticals/dashboard/models/dashboard-v2";
 
 import { TodayAndWeekCalories } from "./TodayAndWeekCalories.tsx";
 import { TodayAndWeekStat } from "./TodayAndWeekStat.tsx";
