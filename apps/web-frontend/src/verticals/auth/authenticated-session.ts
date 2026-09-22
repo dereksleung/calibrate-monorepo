@@ -1,4 +1,4 @@
-import type { AuthenticatedSessionResponse } from "@calibrate/api-contracts";
+import type { AuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/authenticated-user-context";
 
 import { skipToken, useQuery, type QueryClient } from "@tanstack/react-query";
 
@@ -13,14 +13,14 @@ export type AuthenticatedSessionTransition = {
 
 export function setAuthenticatedSession(
   queryClient: QueryClient,
-  session: AuthenticatedSessionResponse,
+  session: AuthenticatedUserContext,
 ): void {
   queryClient.setQueryData(authenticatedSessionQueryKey, session);
 }
 
 export async function establishAuthenticatedSession(
   queryClient: QueryClient,
-  session: AuthenticatedSessionResponse,
+  session: AuthenticatedUserContext,
   options?: { allowCurrentAccountTransition?: boolean },
 ): Promise<AuthenticatedSessionTransition | undefined> {
   const previousAccountId = getAuthenticatedSession(queryClient)?.user.id;
@@ -38,7 +38,7 @@ export async function establishAuthenticatedSession(
   return previousAccountId && previousAccountId !== session.user.id ? { previousAccountId } : {};
 }
 
-export function getAuthenticatedSession(queryClient: QueryClient): AuthenticatedSessionResponse | undefined {
+export function getAuthenticatedSession(queryClient: QueryClient): AuthenticatedUserContext | undefined {
   return queryClient.getQueryData(authenticatedSessionQueryKey);
 }
 
@@ -47,12 +47,12 @@ export function clearAuthenticatedSession(queryClient: QueryClient): void {
 }
 
 /** Subscribes a component to changes in the data set by the manual methods above */
-export function useAuthenticatedSession(): AuthenticatedSessionResponse | undefined {
+export function useAuthenticatedSession(): AuthenticatedUserContext | undefined {
   const { data } = useQuery({
     queryKey: authenticatedSessionQueryKey,
     queryFn: skipToken,
     gcTime: Infinity,
     staleTime: Infinity,
   });
-  return data as AuthenticatedSessionResponse | undefined;
+  return data as AuthenticatedUserContext | undefined;
 }

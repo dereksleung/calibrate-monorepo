@@ -22,6 +22,8 @@
     "./verticals/day-logs/models/nutrition": { "types": "./src/verticals/day-logs/models/nutrition.ts", "default": "./src/verticals/day-logs/models/nutrition.ts" },
     "./verticals/day-logs/models/recent-foods": { "types": "./src/verticals/day-logs/models/recent-foods.ts", "default": "./src/verticals/day-logs/models/recent-foods.ts" },
     "./verticals/dashboard/models/dashboard-v2": { "types": "./src/verticals/dashboard/models/dashboard-v2.ts", "default": "./src/verticals/dashboard/models/dashboard-v2.ts" },
+    "./verticals/auth/models/authenticated-user-context": { "types": "./src/verticals/auth/models/authenticated-user-context.ts", "default": "./src/verticals/auth/models/authenticated-user-context.ts" },
+    "./feature-workflows/auth/session": { "types": "./src/feature-workflows/auth/session.ts", "default": "./src/feature-workflows/auth/session.ts" },
     "./verticals/day-logs/models/__mocks__/day-log": {
       "types": "./src/verticals/day-logs/models/__mocks__/day-log.ts",
       "default": "./src/verticals/day-logs/models/__mocks__/day-log.ts"
