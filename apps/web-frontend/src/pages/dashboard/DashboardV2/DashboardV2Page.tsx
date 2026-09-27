@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { DashboardAnalyticsDrawer } from "./components/DashboardAnalyticsDrawer.tsx";
 import { MiniAnalyticsCard } from "./components/MiniAnalyticsCard.tsx";
 import { SevenDayNutrition } from "./components/SevenDayNutrition.tsx";
+import { cn } from "#/lib/utils.ts";
 
 const NUTRITION_CARD_ORDER: DashboardNutritionMetric[] = [
   "calories",
@@ -44,22 +45,22 @@ function formatAmount(amount: number) {
 
 function HabitCard({ model }: { model: HabitCardModel }) {
   return (
-    <MiniAnalyticsCard title={model.title}>
+    <MiniAnalyticsCard title={model.title} className="@container">
       <MiniAnalyticsCard.Title>{model.title}</MiniAnalyticsCard.Title>
       <MiniAnalyticsCard.Subtitle>{model.subtitle}</MiniAnalyticsCard.Subtitle>
       <MiniAnalyticsCard.ChartArea
-        className="mt-4 grid grid-cols-10 gap-1.5"
+        className="mt-4 grid grid-flow-col grid-cols-10 grid-rows-3 gap-0.75"
         role="img"
         aria-label={`${model.title}: ${model.completedCurrentWeek} of 7 days this week`}
       >
         {model.days.map((day) => (
           <span
             aria-label={`${day.date}: ${day.status}`}
-            className={
+            className={cn("w-full aspect-square",
               day.status === "complete"
-                ? "aspect-square rounded-sm bg-primary"
-                : "aspect-square rounded-sm bg-black/[0.055]"
-            }
+                ? "bg-primary"
+                : "bg-black/[0.055]"
+            )}
             key={day.date}
           />
         ))}

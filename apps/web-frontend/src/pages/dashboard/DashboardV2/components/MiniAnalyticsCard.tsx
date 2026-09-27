@@ -38,8 +38,13 @@ function Subtitle({ className, ...props }: ComponentProps<"p">) {
   return <p className={cn("mt-0.5 text-xs text-on-surface-variant", className)} {...props} />;
 }
 
+/**
+ * Place to define and bound the dimensions that all types of charts 
+ * in the cards can take up,
+ * so that the cards' dimensions don't have huge variations
+ */
 function ChartArea({ className, ...props }: ComponentProps<"div">) {
-  return <div className={cn("min-w-0", className)} {...props} />;
+  return <div className={cn("max-h-15 min-w-0", className)} {...props} />;
 }
 
 function Separator({ className, ...props }: ComponentProps<"div">) {
