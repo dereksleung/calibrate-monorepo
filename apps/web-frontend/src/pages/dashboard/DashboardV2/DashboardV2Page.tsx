@@ -19,7 +19,6 @@ const NUTRITION_CARD_ORDER: DashboardNutritionMetric[] = [
 type DashboardV2PageProps = {
   error?: Error | null;
   isPending?: boolean;
-  onChangeTabOpen?: () => void;
   onRetry?: () => void;
   viewModel?: DashboardV2ViewModel;
 };
@@ -163,13 +162,7 @@ function DashboardSections({
   return <PendingDashboardSections />;
 }
 
-function DashboardV2Page({
-  error = null,
-  isPending = false,
-  onChangeTabOpen,
-  onRetry,
-  viewModel,
-}: DashboardV2PageProps) {
+function DashboardV2Page({ error = null, isPending = false, onRetry, viewModel }: DashboardV2PageProps) {
   const [selectedMetric, setSelectedMetric] = useState<DashboardNutritionMetric | null>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const selectedModel = viewModel && selectedMetric ? viewModel.analytics[selectedMetric] : null;
@@ -195,7 +188,6 @@ function DashboardV2Page({
 
       <DashboardAnalyticsDrawer
         model={selectedModel}
-        onChangeTabOpen={onChangeTabOpen}
         onClose={() => setSelectedMetric(null)}
         returnFocusRef={returnFocusRef}
       />

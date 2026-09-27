@@ -15,7 +15,6 @@ type NutrientAnalyticsTab = "change" | "total";
 type NutrientAnalyticsProps = {
   defaultTab?: NutrientAnalyticsTab;
   model: NutrientAnalyticsModel;
-  onChangeTabOpen?: () => void;
 };
 
 function formatAmount(amount: number) {
@@ -40,18 +39,12 @@ function maybeReverse<T>(items: readonly T[], reversed: boolean) {
   return reversed ? [...items].reverse() : items;
 }
 
-function NutrientAnalytics({ defaultTab = "total", model, onChangeTabOpen }: NutrientAnalyticsProps) {
+function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsProps) {
   const [reversed, setReversed] = useState(false);
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-surface-container-low">
-      <Tabs
-        className="flex min-h-0 flex-1 flex-col gap-0"
-        defaultValue={defaultTab}
-        onValueChange={(value) => {
-          if (value === "change") onChangeTabOpen?.();
-        }}
-      >
+      <Tabs className="flex min-h-0 flex-1 flex-col gap-0" defaultValue={defaultTab}>
         <div className="flex shrink-0 flex-col gap-6 px-5 pb-4 pt-6">
           <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)]">
             <CardContent className="flex flex-col gap-2 px-5 py-5">

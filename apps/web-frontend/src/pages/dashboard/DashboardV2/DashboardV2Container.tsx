@@ -1,12 +1,8 @@
-import {
-  getRollingSevenDayDateRange,
-  getRollingTwentyEightDayDateRange,
-} from "#/shared/date/local-date-range.ts";
+import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
 import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
 import { useIsRestoring } from "@tanstack/react-query";
-import { useState } from "react";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
 
@@ -22,26 +18,16 @@ export function DashboardV2Container() {
 }
 
 function DashboardV2Content({ accountId }: { accountId: string }) {
-  const initialDataDateRange = getRollingSevenDayDateRange();
-  const deeperAnalyticsDateRange = getRollingTwentyEightDayDateRange();
-  const [shouldFetch28DayRange, setShouldFetch28DayRange] = useState(false);
+  const dateRange = getRollingThirtyDayDateRange();
   const { cached, syncResponse } = useSyncDayLogsForDateRange({
     accountId,
-    dateRange: initialDataDateRange,
+    dateRange,
     enabled: true,
-  });
-  const { cached: twentyEightDayData } = useSyncDayLogsForDateRange({
-    accountId,
-    dateRange: deeperAnalyticsDateRange,
-    enabled: shouldFetch28DayRange,
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-        endDate: initialDataDateRange.endDate,
-        initialSevenDayData: cached,
-        twentyEightDayData: twentyEightDayData.some((query) => query.data !== undefined)
-          ? twentyEightDayData
-          : undefined,
+        endDate: dateRange.endDate,
+        dayLogs: cached,
       })
     : undefined;
 
@@ -49,7 +35,6 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
     <DashboardV2Page
       error={syncResponse.error}
       isPending={syncResponse.isPending || syncResponse.isFetching}
-      onChangeTabOpen={() => setShouldFetch28DayRange(true)}
       onRetry={() => {
         void syncResponse.refetch();
       }}

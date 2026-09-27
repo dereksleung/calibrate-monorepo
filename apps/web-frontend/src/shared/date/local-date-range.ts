@@ -12,8 +12,8 @@ export function getRollingSevenDayDateRange(now = new Date()): LocalDateRange {
   return getRollingDateRange(7, now);
 }
 
-export function getRollingTwentyEightDayDateRange(now = new Date()): LocalDateRange {
-  return getRollingDateRange(28, now);
+export function getRollingThirtyDayDateRange(now = new Date()): LocalDateRange {
+  return getRollingDateRange(30, now);
 }
 
 function getRollingDateRange(dayCount: number, now: Date): LocalDateRange {

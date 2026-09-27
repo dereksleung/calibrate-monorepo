@@ -102,17 +102,14 @@ const NUTRIENT_CONFIGURATIONS: readonly NutrientConfiguration[] = [
 
 export function buildDashboardV2ViewModel({
   endDate: endDateInput,
-  initialSevenDayData,
-  twentyEightDayData = initialSevenDayData,
+  dayLogs,
 }: {
   endDate?: string;
-  initialSevenDayData: ReadonlyArray<CachedDayLogQuery>;
-  twentyEightDayData?: ReadonlyArray<CachedDayLogQuery>;
+  dayLogs: ReadonlyArray<CachedDayLogQuery>;
 }): DashboardV2ViewModel {
-  const sevenDayHistory = historyDaysFromSlotQueries(initialSevenDayData);
-  const twentyEightDayHistory = historyDaysFromSlotQueries(twentyEightDayData);
-  const endDate =
-    endDateInput ?? endDateFromSlotQueries(initialSevenDayData) ?? sevenDayHistory.at(-1)?.date ?? "";
+  const history = historyDaysFromSlotQueries(dayLogs);
+  const endDate = endDateInput ?? endDateFromSlotQueries(dayLogs) ?? history.at(-1)?.date ?? "";
+  const sevenDayHistory = historyWithinInclusiveWindow(history, endDate, 7);
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
     buildSevenDayNutritionRow(sevenDayHistory, endDate, configuration),
   );
@@ -136,7 +133,7 @@ export function buildDashboardV2ViewModel({
   const analytics = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["analytics"]>>(
     (models, configuration) => {
       models[configuration.metric] = buildNutrientAnalyticsModel({
-        contributionDays: twentyEightDayHistory,
+        contributionDays: history,
         endDate,
         metric: configuration.metric,
         totalDays: sevenDayHistory,
@@ -149,7 +146,7 @@ export function buildDashboardV2ViewModel({
 
   return {
     analytics,
-    habits: buildHabitModels(sevenDayHistory, endDate),
+    habits: buildHabitModels(history, endDate),
     nutritionCards,
     sevenDayNutrition: { rows },
   };
@@ -231,6 +228,18 @@ function historyDaysFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): 
     if (snapshot === undefined || snapshot.data === undefined) return [];
     return [{ date: snapshot.date, dayLog: snapshot.data }];
   });
+}
+
+function historyWithinInclusiveWindow(
+  days: readonly DashboardHistoryDay[],
+  endDate: string,
+  dayCount: number,
+): DashboardHistoryDay[] {
+  if (endDate === "") return [...days];
+
+  const startDate = offsetDate(endDate, -(dayCount - 1));
+
+  return days.filter(({ date }) => date >= startDate && date <= endDate);
 }
 
 function endDateFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): string | undefined {

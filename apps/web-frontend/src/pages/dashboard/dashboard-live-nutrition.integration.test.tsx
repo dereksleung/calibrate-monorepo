@@ -2,7 +2,7 @@
 
 import type { DayLogRangeResponse } from "@calibrate/api-contracts";
 
-import { getRollingSevenDayDateRange } from "#/shared/date/local-date-range.ts";
+import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
 import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
   applyDayLogSyncResult,
@@ -163,7 +163,7 @@ function dayLogRangeResponse(url: string, calories: number): DayLogRangeResponse
 }
 
 function dayLogSyncResponse(calories: number) {
-  const range = getRollingSevenDayDateRange();
+  const range = getRollingThirtyDayDateRange();
   return {
     slots: dayLogRangeResponse(
       `/api/v1/daylogs?startDate=${range.startDate}&endDate=${range.endDate}`,
@@ -178,7 +178,7 @@ function seedDashboardCache(
   lastValidatedAt: number,
   cacheAccountId = accountId,
 ) {
-  const range = getRollingSevenDayDateRange();
+  const range = getRollingThirtyDayDateRange();
   const response = dayLogRangeResponse(
     `/api/v1/daylogs?startDate=${range.startDate}&endDate=${range.endDate}`,
     calories,
@@ -220,7 +220,7 @@ afterEach(() => {
 });
 
 describe("dashboard live nutrition", () => {
-  it("requests the inclusive seven-day range and renders selected Dashboard V2 values", async () => {
+  it("requests the inclusive thirty-day range and renders selected Dashboard V2 values", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() => {
       return Promise.resolve(
         new Response(JSON.stringify(dayLogSyncResponse(425)), {
@@ -242,7 +242,7 @@ describe("dashboard live nutrition", () => {
     const requestUrl = new URL(getFetchUrl(fetchMock.mock.calls[0][0]), "http://localhost");
     expect(requestUrl.pathname).toBe("/api/v1/daylogs:sync");
     const requestBody = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-    expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(7);
+    expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(30);
 
     await waitFor(() => {
       expect(queryClient.getQueryData(dayLogSlotQueryKey(accountId, requestBody.endDate))).toEqual(
@@ -269,7 +269,7 @@ describe("dashboard live nutrition", () => {
       .mockImplementation(() => new Promise<Response>(() => undefined));
     const queryClient = createDashboardQueryClient();
     seedDashboardCache(queryClient, 210, Date.now());
-    const { endDate } = getRollingSevenDayDateRange();
+    const { endDate } = getRollingThirtyDayDateRange();
     queryClient.setQueryData(dayLogSlotVersionQueryKey(accountId, endDate), 7);
     queryClient
       .getQueryCache()
@@ -380,7 +380,7 @@ describe("dashboard live nutrition", () => {
     expect(await screen.findByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
     expect(within(screen.getByRole("region", { name: "Calories" })).getByText("100")).toBeTruthy();
 
-    const range = getRollingSevenDayDateRange();
+    const range = getRollingThirtyDayDateRange();
     applyDayLogSyncResult(queryClient, accountId, range, dayLogSyncResponse(250), Date.now());
 
     await waitFor(() => {
@@ -406,32 +406,22 @@ describe("dashboard live nutrition", () => {
     expect(screen.getByText("Live breakfast")).toBeTruthy();
   });
 
-  it("defers the twenty-eight-day sync until the Change analytics tab opens", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
-      const request = JSON.parse(init?.body as string) as { endDate: string; startDate: string };
-
-      return Promise.resolve(
-        new Response(
-          JSON.stringify({
-            slots: dayLogRangeResponse(
-              `/api/v1/daylogs?startDate=${request.startDate}&endDate=${request.endDate}`,
-              425,
-            ).days.map(({ date, dayLog }) => ({ date, dayLog, versionNumber: dayLog ? 1 : null })),
-          }),
-          { status: 200, headers: { "content-type": "application/json" } },
-        ),
-      );
-    });
+  it("does not sync again when the Change analytics tab opens", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(dayLogSyncResponse(425)), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
 
     renderDashboard();
 
     fireEvent.click(await screen.findByRole("button", { name: "Open Calories analytics" }));
-
-    expect(fetchMock).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("tab", { name: "Change" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    const requestBody = JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string);
-    expect(dateRange(requestBody.startDate, requestBody.endDate)).toHaveLength(28);
+    expect(screen.getByRole("heading", { name: "Food contribution change" })).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
