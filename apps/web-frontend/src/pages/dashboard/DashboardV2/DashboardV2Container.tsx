@@ -48,7 +48,7 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
   return (
     <DashboardV2Page
       error={syncResponse.error}
-      isPending={!viewModel && (syncResponse.isPending || syncResponse.isFetching)}
+      isPending={syncResponse.isPending || syncResponse.isFetching}
       onChangeTabOpen={() => setShouldFetch28DayRange(true)}
       onRetry={() => {
         void syncResponse.refetch();

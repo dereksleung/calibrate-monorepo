@@ -174,7 +174,7 @@ function PendingNutritionCard({ title }: { title: (typeof PENDING_NUTRITION_TITL
   );
 }
 
-function DashboardSections({
+function DashboardSectionsContent({
   onOpenNutrition,
   viewModel,
 }: {
@@ -279,6 +279,40 @@ function DashboardLoadError({ onRetry }: { onRetry?: () => void }) {
   );
 }
 
+function DashboardSections({
+  isPending,
+  onOpenNutrition,
+  viewModel,
+}: {
+  isPending: boolean;
+  onOpenNutrition: (metric: DashboardNutritionMetric, trigger: HTMLButtonElement) => void;
+  viewModel?: DashboardV2ViewModel;
+}) {
+  if (viewModel) {
+    return (
+      <>
+        {/* For background refetches */}
+        {isPending ? (
+          <p aria-live="polite" className="sr-only">
+            Updating…
+          </p>
+        ) : null}
+        <DashboardSectionsContent onOpenNutrition={onOpenNutrition} viewModel={viewModel} />
+      </>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <div aria-busy="true" aria-label="Loading dashboard" role="status">
+        <PendingDashboardSections />
+      </div>
+    );
+  }
+
+  return <PendingDashboardSections />;
+}
+
 function DashboardV2Page({
   error = null,
   isPending = false,
@@ -297,21 +331,14 @@ function DashboardV2Page({
           <h1 className="hidden md:block md:sr-only">Overview</h1>
           <div className="space-y-8">
             {error ? <DashboardLoadError onRetry={onRetry} /> : null}
-            {viewModel ? (
-              <DashboardSections
-                onOpenNutrition={(metric, trigger) => {
-                  returnFocusRef.current = trigger;
-                  setSelectedMetric(metric);
-                }}
-                viewModel={viewModel}
-              />
-            ) : isPending ? (
-              <div aria-busy="true" aria-label="Loading dashboard" role="status">
-                <PendingDashboardSections />
-              </div>
-            ) : (
-              <PendingDashboardSections />
-            )}
+            <DashboardSections
+              isPending={isPending}
+              onOpenNutrition={(metric, trigger) => {
+                returnFocusRef.current = trigger;
+                setSelectedMetric(metric);
+              }}
+              viewModel={viewModel}
+            />
           </div>
         </div>
       </main>

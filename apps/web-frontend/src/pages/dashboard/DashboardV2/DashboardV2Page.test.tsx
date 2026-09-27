@@ -247,6 +247,21 @@ describe("DashboardV2Page", () => {
     expect(screen.getByRole("main").firstElementChild?.className).toContain(APP_CONTENT_FRAME_CLASS_NAME);
   });
 
+  it("keeps real dashboard content while refetching when a view model is already available", () => {
+    render(<DashboardV2Page isPending viewModel={viewModel} />);
+
+    expect(screen.queryByRole("status", { name: "Loading dashboard" })).toBeNull();
+    expect(screen.getByText("Updating…").getAttribute("aria-live")).toBe("polite");
+    expect(screen.getByRole("button", { name: "Open Calories analytics" })).toBeTruthy();
+    expect(screen.getByText("661")).toBeTruthy();
+  });
+
+  it("does not announce a background refresh when the dashboard is not refetching", () => {
+    render(<DashboardV2Page viewModel={viewModel} />);
+
+    expect(screen.queryByText("Updating…")).toBeNull();
+  });
+
   it("keeps page structure with skeleton nutrition cards and neutral habit cells while pending", () => {
     render(<DashboardV2Page isPending />);
 
