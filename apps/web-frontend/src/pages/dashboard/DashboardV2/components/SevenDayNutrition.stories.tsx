@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
 
-import { SevenDayNutrition } from "./SevenDayNutrition.tsx";
+import { PendingSevenDayNutrition, SevenDayNutrition } from "./SevenDayNutrition.tsx";
 
 function formatLocalDate(date: Date) {
   const year = date.getFullYear();
@@ -74,3 +74,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const CurrentDayHighlight: Story = {};
+
+export const Pending: Story = {
+  render: () => <PendingSevenDayNutrition />,
+};

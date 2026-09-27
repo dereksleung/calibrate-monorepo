@@ -173,6 +173,22 @@ function SevenDayNutrition({ rows }: SevenDayNutritionProps) {
   );
 }
 
+function PendingSevenDayNutrition() {
+  return (
+    <section aria-hidden="true" className="glass-card rounded-xl p-3">
+      {Array.from({ length: 4 }, (_, index) => (
+        <div
+          className="grid grid-cols-[4.75rem_minmax(0,1fr)] gap-2 border-b border-black/[0.06] py-2 first:pt-0 last:border-b-0 last:pb-0"
+          key={index}
+        >
+          <div className="h-8 animate-pulse rounded bg-black/[0.055]" />
+          <div className="h-12 animate-pulse rounded bg-black/[0.055] sm:h-20" />
+        </div>
+      ))}
+    </section>
+  );
+}
+
 SevenDayNutrition.Row = Row;
 
-export { SevenDayBarChart, SevenDayNutrition, SevenDaySummaryStat };
+export { PendingSevenDayNutrition, SevenDayBarChart, SevenDayNutrition, SevenDaySummaryStat };
