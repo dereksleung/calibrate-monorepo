@@ -5,6 +5,7 @@ import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-d
 import { useIsRestoring } from "@tanstack/react-query";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
+// import { dashboardV2PageViewModelMock } from "./DashboardV2Page.viewModel.mock.ts";
 
 export function DashboardV2Container() {
   const isRestoring = useIsRestoring();
@@ -26,9 +27,9 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-        endDate: dateRange.endDate,
-        dayLogs: cached,
-      })
+      endDate: dateRange.endDate,
+      dayLogs: cached,
+    })
     : undefined;
 
   return (
@@ -39,6 +40,7 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
         void syncResponse.refetch();
       }}
       viewModel={viewModel}
+    // viewModel={dashboardV2PageViewModelMock}
     />
   );
 }
