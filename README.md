@@ -115,11 +115,12 @@ There are some planned "Daily Insights" and "Smart Swap" features, if they show 
     - They are suited for this case because there are common subcomponents and layout styles to capture, like MiniAnalyticsCard.Title or MiniAnalyticsCard.ChartArea, while allowing choosing subcomponents to compose for different cases, like MiniAnalyticsCard.BottomSummary composing MiniAnalyticsCard.GoDeeperIcon only when it should be interactive and let you click it to go somewhere else.
 - The **Nutrition** section after has mini cards you can use to drill in deeper for that nutrient.
 <br></br>
-<table>
-  <tr>
-    <td><img width="1186" height="945" src="https://github.com/user-attachments/assets/5cce7cf3-c249-47bf-8a06-8b2ad832c64e" /></td>
-  </tr>
-</table>
+  <table>
+    <tr>
+      <td><img width="1154" height="940" src="https://github.com/user-attachments/assets/928214b6-e348-492b-a1bc-c099efbbd596" /></td>
+      <td><img width="376" height="671" src="https://github.com/user-attachments/assets/b512b7da-aa40-42bb-b7da-8b1adf1fa582" /></td>
+    </tr>
+  </table>
 <br></br>
 
 #### Nutrient Analytics
