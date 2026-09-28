@@ -1,6 +1,8 @@
 # Calibrate
 
-A calorie tracker application, because I've gotten into healthier eating, jogging, and calisthenics.
+Calibrate is a full-stack nutrition-tracking application designed to turn detailed food logs into focused, actionable insights about the foods and habits driving changes in calorie and macronutrient intake.
+
+Rather than presenting users with an open-ended collection of charts, Calibrate prioritizes analyses intended to answer concrete questions, for example: which foods contributed most to recent calorie or macro intake, what has changed between recent periods, and which foods are driving those changes.
 
 ## Table of Contents
 
