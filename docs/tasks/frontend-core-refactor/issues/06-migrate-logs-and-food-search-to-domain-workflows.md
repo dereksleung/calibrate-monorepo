@@ -4,7 +4,7 @@
 
 **Status:** ready-for-agent
 
-**What to build:** Replace Logs and food-search consumption of API response/request types with direct core workflow/model imports. Move portable nutrition totals, meal definitions, and cache-only recent-food ranking into core; retain route parsing, display formatting, component props, and UI state in web.
+**What to build:** Replace Logs and food-search consumption of API response/request types with direct core workflow/vertical imports. Move portable nutrition totals, meal definitions, and cache-only recent-food ranking into cohesive core verticals; retain web-specific route and display choices, component props, and UI state in web.
 
 - [ ] Keep the Confirm Food route state web-local.
 - [ ] Preserve cache-only recents: no idle API fetch and no new endpoint.
@@ -15,4 +15,4 @@
 
 **Verify:** focused Logs/FoodSearch tests, `npx nx run web:test`, `npx nx run web:typecheck`.
 
-**Likely files:** bounded batches under `apps/web-frontend/src/pages/logs/` and core shared/day-log model modules.
+**Likely files:** bounded batches under `apps/web-frontend/src/pages/logs/` and the relevant core vertical modules.

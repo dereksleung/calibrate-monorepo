@@ -7,8 +7,8 @@
 **What to build:** Implement public save-food-entry and update-weight workflows that complete each user goal. `src/api/day-logs/save-food-entry.ts` owns the validated network request and returns the validated API response. `src/feature-workflows/day-logs/save-food-entry.ts` owns `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry`; it absorbs the portable orchestration currently in web's `verticals/day-log-cache/use-save-food-entry.ts`.
 
 - [ ] Resolve host-supplied account context and the app-owned `QueryClient` without importing web authentication code; execute the server command with the injected transport.
-- [ ] Put request/response mappers in the workflow folder, optionally in a separate `save-food-entry-mappers.ts`. Map the validated save response and command input to frontend-domain values before patching the cache.
-- [ ] Patch the account-scoped Day Log slot after the server acknowledges the write. Advance the cached version only when its predecessor is trusted; otherwise keep the local acknowledgement unverified and conditionally sync that date. A user-goal workflow may call save/update and sync when correctness requires it.
+- [ ] Shape frontend command input into the request in the workflow. Define each pure response mapper inside its private endpoint file, including `api/day-logs/save-food-entry.ts`; the workflow calls it on the validated response before patching the cache. The request operation itself does not call the mapper.
+- [ ] Patch the account-scoped Day Log slot inside the owning Save Food Entry or Update Weight workflow after the server acknowledges the write, using shared cache keys/models from `verticals/day-log-cache/`. Advance the cached version only when its predecessor is trusted; otherwise keep the local acknowledgement unverified and conditionally sync that date. A user-goal workflow may call save/update and sync when correctness requires it.
 - [ ] Keep mutation options and the hook on the same workflow policy so using either entry point produces the same mapping, cache updates, reconciliation, and fallback behavior.
 - [ ] Keep locally acknowledged data on reconciliation failure and leave the slot eligible for normal validation.
 - [ ] Keep request/response contract types private to the workflow/API boundary.
@@ -18,4 +18,4 @@
 
 **Verify:** focused mutation/reconciliation tests, `npx nx run @calibrate/frontend-core:test`, targeted web cache tests.
 
-**Likely files:** `src/feature-workflows/day-logs/save-food-entry.ts`, its optional mapper/test, an update-weight workflow/test, then bounded edits to web's `verticals/day-log-cache/use-save-food-entry.ts` and callers.
+**Likely files:** `src/api/day-logs/save-food-entry.ts` and its focused mapper test, `src/feature-workflows/day-logs/save-food-entry.ts`, an update-weight endpoint/workflow and tests, shared cache keys/models under `src/verticals/day-log-cache/`, then bounded edits to web's `verticals/day-log-cache/use-save-food-entry.ts` and callers.

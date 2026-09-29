@@ -4,7 +4,7 @@
 
 **Status:** ready-for-agent
 
-**What to build:** Define and map the core `AuthenticatedUserContext` plus all existing auth workflow results. Migrate session, email-verification, and passkey callers to direct public core leaves. Keep `SessionRestorationGate` and the authenticated-session cache coordinator in web because they own browser cache fencing and navigation.
+**What to build:** Define the core `AuthenticatedUserContext` and pure auth response mappers in their private endpoint files. Auth workflows call those mappers to produce frontend-domain results. Migrate session, email-verification, and passkey callers to direct public core leaves. Keep `SessionRestorationGate` and the authenticated-session cache coordinator in web because they own browser cache fencing and navigation.
 
 - [ ] Do not treat current-user context as token storage.
 - [ ] Preserve session transport information needed by the client.

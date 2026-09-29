@@ -4,9 +4,9 @@
 
 **Status:** ready-for-agent
 
-**What to build:** Establish `src/api/<area>` as the private home of network request operations and make the package export map an explicit allowlist of public transport/error, workflow, model, and `__mocks__` leaf paths. Add app-configurable credentials to `ApiTransport`, preserving `"include"` as the default. In particular, move `saveFoodEntry` to `src/api/day-logs/save-food-entry.ts`: it validates and forms `POST /daylogs/{date}/food-entries`, executes it through the injected transport, and returns the validated API response.
+**What to build:** Establish `src/api/<area>/<endpoint>.ts` as the private home of network request operations and their co-located pure response mappers, and make the package export map an explicit allowlist of public transport/error, workflow, model, and `__mocks__` leaf paths. Add app-configurable credentials to `ApiTransport`, preserving `"include"` as the default. In particular, move `saveFoodEntry` to `src/api/day-logs/save-food-entry.ts`: it validates and forms `POST /daylogs/{date}/food-entries`, executes it through the injected transport, and returns the validated API response. Ticket 03 adds the mapper in that same file; the request operation does not call it.
 
-- [ ] Keep URL/path/query, HTTP method, request-body validation, transport execution, response-schema validation, and HTTP-error handling inside private API modules. These modules change for network/transport/validator details, not for cache or user-goal policy.
+- [ ] Keep URL/path/query, HTTP method, request-body validation, transport execution, response-schema validation, HTTP-error handling, and endpoint response mapping inside private API files. These modules change for network/transport/validator details and response shapes, not for cache or user-goal policy.
 - [ ] Leave `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` for the public feature-workflow module in ticket 05; private `api/**` modules must not import TanStack Query or update the cache.
 - [ ] Do not export `api/**` or use a wildcard export that makes it reachable.
 - [ ] Prove `credentials` passes through the injected transport and defaults to today’s behavior.
