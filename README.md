@@ -11,6 +11,21 @@ Calibrate is a full-stack nutrition-tracking application designed to turn detail
 
 ## Table of Contents
 
+- [Product approach](#product-approach)
+- [Engineering highlights](#engineering-highlights)
+- [Architecture](#architecture)
+  - [Frontend architecture](#frontend-architecture)
+  - [Backend boundaries](#backend-boundaries)
+- [Data access Solution Design, Tradeoffs Rationale: Expected Usage Patterns](#data-access-solution-design-tradeoffs-rationale-expected-usage-patterns)
+- [Data synchronization and caching](#data-synchronization-and-caching)
+- [Screenshots](#screenshots)
+  - [Nutrient analytics](#nutrient-analytics)
+  - [Daily logging](#daily-logging)
+- [AI Development and validation workflow](#ai-development-and-validation-workflow)
+- [Tech stack](#tech-stack)
+- [Run the local demo](#run-the-local-demo)
+- [Further technical documentation](#further-technical-documentation)
+
 ## Product approach
 
 Nutrition applications can easily become collections of charts that expose more data without making the next decision any clearer. Calibrate instead prioritizes analyses that answer concrete questions a user can act on.
@@ -112,7 +127,7 @@ motivation to adjust if needed.
   </tr>
 </table>
 
-## Development and validation workflow
+## AI Development and validation workflow
 
 Calibrate is also a testbed for development workflows in which AI agents can work on multiple changes concurrently without sharing fragile local state.
 
