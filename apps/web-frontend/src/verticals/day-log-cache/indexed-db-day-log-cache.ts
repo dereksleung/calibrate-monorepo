@@ -2,7 +2,8 @@ import {
   isPersistedDayLogClient,
   prunePersistedDayLogClient,
   type PersistedDayLogClient,
-} from "./day-log-cache.ts";
+} from "@calibrate/frontend-core/verticals/day-log-cache/persistence-policy";
+
 import {
   DAY_LOG_CACHE_LIFECYCLE_STORE,
   DAY_LOG_CACHE_SNAPSHOT_STORE,

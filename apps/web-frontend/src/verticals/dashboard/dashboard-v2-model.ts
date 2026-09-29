@@ -1,5 +1,5 @@
-import type { DayLogSnapshot } from "#/verticals/day-log-cache/day-log-cache.ts";
 import type { DayLogRangeResponse, FoodEntryResponse } from "@calibrate/api-contracts";
+import type { DayLogSnapshot } from "@calibrate/frontend-core/shared/models/day-logs/day-log";
 
 import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
 import {

@@ -39,9 +39,25 @@
       "types": "./src/day-logs/get-day-log-range.ts",
       "default": "./src/day-logs/get-day-log-range.ts"
     },
-    "./day-logs/sync-day-logs": {
-      "types": "./src/day-logs/sync-day-logs.ts",
-      "default": "./src/day-logs/sync-day-logs.ts"
+    "./feature-workflows/day-logs/sync-day-logs": {
+      "types": "./src/feature-workflows/day-logs/sync-day-logs.ts",
+      "default": "./src/feature-workflows/day-logs/sync-day-logs.ts"
+    },
+    "./shared/models/day-logs/day-log": {
+      "types": "./src/shared/models/day-logs/day-log.ts",
+      "default": "./src/shared/models/day-logs/day-log.ts"
+    },
+    "./shared/models/day-logs/__mocks__/day-log": {
+      "types": "./src/shared/models/day-logs/__mocks__/day-log.ts",
+      "default": "./src/shared/models/day-logs/__mocks__/day-log.ts"
+    },
+    "./verticals/day-log-cache/day-log-slots": {
+      "types": "./src/verticals/day-log-cache/day-log-slots.ts",
+      "default": "./src/verticals/day-log-cache/day-log-slots.ts"
+    },
+    "./verticals/day-log-cache/persistence-policy": {
+      "types": "./src/verticals/day-log-cache/persistence-policy.ts",
+      "default": "./src/verticals/day-log-cache/persistence-policy.ts"
     },
     "./day-logs/save-food-entry": {
       "types": "./src/day-logs/save-food-entry.ts",

@@ -12,8 +12,7 @@ export const dayLogQueryKeyPrefix = (accountId: string) => ["dayLogs", accountId
 export const dayLogQueryKey = (accountId: string, date: string) =>
   [...dayLogQueryKeyPrefix(accountId), "date", date] as const;
 
-export const dayLogSlotQueryKey = (accountId: string, date: string) =>
-  [...dayLogQueryKeyPrefix(accountId), "slot", date] as const;
+export { dayLogSlotQueryKey } from "../verticals/day-log-cache/day-log-slots.js";
 
 export function getDayLog(transport: ApiTransport, date: string): Promise<DayLogResponse | null> {
   const { date: validDate } = GetDayLogRequestRouteParamsSchema.parse({ date });
