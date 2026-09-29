@@ -1,11 +1,11 @@
 {
-  "name": "clean-architecture-backend",
+  "name": "calibrate-monorepo",
   "version": "1.0.0",
   "description": "",
   "keywords": [],
-  "homepage": "https://github.com/dereksleung/clean-architecture-backend#readme",
+  "homepage": "https://github.com/dereksleung/calibrate-monorepo#readme",
   "bugs": {
-    "url": "https://github.com/dereksleung/clean-architecture-backend/issues"
+    "url": "https://github.com/dereksleung/calibrate-monorepo/issues"
   },
   "workspaces": [
     "apps/*",
@@ -15,7 +15,7 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dereksleung/clean-architecture-backend.git"
+    "url": "git+https://github.com/dereksleung/calibrate-monorepo.git"
   },
   "type": "module",
   "main": "index.js",
