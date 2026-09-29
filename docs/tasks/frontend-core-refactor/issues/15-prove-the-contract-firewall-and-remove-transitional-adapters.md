@@ -1,6 +1,6 @@
-# 09: Prove the contract firewall and remove transitional adapters
+# 15: Prove the contract firewall and remove transitional adapters
 
-**Blocked by:** 06, 07, 08.
+**Blocked by:** 05, 06, 07, 08, 09, 10, 11, 12, 13, 14.
 
 **Status:** ready-for-agent
 

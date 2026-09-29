@@ -2,13 +2,13 @@
 
 ## Current pressure points
 
-`@calibrate/api-client` already has the useful portable transport seam, but its public operations return API-contract types. The requested web areas each then couple directly to contract response shapes:
+The renamed `@calibrate/frontend-core` package has the useful portable transport seam, but its temporary public operation leaves still return API-contract types. The requested web areas each then couple directly to contract response shapes:
 
 - Logs renders `DayLogResponse` and `FoodEntryResponse`, while its save workflow writes API-shaped data into the cache.
 - Dashboard V2 reads cache slots but keeps an obsolete `DayLogRangeResponse` type alias; its legacy nutrition model has no production import.
 - The Day Log cache persists raw Day Log responses and separately reconstructs version/freshness semantics from TanStack Query state.
 
-The refactor must first establish the package identity and direct-import surface, then move one data boundary at a time. It must not change the server sync protocol or the browser cache fence.
+The package identity and direct-import surface are present on this branch. The remaining work moves one complete user-goal boundary at a time. It must not change the server sync protocol or the browser cache fence.
 
 ## Architecture
 
@@ -33,48 +33,39 @@ Rename the package, project references, lockfile workspace name, and every consu
 
 Verify `@calibrate/frontend-core` and web typecheck/test targets before beginning model changes.
 
-### 2. Seal the API boundary and define the public module topology
+### 2. Complete Day Log workflows as vertical slices
 
-Create the private `api/<area>/<endpoint>.ts` modules and move network-request details there: route/path/query, HTTP method, request-body validation, transport execution, and response validation. Define its pure validated-response-to-frontend-domain mapper in the same file. For example, `src/api/day-logs/save-food-entry.ts` owns `saveFoodEntry(transport, date, input)`, which returns the validated API response, and a separate pure mapper for that response. The request operation does not call the mapper. The file has no React Query import, cache writes, or fallback policy. Changes to network protocol details, transport or validation technology, or the endpoint's response shape belong here; a change to the Save Food Entry goal does not.
+Tickets 02 and 03 are superseded as implementation checkpoints. Each workflow ticket now delivers the frontend-domain model and builder it needs, private endpoint request and co-located pure response mapper, public workflow, caller migration, and focused tests together. The request operation returns the validated API response without calling the mapper. The workflow calls the mapper before returning or caching domain data. A private endpoint has no React Query import, cache writes, or fallback policy.
 
-Make `package.json` exports a narrow allowlist for public vertical, workflow, transport/error, and test leaf paths. `src/api/**` is a private filesystem path, not an importable `@calibrate/frontend-core/api/**` package subpath. Add configurable `credentials` to `ApiTransport`, defaulting to `"include"`.
+Ticket 04 establishes the shared Day Log/Meal/Food Entry and `DayLogSnapshot` models while moving sync request, mapper, workflow, account-scoped cache mechanics, and portable persistence policy together. Tickets 05 and 06 independently complete Save Food Entry and Update Weight, each with its acknowledgement model, endpoint, mapper, mutation workflow, and result-specific cache reconciliation. Ticket 07 completes the single-date/range Day Log read goal and migrates Logs. Ticket 08 completes Food Search and cache-only recents. A read goal may use two endpoints; the endpoint file remains the response-shape boundary for each.
 
-The public `src/feature-workflows/<workflow-group>/<goal>.ts` modules own TanStack Query options/hooks and application-layer orchestration. A workflow receives or resolves host-supplied account context, maps frontend command inputs to API request shapes, calls one or more private API operations, explicitly calls their co-located response mappers, applies result-specific cache updates, reconciles when needed, and defines fallback behavior. It can use shared keys and cache observations from portable verticals. Name each leaf for the cohesive user goal; choose a discoverable group without requiring it to match a vertical or endpoint. A workflow may depend on multiple verticals. Public successful outputs are frontend-domain models. Internal workflows and tests can import private endpoint functions; app code cannot import their package paths.
+Keep `package.json` exports as a narrow allowlist. Each slice adds only its public workflow/model/`__mocks__` leaves; `src/api/**` stays an internal filesystem path. The final ticket audits the completed export map. Configurable `ApiTransport.credentials` belongs with the session slice in ticket 10 and retains the `"include"` default, so earlier Day Log slices continue to use current web behavior.
 
-For the Save Food Entry migration, move `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` from the old combined API-client file to `src/feature-workflows/day-logs/save-food-entry.ts`. Fold the portable user-goal orchestration of `apps/web-frontend/src/verticals/day-log-cache/use-save-food-entry.ts` into that workflow: obtain injected account context and the app-owned `QueryClient`, execute the save command, call the response mapper defined in `src/api/day-logs/save-food-entry.ts`, apply the mapped acknowledgement to the account-scoped Day Log slot within the workflow using shared cache keys/models, conditionally sync one date, and retain the locally acknowledged entry for later validation if sync fails. Keep the web hook only as a thin adapter for web's account/transport setup if one remains useful.
+The public `src/feature-workflows/<workflow-group>/<goal>.ts` modules own TanStack Query options/hooks and application-layer orchestration. A workflow receives host-supplied account context, maps frontend commands to API requests, calls one or more private operations and their co-located response mappers, applies result-specific cache updates, reconciles when needed, and defines fallback behavior. It can use shared keys and cache observations from portable verticals. Public successful outputs are frontend-domain models.
 
-### 3. Migrate Day Log and food data first
+### 3. Migrate projections and authentication by goal
 
-Create Day Log, Food Entry, Meal, food-search, and Day Log sync/write-acknowledgement models under `verticals/day-logs/models`. Keep `DayLog` meal nullability unchanged. Define `DayLogSnapshot` as `{ date, data: DayLog | null | undefined }` and use its `null`/`undefined` meanings consistently.
+Ticket 09 moves the Dashboard V2 projection after the Day Log read boundary exists. It consumes domain snapshots and does not introduce another endpoint mapper. Tickets 10–14 independently complete session, Account Email Verification, Passkey Authentication, Passkey Registration, and local-development enrollment. Each auth ticket brings its needed model/builders, endpoint requests and co-located mappers, public workflow, web adapter handoff, and focused tests. Session ticket 10 introduces `AuthenticatedUserContext` and configurable transport credentials. Browser cache fencing, WebAuthn, and navigation remain in web.
 
-Implement Day Log and food response mappers in their private endpoint files, not in `verticals/<area>/models` or separate workflow mapper files. Workflows call those mappers before using frontend-domain data. Move reusable Day Log cache behavior into `src/verticals/day-log-cache/`: query keys, shared QueryClient slot observations, freshness decisions, and persistence policy (cache buster, retention, account-scoped dehydration allowlist, persisted-snapshot validation, and pruning). Put `applyDayLogSyncResult` in `feature-workflows/day-logs/sync-day-logs.ts`, `applyFoodEntryCreateToDayLogCache` in `feature-workflows/day-logs/save-food-entry.ts`, and `applyWeightObservationToDayLogCache` in `feature-workflows/day-logs/update-day-log-weight.ts`; each applies a result specific to its goal and uses shared cache keys/models. Web retains the IndexedDB persister and lifecycle fence, composing them with core policy through `PersistQueryClientProvider`; mobile can compose the same policy with its own persister.
+Day Log cache mechanics live in `src/verticals/day-log-cache/`: query keys, slot observations, freshness decisions, cache buster, retention, account-scoped dehydration allowlist, persisted-snapshot validation, and pruning. Result-specific writes stay with their workflows: `applyDayLogSyncResult` in 04, `applyFoodEntryCreateToDayLogCache` in 05, and `applyWeightObservationToDayLogCache` in 06. Web composes core policy with its IndexedDB persister through `PersistQueryClientProvider` and retains its lifecycle fence.
 
-Organize `src/verticals/<area>/` as portable feature folders, each responsible for one cohesive area. Pure calculations, frontend-domain and presentation models, and stateful QueryClient operations can all belong there when web and mobile share the behavior. Split `apps/web-frontend/src/verticals/day-log-cache/day-log-cache.ts` by ownership: shared cache mechanics in the Day Log cache vertical, result-application operations in their feature workflows. Workflows call endpoint mappers before passing frontend-domain values to verticals. Keep platform persisters and lifecycle code in their apps.
+Organize `src/verticals/<area>/` as portable feature folders. Pure calculations, frontend-domain and presentation models, and stateful QueryClient operations can all belong there when web and mobile share the behavior. Split `apps/web-frontend/src/verticals/day-log-cache/day-log-cache.ts` by ownership, and keep platform persisters and lifecycle code in their apps.
 
-### 4. Migrate Logs and Dashboard consumers
+### 4. Stabilize and remove transitional seams
 
-Logs receives domain models and workflows through direct core imports. Move portable nutrition totals, meal definitions, cache-only recent-food ranking, and Dashboard V2 analytics projections into the appropriate `src/verticals/<area>/` folders. `rank-recent-foods-from-cache.ts` and `confirm-food-nutrition.ts` are candidate sources; extract behavior that can use frontend-domain inputs without page state or API-contract dependencies. Apply the same portability review to `log-page-helpers.ts`: keep web-specific route and presentation choices in web, while sharing behavior when both apps need the same semantics. Audit `dashboard-nutrition-model`; delete it and its test when the production-import audit remains empty.
-
-### 5. Migrate authentication and complete the contract firewall
-
-Create `AuthenticatedUserContext` plus auth response mappers in the respective private endpoint files. Auth workflows call those mappers. The web session-restoration gate continues to own browser cache confirmation/revocation, IndexedDB lifecycle handling, and navigation. Migrate all current passkey/email/session operation callers to direct public core leaf paths. Verify no app-facing operation returns a contract type and no requested web scope imports a response type from `@calibrate/api-contracts`.
-
-### 6. Stabilize and remove transitional seams
-
-Delete temporary package-rename adapters once consumers use final workflows/models. Convert shareable fixtures to co-located `__mocks__` builders; retain app-only fixtures in web. Run package and web suites, check direct import/export boundaries, and manually exercise the Logs write/reconciliation plus Dashboard cache-first flow.
+Ticket 15 removes temporary package-rename adapters once all consumers use final workflows/models. It checks approved exports, private endpoint ownership, mapper calls, and the application contract firewall. Convert shareable fixtures to co-located `__mocks__` builders; retain app-only fixtures in web. Run package and web suites and manually exercise Logs write/reconciliation plus Dashboard cache-first flow.
 
 ## Dependency order
 
-1. Package rename and direct import map
-2. Private API/export allowlist and transport configuration
-3. Day Log domain types and mappers
-4. Sync/cache workflow
-5. Save/weight reconciliation workflow
-6. Logs and Dashboard migration
-7. Auth migration
-8. Cleanup and full verification
+1. **01:** package rename and initial direct-import allowlist (the renamed package is present on this branch; verify the ticket checkpoint before proceeding).
+2. **04:** Day Log/sync/cache foundation.
+3. **05 and 06:** Save Food Entry and Update Weight independently after 04.
+4. **07:** Day Log reads and Logs after 04–06; **08:** Food Search after 04–05.
+5. **09:** Dashboard projection after 07.
+6. **10:** session/context/transport after 01; **11–14:** other auth goals independently after 10.
+7. **15:** cleanup and full verification after all slices and Dashboard.
 
-Tasks 4 and 5 share Day Log model work but can proceed after task 3. Logs and Dashboard can then migrate independently. Authentication is independent of Day Log behavior after the package rename, but finishes after the public export boundary is in place.
+Tickets 02 and 03 remain as supersession records so existing references explain where their work went. The numbering gives a readable route through the work; the blocker lines permit independent auth and food work to proceed when their prerequisites are ready.
 
 ## Risks and mitigations
 
@@ -95,10 +86,12 @@ Tasks 4 and 5 share Day Log model work but can proceed after task 3. Logs and Da
 These checkpoints are scheduled moments to run additional tests, checks, and manual verification after the verification in each defined task in the Phase 3 Task Breakdown. They are not intended to define commit boundaries. Commit according to the incremental implementation rule: each commit should capture one logical change, even if that means committing before, between, or after these verification checkpoints.
 
 - After package rename: `npx nx run @calibrate/frontend-core:typecheck`, `npx nx run @calibrate/frontend-core:test`, and `npx nx run web:typecheck`.
-- After Day Log/cache workflows: focused core tests, `npx nx run web:test`, and Day Log cache integration tests.
-- After Logs/Dashboard: targeted Logs and Dashboard tests, `npx nx run web:test`, `npx nx run web:typecheck`.
+- After 04: focused Day Log model, sync endpoint/mapper/workflow, and cache tests, plus targeted web cache integration tests.
+- After 05–08: focused request/mapper/workflow tests for each goal, then `npx nx run web:test` and `npx nx run web:typecheck`.
+- After 09: targeted Dashboard tests, `npx nx run web:test`, `npx nx run web:typecheck`.
+- After each of 10–14: its focused auth endpoint/mapper/workflow and web handoff tests.
 - Before merge: package tests/typecheck, web fast and integration suites, web lint, and format check.
 
 ## Task breakdown
 
-See the ordered, independently reviewable tickets in [issues](./issues/). Each ticket lists its acceptance criteria, focused verification, and bounded file ownership.
+See the ordered, independently reviewable tickets in [issues](./issues/). Tickets 02–03 are superseded; each ticket from 04 onward lists its goal, acceptance criteria, focused verification, and bounded file ownership.

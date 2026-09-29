@@ -81,9 +81,10 @@ The API contract type in this example remains inside core. The public `DayLogSna
 
 ## Testing strategy
 
+- Treat each workflow ticket as an independently testable slice: its needed domain/vertical models and builders, private endpoint request and co-located response mapper, public workflow, focused tests, and bounded caller migration land together. Shared models may be extended by later slices without duplicating them.
 - Unit-test each private API request operation's method, path, request-body and response validation; test its co-located response mapper with representative validated responses.
 - Exercise `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` through their public behavior so both paths complete the same cache and reconciliation policy.
-- Unit-test endpoint response mappers and portable vertical behavior with co-located builders, including pure functions and shared injected-QueryClient cache operations. Test that workflows actually call the mapper before returning or caching domain data.
+- Unit-test endpoint response mappers and portable vertical behavior with co-located builders, including pure functions and shared injected-QueryClient cache operations. Test that each workflow actually calls its mapper before returning or caching domain data.
 - Test query-key identity and cache observations in the vertical; test sync acceptance, result-specific cache writes, predecessor-version behavior, and reconciliation fallback through the owning workflows without a platform persister.
 - Test Day Log persistence allowlisting, account isolation, retention, validation, and pruning in core; test the web persister and lifecycle fence in web integration tests.
 - Keep browser-level IndexedDB, cache-fence, BroadcastChannel, router, and UI integration tests in `apps/web-frontend`.
@@ -98,3 +99,7 @@ The API contract type in this example remains inside core. The public `DayLogSna
 ## Open questions
 
 None. The future mobile authentication implementation is deliberately deferred; only its transport configuration seam is included here.
+
+## Ticket allocation
+
+Tickets [02](./issues/02-seal-private-api-and-configure-transport.md) and [03](./issues/03-add-day-log-domain-models-and-builders.md) are superseded as separate implementation checkpoints. Tickets 04–08 deliver Day Log sync, Save Food Entry, Update Weight, Day Log reads, and Food Search as complete slices. Ticket 09 migrates Dashboard to their domain output. Tickets 10–14 deliver the existing authentication goals as complete slices, including transport credentials with session in 10. Ticket 15 performs the final export and contract-firewall audit. The [plan](./PLAN.md) records dependencies and verification checkpoints.

@@ -1,19 +1,18 @@
-# 02: Seal private API modules and configure transport credentials
+# 02: Scope distributed into workflow slices
 
-**Blocked by:** 01.
+**Blocked by:** None.
 
-**Status:** ready-for-agent
+**Status:** superseded
 
-**What to build:** Establish `src/api/<area>/<endpoint>.ts` as the private home of network request operations and their co-located pure response mappers, and make the package export map an explicit allowlist of public transport/error, workflow, model, and `__mocks__` leaf paths. Add app-configurable credentials to `ApiTransport`, preserving `"include"` as the default. In particular, move `saveFoodEntry` to `src/api/day-logs/save-food-entry.ts`: it validates and forms `POST /daylogs/{date}/food-entries`, executes it through the injected transport, and returns the validated API response. Ticket 03 adds the mapper in that same file; the request operation does not call it.
+No implementation checkpoint remains in this ticket. Moving every request into `api/**` before its model, mapper, and workflow would leave the package between architectures. The work is assigned to complete workflow slices instead:
 
-- [ ] Keep URL/path/query, HTTP method, request-body validation, transport execution, response-schema validation, HTTP-error handling, and endpoint response mapping inside private API files. These modules change for network/transport/validator details and response shapes, not for cache or user-goal policy.
-- [ ] Leave `getSaveFoodEntryMutationOptions` and `useSaveFoodEntry` for the public feature-workflow module in ticket 05; private `api/**` modules must not import TanStack Query or update the cache.
-- [ ] Do not export `api/**` or use a wildcard export that makes it reachable.
-- [ ] Prove `credentials` passes through the injected transport and defaults to today’s behavior.
-- [ ] Do not introduce mobile token storage or alter web session behavior.
+- Sync and Day Log cache: [04](./04-move-day-log-sync-and-slot-composition-to-core.md).
+- Save Food Entry: [05](./05-move-save-food-entry-reconciliation-workflow-to-core.md).
+- Update Weight: [06](./06-move-update-weight-reconciliation-workflow-to-core.md).
+- Day Log reads: [07](./07-migrate-logs-to-day-log-read-workflows.md).
+- Food search: [08](./08-migrate-food-search-to-domain-workflow.md).
+- Session, email verification, passkey authentication, passkey registration, and local-development auth: [10](./10-migrate-session-to-authenticated-user-context.md) through [14](./14-migrate-local-development-passkey-enrollment-workflow.md).
 
-**Acceptance:** An application can import approved leaf modules but cannot resolve `@calibrate/frontend-core/api/**`; the private `saveFoodEntry` operation handles network details and returns a validated response without React Query/cache behavior; browser credential behavior is unchanged by default.
+Ticket [01](./01-rename-package-and-establish-direct-imports.md) owns the initial explicit export allowlist needed for direct imports. Each workflow ticket extends that allowlist only for its approved public leaves and keeps its new `api/**` path private. Ticket [10](./10-migrate-session-to-authenticated-user-context.md) owns configurable transport credentials with the current `"include"` default. Ticket [15](./15-prove-the-contract-firewall-and-remove-transitional-adapters.md) audits the completed boundary.
 
-**Verify:** focused transport tests, `npx nx run @calibrate/frontend-core:typecheck`, `npx nx run @calibrate/frontend-core:test`.
-
-**Likely files:** `packages/frontend-core/package.json`, `src/transport.ts`, `src/transport.test.ts`, `src/api/day-logs/save-food-entry.ts`, and its focused test. Keep the public mutation adapter compiling until ticket 05 migrates it.
+The architecture and acceptance criteria remain in [ADR-0007](../../../adr/0007-frontend-core-package-and-workflow-boundaries.md) and the [PRD](../PRD.md).
