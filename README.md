@@ -67,8 +67,6 @@ packages/
 
 ### Frontend architecture
 
-
-
 Routes handle URL and search state, pages compose screens, and verticals own feature behavior such as authentication, dashboard view models, and the shared Day Log cache.
 
 The frontend keeps reusable server data separate from page-specific presentation models. For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
