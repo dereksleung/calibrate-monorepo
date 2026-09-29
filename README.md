@@ -67,11 +67,13 @@ packages/
 
 ### Frontend architecture
 
-The frontend keeps reusable server data separate from page-specific presentation models.
 
-For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
 
-`MiniAnalyticsCard` follows a similar principle at the component level. Common pieces such as titles, chart areas, summary values, separators, and interaction affordances are reusable, while individual Habit and Nutrition cards choose the composition appropriate to their behavior.
+Routes handle URL and search state, pages compose screens, and verticals own feature behavior such as authentication, dashboard view models, and the shared Day Log cache.
+
+The frontend keeps reusable server data separate from page-specific presentation models. For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
+
+At the component level, the same attention to capturing what is shared while leaving context-specific composition flexible shapes components like `MiniAnalyticsCard`, a compound component. Common pieces such as titles, chart areas, summary values, separators, and interaction affordances are reusable, while individual Habit and Nutrition cards compose only the pieces appropriate to their behavior.
 
 ### Backend boundaries
 
