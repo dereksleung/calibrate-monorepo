@@ -6,7 +6,7 @@ Logs Calendar week scroller freshness is amended by [ADR-0006](./0006-logs-calen
 
 ## Context
 
-Calibrate needs fast cache-first Day Log reads without repeatedly transferring and rehydrating unchanged Food Entries. The previous ETag design optimized exact range reads, but needed a special six-day rollover validator and did not let the server return only the individual dates that changed. It also did not fully resolve a shared IndexedDB race: a tab that missed a logout broadcast, or that was persisting while another tab logged out, could otherwise restore or revive a prior account's private cache.
+Calibrate needs fast cache-first Day Log reads without repeatedly transferring and rehydrating unchanged Food Entries. Private user data needs to be protected against an IndexedDB race as well: a tab that missed a logout broadcast, or that was persisting while another tab logged out, could otherwise restore or revive a prior account's private cache.
 
 The existing Day Log read model is naturally date-keyed. A response-visible Day Log write can have a server-owned revision, while the absence of a Day Log is also meaningful cached state. Those facts support a client manifest instead of HTTP cache validators.
 
@@ -28,9 +28,12 @@ The application defines a user-scoped Day Log sync read use case and ports in do
 
 ### Persisted cache and privacy boundary
 
+See [ticket 02](docs/tasks/day-log-cache-revalidation/issues/02-harden-day-log-cache-logout-recovery.md) for precise spec.
+
 The canonical client cache is one identity-scoped date slot per Day Log date, including `Known-empty`, its `versionNumber` when present, `lastValidatedAt`, and an `unverified` state for a locally acknowledged write that could not be safely merged. Query keys include the server-confirmed account ID. The root `QueryClientProvider` remains mounted because session and surrounding UI use React Query; a `PersistQueryClientProvider` for the same client mounts only below the server-authenticated session gate and is keyed by account ID plus cache lifecycle generation. Only the allow-listed Day Log slots and validation metadata dehydrate. Authentication queries, tokens, mutations, and unrelated data never persist.
 
 A native asynchronous IndexedDB persister keeps cache snapshots in a `persistedClients` object store and a separate `cacheLifecycle` store in the same database. The lifecycle store holds an account-scoped generation fence for each tracked account and one durable marker for the current server-confirmed account. Session confirmation changes that marker only in the transaction that fences and invalidates every other tracked account's snapshot. A persister captures its account/generation lease only after session confirmation, and a lease is current only while both its generation and the current-account marker match. Restore reads its snapshot and lifecycle state in one transaction and accepts it only when that lease matches. Persist reads the lifecycle state and conditionally writes the snapshot in one overlapping read-write transaction; a stale tab cannot re-create a snapshot after another tab has revoked its generation or become current. `removeClient` removes only the scoped snapshot, not the lifecycle record.
+See [ticket 02](docs/tasks/day-log-cache-revalidation/issues/02-harden-day-log-cache-logout-recovery.md) for precise spec of the lifecycle for data clearing and generation fencing on logout described below. 
 
 After successful server logout, or a conclusively confirmed session loss, cache revocation follows an account-scoped durable multi-phase recovery protocol in `cacheLifecycle`, rather than ticket 01's one post-server transaction. A `LogoutRecord` has an operation ID, phase (`logout-pending`, `server-logout-confirmed`, `fence-committed`, `cleanup-pending`, or `resolved`), and a target generation. The operation ID means only the logout that created a record can resolve it; the target generation makes a repeated fence attempt idempotent.
 

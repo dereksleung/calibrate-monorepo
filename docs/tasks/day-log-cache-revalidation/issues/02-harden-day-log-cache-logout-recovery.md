@@ -62,11 +62,11 @@ stateDiagram-v2
     Active --> LogoutPending: logout-pending marker commits
     Active --> Active: marker write fails / no server call
 
-    LogoutPending --> Active: server logout definitively fails; clear marker
-    LogoutPending --> LogoutPending: outcome ambiguous; remain fail-closed
+    LogoutPending --> Active: server logout definitively fails, clear marker
+    LogoutPending --> LogoutPending: outcome ambiguous, remain failclosed
     LogoutPending --> ServerLogoutConfirmed: server succeeds + phase commits
 
-    ServerLogoutConfirmed --> ServerLogoutConfirmed: fence transaction fails; bounded fresh retry
+    ServerLogoutConfirmed --> ServerLogoutConfirmed: fence transaction fails, bounded fresh retry
     ServerLogoutConfirmed --> FenceCommitted: target generation commits + read-back succeeds
 
     FenceCommitted --> Resolved: snapshot cleanup + matching marker clear succeed
@@ -74,7 +74,7 @@ stateDiagram-v2
     CleanupPending --> CleanupPending: local Retry cleanup fails
     CleanupPending --> Resolved: local Retry cleanup succeeds
 
-    Resolved --> Active: new session acquires a new lease
+    Resolved --> Active: new session acquires access to the cache
 ```
 
 `FenceCommitted` is the earliest state in which login navigation is allowed. `CleanupPending` and `Resolved` are not allowed to restore the old account snapshot.
