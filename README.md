@@ -2,154 +2,108 @@
 
 Calibrate is a full-stack nutrition-tracking application designed to turn detailed food logs into focused, actionable insights about the foods and habits driving changes in calorie and macronutrient intake.
 
-Rather than presenting users with an open-ended collection of charts, Calibrate prioritizes analyses intended to answer concrete questions, for example: which foods contributed most to recent calorie or macro intake, what has changed between recent periods, and which foods are driving those changes.
+<table>
+  <tr>
+    <td><img width="1154" height="940" src="https://github.com/user-attachments/assets/928214b6-e348-492b-a1bc-c099efbbd596" /></td>
+    <td><img width="376" height="671" src="https://github.com/user-attachments/assets/b512b7da-aa40-42bb-b7da-8b1adf1fa582" /></td>
+  </tr>
+</table>
 
 ## Table of Contents
 
-- [Solution Design Notes — Caching and Synchronization](#solution-design-notes--caching-and-synchronization)
-  - [Expected usage patterns](#expected-usage-patterns)
-  - [Persisted client-side cache](#persisted-client-side-cache)
-  - [Lightweight synchronization](#lightweight-synchronization)
-  - [Avoiding unnecessary refetches after writes](#avoiding-unnecessary-refetches-after-writes)
-  - [Why a one-hour freshness window?](#why-a-one-hour-freshness-window)
-- [Frontend Current State](#frontend-current-state)
-- [Screenshots](#screenshots)
-  - [Dashboard page](#dashboard-page)
-    - [Nutrient Analytics](#nutrient-analytics)
-  - [Daily Logs Page](#daily-logs-page)
-- [Experimenting with scaling myself with AI development flows - code may not be perfect](#experimenting-with-scaling-myself-with-ai-development-flows---code-may-not-be-perfect)
-- [Tech Stack](#tech-stack)
-  - [Why Nx?](#why-nx)
-  - [Backend](#backend)
-    - [Node.js/Express.js, not NestJS](#nodejsexpressjs-not-nestjs)
-    - [Kysely, a SQL query builder, rather than an ORM](#kysely-a-sql-query-builder-rather-than-an-orm)
-  - [Frontend](#frontend)
-- [Run local demo](#run-local-demo)
-- [Developing locally](#developing-locally)
-  - [Common](#common)
-  - [Git worktrees (shared Postgres)](#git-worktrees-shared-postgres)
-  - [Backend](#backend-1)
-    - [Run locally](#run-locally)
-    - [Seeding the Foundation Foods Demo catalog](#seeding-the-foundation-foods-demo-catalog)
-    - [Initial dotenv configuration](#initial-dotenv-configuration)
-    - [Testing signup locally without Brevo](#testing-signup-locally-without-brevo)
-    - [Inspecting authenticated pages locally without a passkey](#inspecting-authenticated-pages-locally-without-a-passkey)
-    - [Building the backend Docker image](#building-the-backend-docker-image)
-  - [Frontend](#frontend-1)
-    - [Running Frontend Locally](#running-frontend-locally)
+## Product approach
 
-## Solution Design Notes — Caching and Synchronization
+Nutrition applications can easily become collections of charts that expose more data without making the next decision any clearer. Calibrate instead prioritizes analyses that answer concrete questions a user can act on.
 
-The application's data-access strategy is shaped by two main considerations:
+For example, nutrient analytics surface which foods contributed most to calorie or macronutrient intake over the last seven days, as well as which foods increased or decreased most in their share of intake when comparing recent periods. The goal is to help users identify practical adjustments rather than require them to interpret an open-ended analytics dashboard.
 
-1. Expected user behaviour: activity is likely to cluster around meals, with relatively little activity between logging sessions.
-2. Infrastructure constraints: the project is designed to remain within free-tier cloud limits, so minimizing API requests, database work, response sizes, and outbound bandwidth is valuable.
+The main dashboard follows the same approach. Seven-day nutrition, logging habits, and deeper nutrient analytics are deliberately ordered and kept compact so the most useful information remains visible on both desktop and mobile.
 
-### Expected usage patterns
+## Engineering highlights
 
-A few assumptions about how users interact with food and weight logs drive the design:
+- **Composable frontend architecture.** Dashboard data is transformed into presentation-oriented view models before reaching UI components. Components such as `MiniAnalyticsCard` use a compound-component API to share layout and semantics while allowing different analytics cards to compose only the pieces they need.
 
-- Usage is likely to spike around meals and snacks, when users record what they have eaten. Those are also natural times to review recent calorie, nutrition, or weight trends.
-- After logging a meal and checking their stats, users are unlikely to remain continuously active. In many cases, they will not return until their next meal or snack.
-- Historical food and weight logs become increasingly stable with age. Correcting yesterday's log is plausible; reconstructing an exact meal from several days ago requires substantially more effort.
-- As a result, I expect logs older than roughly a week to change infrequently.
+- **Persisted, cache-first data access.** Day Logs are persisted in IndexedDB through TanStack Query and keyed by date. Multiple views derive their data from the same cached records rather than independently fetching equivalent server state.
 
-These patterns make the application a good fit for aggressive client-side reuse of previously fetched data, provided there is still a lightweight way to detect changes made elsewhere.
+- **Bounded synchronization instead of unconditional refetching.** The client sends its known Day Log versions to a synchronization endpoint. Unchanged ranges can return `204 No Content`, while changed ranges return only the dates that need updating. Successful writes can patch known cache state without automatically turning each mutation into another full read.
 
-### Persisted client-side cache
+- **Private-cache lifecycle protection.** Because persisted nutrition data belongs to an authenticated user, the cache uses account-scoped generations and durable fencing so a stale tab cannot restore or re-persist another session's data after logout or account changes. The design is documented in [ADR-0004](docs/adr/0004-bounded-day-log-sync-and-cache-fence.md).
 
-Daily food and weight logs are stored in a persisted client-side cache and keyed by date. Different views derive their own projections from this shared underlying data rather than independently fetching equivalent information from the server.
+- **Clear backend layering.** The Express backend separates presentation, application workflows, domain rules, and infrastructure, keeping framework and persistence details out of the domain and application layers. See the [backend architecture ADR](apps/backend/docs/adr/0001-clean-architecture-and-domain-boundaries.md).
 
-The cache is implemented with TanStack Query and IndexedDB. Because it contains private user data, the persistence layer also uses cache generations, fence tokens, and explicit logout cleanup to prevent persisted data from one authenticated session being exposed to another.
+- **Isolated validation environments.** Integration and browser tests use disposable PostgreSQL environments, generated runtime configuration, and dynamically allocated ports. Linked Git worktrees receive separate databases and application ports so multiple development or agent tasks can run concurrently without sharing mutable application state.
 
-This approach reduces both repeated API requests and backend egress when several areas of the UI need the same daily-log data.
+## Architecture
 
-### Lightweight synchronization
+Calibrate is organized as an Nx monorepo:
 
-Cached data is considered fresh for one hour. Once it becomes stale, the client does not immediately download the full log again. Instead, it calls a synchronization endpoint using a `versionNumber` associated with each daily log.
+```text
+apps/
+  web-frontend/   React web application
+  backend/        Express API and application/domain layers
+  web-e2e/        Playwright browser validation
 
-If the server's version matches the client's version, the endpoint returns `204 No Content`. In the common case, this allows the backend to confirm that the cache is still current without querying and serializing all of the food entries associated with that day.
+packages/
+  api-client/             Shared frontend API access
+  api-contracts/          HTTP request/response contracts
+  dev-bindings/           Development port/origin configuration
+  local-runtime-config/   Generated local runtime configuration
+```
 
-Only when the versions differ does the client need the updated data.
+### Frontend architecture
 
-I considered treating older logs as permanently fresh after some threshold, such as one week. I chose the simpler one-hour freshness policy instead because lightweight version revalidation is inexpensive while still allowing changes from another client to propagate eventually. Users generally will only use a single device and platform to log food entries for each meal, more is inconvenient, so syncing between several clients can be deferred until the next meal.
+The frontend keeps reusable server data separate from page-specific presentation models.
 
-### Avoiding unnecessary refetches after writes
+For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
 
-Food logging can generate a relatively high number of writes compared with reads. A single meal might contain 5–10 food entries, repeated several times per day for each active user.
+`MiniAnalyticsCard` follows a similar principle at the component level. Common pieces such as titles, chart areas, summary values, separators, and interaction affordances are reusable, while individual Habit and Nutrition cards choose the composition appropriate to their behavior.
 
-For that reason, successful mutations do not automatically invalidate the relevant queries and refetch their complete server state. Instead, mutation responses contain only the information required to update the local cache—for example, the newly created food-entry ID and the updated daily-log `versionNumber`.
+### Backend boundaries
 
-The client can then patch its cached state directly.
+The backend uses Express as a thin HTTP layer around application and domain code rather than making framework concepts the application's architectural boundaries.
 
-This avoids turning each write into an additional read while keeping the local cache consistent with the mutation that just occurred.
+Domain objects own business invariants, application services orchestrate workflows and business rules that span aggregates, infrastructure owns PostgreSQL and Kysely persistence details, and presentation owns HTTP validation and wire-format mapping.
 
-### Why a one-hour freshness window?
+Kysely provides typed SQL construction while keeping query and transaction behavior explicit—useful for an application whose analytics and synchronization requirements increasingly depend on deliberate query design.
 
-The design assumes that the same account could eventually be used from more than one client—for example, both a web application and a mobile application. Supporting both is partly a portfolio constraint, but it also creates a realistic synchronization problem: one device can modify data that another device has cached.
+## Data access Solution Design, Tradeoffs Rationale: Expected Usage Patterns
+**The data-access strategy is based on expected product usage rather than assuming every piece of cached data is equally likely to have changed.** Food logging and analytics browsing tends to occur in short bursts around meals, when users may move between several related views, followed by relatively long periods of inactivity. Recent logs may still be corrected, while older history becomes progressively more stable, as it gets more inconvenient to remember what you ate, or backfill many days. Those assumptions make cache-heavy reads and lightweight reconciliation a better fit than continuously refetching equivalent data.
 
-A one-hour freshness window is a practical compromise.
+They also relax the consistency guarantees the application actually needs. Cross-client changes do not need to appear in real time because users are expected to log from one device at a time and may not use another client until a later session. Calibrate can therefore reconcile changes when another client next needs fresh data rather than maintaining continuous synchronization.
 
-During a typical meal, a user is likely to use only one device and platform to log food and browse several related screens within a relatively short period. Keeping the data fresh during that session prevents those screens from repeatedly requesting information that is unlikely to change.
+The same usage pattern also makes avoiding redundant reads valuable during active logging sessions. A meal may generate several writes in a short period, so successful mutations return enough information for the initiating client to update compatible cached state directly rather than immediately refetching the complete server representation after every write.
 
-If the user later switches devices, the next session will generally occur far enough in the future—for example, at the next meal—that the cached data will have become stale and the lightweight synchronization check will run.
+[Read the full data-access design rationale](docs/design/data-access-strategy.md)
 
-The result is a cache policy optimized for the application's expected access pattern: reuse data heavily while the user is actively browsing, then cheaply revalidate it when they return.
+## Data synchronization and caching
 
-## Frontend Current State
+User activity is expected to cluster around meals: several writes and related reads may happen in a short session, followed by a long inactive period.
 
-The Overview (Dashboard) page and Logs pages load data and let you add new food entries if you run the frontend and backend dev servers and sign up a user.
+Calibrate therefore favors reuse while a user is active and lightweight revalidation when they return. Day Logs normally remain fresh for one hour. When revalidation is required, the client sends a bounded manifest describing the dates and versions it already knows; the server compares that manifest against a narrow PostgreSQL projection before deciding whether complete Day Log data needs to be returned.
 
-One goal is to show product judgment: take what could easily become dense, data-heavy areas in the Dashboard page, and keep it simple enough to be useful. The target user is not an expert mathematician or nutrition analyst, rather they are people wanting to change themselves, who may need help building new habits, and need to understand what to do next, and what is working or not working. The most important product work is surfacing actions and actionable insights that help them keep momentum with new habits, while suggesting small tweaks they may not have realized they can do that will help them get results.
+Mutation responses contain enough information to update compatible cached state directly. This avoids following every food-entry write with an immediate full refetch while still allowing another client to be reconciled later.
 
-Charts and data stay at overview level by default. When a user chooses to drill deeper, the app should still be selective about what it shows. More data is only useful when it creates a clearer insight, a better decision, or a practical adjustment the user can actually make.
-
-There are some planned "Daily Insights" and "Smart Swap" features, if they show up, they are mock UI right now, while I learn the AI backing needed to properly create them.
+The complete synchronization, privacy, cross-tab, and failure-recovery design is documented in [Bounded Day Log synchronization and cache-lifecycle fencing](docs/adr/0004-bounded-day-log-sync-and-cache-fence.md).
 
 ## Screenshots
 
-### Dashboard page
+### Nutrient analytics
 
-- A compact, mobile-friendly design with rolling **Seven-Day Nutrition** section with both daily charts and the average over the last 7 days lets the user quickly gain a sense of how they are doing and if it is good to give efforts for special adjustments today.
-- On mobile screens it takes up half the screen, so that the next section for Habits also appears without scrolling and help the user build their habits.
-- The **Habits** section is next in sequence, and gently encourages the user with to keep up their good work with calendar heatmaps and weekly usage stats. The acts of logging food and weight are so key to making progress; the awareness they bring to your current habits and how much for example snacking or higher calorie foods in your meals account for are priceless.
-  - The small cards MiniAnalyticsCard is a compound component.
-    - They are suited for this case because there are common subcomponents and layout styles to capture, like MiniAnalyticsCard.Title or MiniAnalyticsCard.ChartArea, while allowing choosing subcomponents to compose for different cases, like MiniAnalyticsCard.BottomSummary composing MiniAnalyticsCard.GoDeeperIcon only when it should be interactive and let you click it to go somewhere else.
-- The **Nutrition** section after has mini cards you can use to drill in deeper for that nutrient.
-<br></br>
-  <table>
-    <tr>
-      <td><img width="1154" height="940" src="https://github.com/user-attachments/assets/928214b6-e348-492b-a1bc-c099efbbd596" /></td>
-      <td><img width="376" height="671" src="https://github.com/user-attachments/assets/b512b7da-aa40-42bb-b7da-8b1adf1fa582" /></td>
-    </tr>
-  </table>
-<br></br>
+The Total view highlights the foods contributing most to a selected nutrient. The Change view focuses on foods whose relative contribution has changed most between recent periods, turning historical logging data into a smaller set of trends worth investigating.
 
-#### Nutrient Analytics
+<table>
+  <tr>
+    <td><img width="1197" height="850" src="https://github.com/user-attachments/assets/7aa0e2da-0bf5-4b1e-b1f0-7328e146e43f" /></td>
+    <td><img width="487" height="906" src="https://github.com/user-attachments/assets/ff7ab55b-3382-478a-95ac-b1c7f637212a" /></td>
+  </tr>
+</table>
 
-- Clicking a nutrient mini card from the Dashboard's **Nutrition** section opens an analytics panel, surfacing simple, actionable insights.
-- In the **Total** tab, seeing what recently had the highest contributions to calories or fats especially can drive what to try reducing next.
-- The **Change** tab lets you see both what you've been hard at work reducing, and what you didn't notice you've been increasing.
-  - You get both some congratulations and reinforcement, as well as suggestions about further eating trends to watch.
-  <br></br>
-  <table>
-    <tr>
-      <td><b>Initial view - Total tab</b></td>
-      <td><b>Change tab</b></td>
-    </tr>
-    <tr>
-      <td><img width="1197" height="850" src="https://github.com/user-attachments/assets/7aa0e2da-0bf5-4b1e-b1f0-7328e146e43f" /></td>
-      <td><img width="487" height="906" alt="Screenshot 2026-09-01 at 11 29 52 AM" src="https://github.com/user-attachments/assets/ff7ab55b-3382-478a-95ac-b1c7f637212a" /></td>
-    </tr>
-  </table>
+### Daily logging
 
-### Daily Logs Page
+The Logs page keeps current calorie and macro status close to the food-entry workflow so users can adjust during the day rather than only review results afterward.
 
-- Each day starts with a compact summary of calories eaten, calories remaining, and macros with line graphs to give the user a quick sense of if their day is on the right track, and what they can still afford. As they are working on building new habits, it helps to know this information so they can quickly adjust in the same day.
-- The week scroller also shows a ring of the percent of calories eaten of the limit per day that week, to also help keep that information top of mind in a compact interface that works with the feel of the design.
-- Logging can be done via the floating Plus button, or an Add Item button under the specific meal to quickly reach logging for it, which a user will frequently do.
-- Will revisit this page's design further, it is an older page I have harmonized partially with the new Dashboard's design.
-  <br></br>
+The calendar week scroller at the top also shows visually shows percent of calories eaten against the limit for the entire week, providing more
+motivation to adjust if needed.
 
 <table>
   <tr>
@@ -158,70 +112,36 @@ There are some planned "Daily Insights" and "Smart Swap" features, if they show 
   </tr>
 </table>
 
-## Experimenting with scaling myself with AI development flows - code may not be perfect
+## Development and validation workflow
 
-- I am changing when and how much I review code, including after first merging lower-risk feature changes
-  onto the main branch, creating refactor commits after when I see chances to improve things, and updating skills and other agent context to
-  catch things automatically.
-- I may catch things later than I previously would have as a result.
-- The reason I am doing this is that the industry is trending toward engineers scaling themselves by acting more like an engineering manager over a fleet of agents.
-- Managers do not always review code, but rather ask for evidence that things worked, so I use review and validation pipelines that take screenshots, run E2E Playwright tests, and created a path for easy agent manual validation of authenticated routes.
-- It is better to have agents also participate in review and validation, otherwise I become the bottleneck.
-- Jobhunting is its own full-time effort, and does also mean I cannot devote constant attention to reviewing with a fine-toothed comb the large amounts of code AI agents can write.
-- So I am investing in and testing systems that take a good amount of the review and validation burden off me, while still
-  doing some manual verification like Amplitude's recent article on their usage of AI, and examining diffs from time to time for opportunities to simplify and improve the code.
+Calibrate is also a testbed for development workflows in which AI agents can work on multiple changes concurrently without sharing fragile local state.
 
-# Tech Stack
+Linked Git worktrees are assigned their own PostgreSQL database, frontend/backend port pair, and matching runtime configuration. Browser E2E runs go further by provisioning a disposable PostgreSQL container with generated credentials, applying migrations, selecting available application ports, and starting the frontend and backend before Playwright exercises the system.
 
-## Why Nx?
+AI-assisted changes are validated through the same engineering controls used for ordinary development: unit and integration tests, type checking, linting, Playwright browser flows, screenshots/manual behavioral checks where appropriate, and review of architecture-sensitive changes.
 
-This project uses Nx to support a scalable monorepo architecture. Nx gives the codebase a clear project structure, strong tooling around dependency boundaries, and a better developer experience as the system grows.
+## Tech stack
 
-- One of the main reasons for choosing Nx is its ability to understand the dependency graph of the workspace. This allows Nx to determine which projects are affected by a change and run only the relevant checks, such as tests, linting, typechecking, or builds. That keeps feedback fast while still giving confidence that related parts of the system have not been broken.
-- Another reason for using Nx is future scalability. If parts of the backend eventually need to be extracted into separate services or microservices, having the code organized as independent projects inside a monorepo makes that transition easier. The workspace can evolve gradually without forcing an early split into multiple repositories.
+| Area | Technologies |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, TanStack Query, TanStack Router, Tailwind CSS, Storybook |
+| Backend | Node.js, Express, TypeScript, PostgreSQL, Kysely, Zod |
+| Authentication | WebAuthn/passkeys, cookie-backed server sessions |
+| Testing | Vitest, React Testing Library, Playwright, Testcontainers |
+| Tooling | Nx, Docker, Git worktrees |
 
-In short, Nx was chosen because it provides:
+For the reasoning behind several of these choices, see
+[Technology choices](docs/design/technology-choices.md).
 
-- a structured monorepo setup
-- automatic project dependency tracking
-- affected-based testing, linting, typechecking, and builds
-- faster local and CI feedback
-- better support for enforcing architectural boundaries
-- a smoother path toward future service extraction if the system grows in that direction
+## Run the local demo
 
-## Backend
-
-Currently building out the backend as an Express.js app drawing from clean architecture layering to decouple business logic from particular technology choices.
-Will use the backend to explore/practice various backend topics.
-
-### Node.js/Express.js, not NestJS
-
-- I chose Express.js over NestJS to demonstrate clean architecture from first principles.
-  - NestJS comes with its own opinionated module system, dependency injection container, and decorator-based patterns. This can be valuable in production, but here they would obscure the point.
-  - With Express.js as a thin HTTP layer, every boundary, dependency inversion, and layer relationship is something I explicitly designed rather than something the framework provided for me.
-
-### Kysely, a SQL query builder, rather than an ORM
-
-- I chose a type-safe query builder over an ORM (e.g. Prisma, TypeORM) for three reasons:
-  1. **Clean architecture alignment.** ORMs couple persistence concerns to domain models through decorators or generated types. A query builder keeps the mapping between database rows and domain objects explicit and confined to the repository layer.
-  2. **SQL control for future analytics.** A calorie tracker naturally leads to aggregation queries, such as weekly averages, macro breakdowns, trend lines. A query builder lets me write and optimize that SQL directly rather than working around an ORM's abstraction.
-  3. **Full type safety over Knex.js.** Kysely infers return types from the query itself and provides autocomplete on table and column names, catching schema mismatches at compile time, things Knex.js doesn't offer.
-
-## Frontend
-
-- TanStack Router was chosen because it gives the app fully-typed routing with room to grow into route loaders for high network performance for mobile users taking time of their busy day to jot down meal entries.
-
-- shadcn/ui is useful here for helping build battle-tested, accessible, polished UI quickly while still allowing keeping ownership over styling.
-
-# Run local demo
-
-This is the evaluator path. It does not require private keys, the gitignored `.env.keys` file used by dotenvx to decrypt .env files, a FoodData Central API key, or email service provider credentials.
+The evaluator demo is self-contained and does not require private keys, email-provider credentials, or a FoodData Central API key.
 
 **Prerequisites**
 
-- Node.js 26, matching [`.tool-versions`](.tool-versions)
-- Docker Desktop (PostgreSQL runs in Docker; a host database install is not required)
-- Host port 5433 must be free so Docker can start the demo PostgreSQL service.
+- Node.js 26
+- Docker Desktop
+- Host port `5433` available
 
 From a fresh clone:
 
@@ -231,9 +151,9 @@ npx nx run @calibrate/local-runtime-config:demo-setup
 npx nx run @calibrate/local-runtime-config:demo-dev
 ```
 
-`demo-dev` prints the local URL. Open it and choose **Start local test session**. The default address is [http://localhost:3000/calibrate-monorepo/signup-login](http://localhost:3000/calibrate-monorepo/signup-login).
+Open the URL printed by `demo-dev` and choose **Start local test session**.
 
-The Demo catalog is pinned USDA Foundation Foods from the 2026-04-30 FoodData Central foundation-foods JSON release. Search misses outside that set are expected. Demo mode never calls FoodData Central or sends real email.
+The demo uses a pinned USDA Foundation Foods dataset and does not send real email or call FoodData Central.
 
 `demo-setup` is idempotent: it writes or reuses gitignored `.local.env`, starts PostgreSQL, applies migrations, and seeds the catalog. To recreate the Demo database while keeping that generated configuration:
 
@@ -241,191 +161,13 @@ The Demo catalog is pinned USDA Foundation Foods from the 2026-04-30 FoodData Ce
 npx nx run @calibrate/local-runtime-config:demo-reset
 ```
 
-# Developing locally
+For a complete local development setup where you supply env vars, see [DEVELOPMENT.md](docs/DEVELOPMENT.md)
 
-## Common
+## Further technical documentation
 
-1. Run `npm ci` in the project root.
-
-Evaluators should follow [Run local demo](#run-local-demo) instead of the worktree and Dotenvx setup below.
-
-## Git worktrees (shared Postgres)
-
-Several linked git worktrees on one machine can share the existing Compose Postgres on `127.0.0.1:5433`. Each checkout gets its own database name, sticky frontend/backend ports, and matching API/CORS/WebAuthn URLs.
-
-From the primary or a linked worktree:
-
-```bash
-npx nx run workspace:worktree-setup
-```
-
-Setup is idempotent. It will:
-
-- copy `.env.keys` from the primary checkout when this worktree does not have it yet
-- start the shared Postgres container only when `127.0.0.1:5433` is not already accepting connections (`COMPOSE_PROJECT_NAME=calibrate-shared`)
-- create and migrate this worktree's database
-- write gitignored `.worktree-dev.json` with the chosen ports and origins
-- print copy-paste `backend:dev` and `web:dev` commands with the required env overrides
-
-If no dotenvx key is available in this worktree, the primary checkout, or
-`DOTENV_PRIVATE_KEY`, setup stops without provisioning anything. Setup does not
-start Vite or Express; run the printed commands in separate terminals. Host
-processes always talk to Postgres at `DB_HOST=127.0.0.1` and `DB_PORT=5433`.
-
-The selected adjacent frontend/backend port pair is claimed in
-`~/.calibrate/worktree-ports` by worktree path and reused when it is still
-available. Teardown intentionally leaves that claim in place.
-
-When you are done with a linked worktree database:
-
-```bash
-npx nx run workspace:worktree-teardown -- --database calibrate_wt_<slug>_<hash>
-```
-
-Teardown drops only this linked worktree's `calibrate_wt_*` database, deletes
-this worktree's `.worktree-dev.json`, and leaves the shared Postgres container
-running. It refuses the primary `.env` database, `postgres`, `template0`,
-`template1`, and databases belonging to another worktree. Do not run `docker
-compose down` for worktree cleanup.
-
-The primary checkout keeps the `DB_NAME` from `.env`. Linked worktrees use `calibrate_wt_<slug>_<hash>` so same-named folders on different paths cannot collide.
-
-## Backend
-
-### Run locally
-
-Use [Git worktree setup](#git-worktrees-shared-postgres). It starts only the
-shared Postgres service, creates and migrates the selected database, and prints
-the host `backend:dev` command. The Compose `backend` service is not part of
-this worktree workflow.
-
-### Seeding the Foundation Foods Demo catalog
-
-After a local database is configured and migrated, run the seed target with the
-same database environment as the backend. For a linked worktree, reuse the
-`DB_NAME`, `DB_HOST`, and `DB_PORT` overrides printed by worktree setup:
-
-```bash
-npx nx run backend:seed-demo-catalog
-```
-
-The seed reads the checked-in Foundation Foods archive and manifest in
-[`apps/backend/data/foundation-foods/`](apps/backend/data/foundation-foods/),
-validates the pinned release identity, archive filename, SHA-256 checksum, and
-expected mapping totals, then upserts records in bounded 250-row batches inside
-one transaction. Reruns are idempotent. Record-local mapping failures are
-skipped and included in the gitignored `.demo/catalog-seed-report.json` report.
-The [source module](apps/backend/src/infrastructure/demo-catalog/foundation-foods-source.ts)
-pins the release identity, while the
-[manifest](apps/backend/data/foundation-foods/manifest.json) records the
-checksum and expected summary.
-
-### Initial dotenv configuration
-
-1. Add a `.env` file to the project root. Set the following environment variables in it as strings, to the correct values. `DB_NAME` is the primary checkout database; shared local Postgres listens on `127.0.0.1:5433`.
-
-```
-DB_NAME="<primary_checkout_database>"
-DB_HOST="127.0.0.1"
-DB_PORT="5433"
-DB_USER="postgres"
-DB_PASSWORD="<local_postgres_password>"
-JWT_KEY_ID="local-dev"
-JWT_ACCESS_TOKEN_TTL_SECONDS="900"
-JWT_ISSUER="http://localhost:3001/"
-JWT_AUDIENCE="http://localhost:3001/api"
-API_BASE_URL="http://localhost:3001/"
-OTP_HMAC_KEY="<base64url_encoded_random_key_of_at_least_32_bytes>"
-OTP_HMAC_CURRENT_KEY_VERSION="1"
-EMAIL_REQUEST_IP_HMAC_KEY="<independent_hexadecimal_random_key_of_at_least_32_bytes>"
-EMAIL_VERIFICATION_GLOBAL_HOURLY_LIMIT="1000"
-TRUST_PROXY_HOPS="0"
-WEBAUTHN_RP_ID="localhost"
-WEBAUTHN_ORIGIN="http://localhost:3000"
-WEBAUTHN_RP_NAME="Calibrate"
-EMAIL_SERVICE_CREDENTIAL="<brevo_api_key>"
-```
-
-`TRUST_PROXY_HOPS` must match the number of trusted reverse-proxy hops in front
-of the backend (`0` for direct local development). It controls which address
-Express exposes as the requesting IP; it does not authenticate the client.
-`WEBAUTHN_ORIGIN` must match the frontend origin used for passkey ceremonies
-(`http://localhost:3000` is the primary checkout default). Worktree setup
-overrides the frontend port, `VITE_API_BASE_URL`, `CORS_ORIGIN`, and
-`WEBAUTHN_ORIGIN` for the selected worktree pair. Use independently generated
-values for `OTP_HMAC_KEY` and `EMAIL_REQUEST_IP_HMAC_KEY`.
-
-2. Generate an Ed25519 private key .pem file using `openssl genpkey -algorithm ED25519 -out jwt-ed25519-private.pem`.
-
-3. Copy the .pem file contents to the .env file like JWT_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----\n(the_private_key)\n-----END PRIVATE KEY-----". It will be encrypted using dotenvx, which is a project dependency.
-
-4. Run `npm ci` in the project root.
-
-5. Run `npx dotenvx encrypt`. It should generate a .env.keys file with a private key, and encrypt the values in .env.
-   Dotenvx docs [here](https://dotenvx.com/docs/learn/encrypting/introduction)
-
-6. Run `npx nx run workspace:worktree-setup` to provision Postgres, create the worktree database, run migrations, and print the dev commands.
-
-7. Run the printed `backend:dev` and `web:dev` commands in separate terminals.
-
-8. Other commands can be run like `npx nx run (project_name):(command_name) (args)`. Project names are found in `apps/app-folder/package.json`'s `name` field, the available command names comes from the `scripts` field.
-
-### Testing signup locally without Brevo
-
-When the web frontend is running on the HTTP loopback origin configured by the
-backend's `WEBAUTHN_ORIGIN` (the frontend origin printed by worktree setup),
-the signup page shows a local-development-only section with an
-**Authorize create passkey** button. Use it to create a disposable
-`@example.test` account and continue directly to the existing passkey setup
-page. This bypass is denied in production and does not create a deliverable
-recovery email, so it is intended only for evaluating the local repository.
-Nx documentation [here](https://nx.dev/docs/getting-started/tutorials/running-tasks#running-a-single-task)
-
-### Inspecting authenticated pages locally without a passkey
-
-For a quick manual check of the dashboard or other protected pages, provision
-the current worktree first:
-
-```bash
-npx nx run workspace:worktree-setup
-```
-
-Run the printed backend and frontend commands in separate terminals, then open
-the printed frontend URL at `/calibrate-monorepo/signup-login` in the agent
-browser and click **Start local test session**. The server creates the
-disposable local fixture session and the browser keeps the normal access and
-refresh cookies; no passkey is created or stored. The button is available only
-from the local loopback development UI, and the backend remains the
-authoritative boundary.
-
-Use **Authorize create passkey** when the task is specifically about passkey
-registration or the real WebAuthn flow. The local test session does not satisfy
-recent passkey re-authentication required by sensitive operations. See
-[ADR-0004](apps/backend/docs/adr/0004-loopback-only-local-test-session.md) for
-the security boundary and rationale.
-
-### Building the backend Docker image
-
-The backend Dockerfile is in `apps/backend`, but it must be built with the repository root as the Docker build context because it copies root workspace files and the shared `packages/api-contracts` package.
-
-Run this from the repository root:
-
-```bash
-npx nx run backend:docker-build
-```
-
-Equivalent raw Docker command:
-
-```bash
-docker build -f apps/backend/Dockerfile -t dereksleung407/calibrate:latest .
-```
-
-Do not use `apps/backend` as the build context. Docker cannot copy files outside the context, so `docker build -f apps/backend/Dockerfile apps/backend` will fail when the Dockerfile tries to copy root files such as `package.json` or sibling workspace files such as `packages/api-contracts/package.json`.
-
-## Frontend
-
-### Running Frontend Locally
-
-Use [Git worktree setup](#git-worktrees-shared-postgres), then run the printed
-`web:dev` command. The frontend URL is the `frontendUrl` in
-`.worktree-dev.json` and may differ between worktrees.
+- [Backend clean architecture and domain boundaries](apps/backend/docs/adr/0001-clean-architecture-and-domain-boundaries.md)
+- [Email verification and cookie-backed server sessions](apps/backend/docs/adr/0002-email-otp-and-cookie-backed-server-sessions.md)
+- [Bounded Day Log synchronization and cache-lifecycle fencing](docs/adr/0004-bounded-day-log-sync-and-cache-fence.md)
+- [Dashboard V2 product and implementation decisions](docs/tasks/dashboard-v2/PRD.md)
+- [Self-contained local demo mode](docs/adr/0004-self-contained-local-demo-mode.md)
+- [Loopback-only local test sessions](apps/backend/docs/adr/0004-loopback-only-local-test-session.md)
