@@ -14,7 +14,7 @@ Keep the mapper independent of React, TanStack Query, routes, DOM, and visual co
 
 - The mapper calculates calories, protein, fat, and carbohydrates from all meal slots of every Day Log.
 - Seven-day nutrition is oldest-to-newest and includes zero-valued known-empty and Empty Day Log dates.
-- Habit grids contain 30 chronological cells: the oldest 23 are `unavailable`; the latest seven are completed based on Weight observations or Food Entries.
+- Habit grids contain 30 chronological cells: the oldest 23 are `unavailable`; the latest seven are completed based on weight recordings or Food Entries.
 - A Food contribution aggregates one nutrient across Food Entries whose `name` strings are exactly equal.
 - Total analytics includes every named contribution, sorted descending, with its amount and percentage of that nutrient total.
 - Change calculation partitions any supplied dated history into the current local 14-day window and the preceding local 14-day window; it does not depend on receiving a particular number of days.

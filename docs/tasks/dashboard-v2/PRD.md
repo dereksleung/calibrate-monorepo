@@ -20,7 +20,7 @@ The Header's inner content wrapper—not the full-width Header background—must
 - The seven-day overview is a static accessible summary. There is no Nutrition `See All` action in this delivery.
 - The Nutrition cards open a Dashboard-owned drawer similar to the drawer for fats found currently in src/pages/Goals.tsx. `NutrientAnalytics` is reusable for calories, fats, protein, and carbohydrates. Its Total tab aggregates all Food Entries with exactly matching names across the available seven days, orders by contribution descending, and shows each amount and share of the selected nutrient total without thumbnails.
 - The Change tab defaults to ordering from highest reductions first to highest additions, can reverse that order, and groups Food Entries by their exact recorded names. For the full 28-day implementation it compares the current local 14-day window with the preceding local 14-day window; removals are `-100%` and foods absent in the earlier window are `New`.
-- Habits use the live seven-day range only: a Weigh-In day has a Weight observation and a Food Logging day has at least one Food Entry. The 23 earlier squares remain neutral gray until the deferred history work exists.
+- Habits use the live seven-day range only: a Weigh-In day has a weight recording and a Food Logging day has at least one Food Entry. The 23 earlier squares remain neutral gray until the deferred history work exists.
 - Drawer rows have no food thumbnails because the current Food Entry contract has no image URL.
 
 ## Deferred history-backed Change calculation

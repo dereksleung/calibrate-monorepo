@@ -24,12 +24,15 @@ _Avoid_: calendar week, arbitrary seven-day period
 The Sunday-to-Saturday collection of seven local calendar dates. A future date within the current Calendar week is Upcoming, not a Known-empty day.
 _Avoid_: rolling week
 
-**Weight observation**:
-A non-null weight recorded on a Day Log for a specific calendar date. A visually connected chart line does not create additional weight observations.
+**Weight recording**:
+The non-null weight saved on a Day Log for a specific calendar date. Recording it for the first time and replacing it both leave one weight recording for that date. A visually connected chart line does not create additional weight recordings.
 _Avoid_: inferred weight, estimated weight
 
+**Updated weight**:
+The weight value after a successful save that creates or replaces a Day Log's weight recording.
+
 **Weigh-In day**:
-A Day Log with a Weight observation. It is the completed state for the Weigh-In habit display.
+A Day Log with a weight recording. It is the completed state for the Weigh-In habit display.
 _Avoid_: weight day, completed weight log
 
 **Food Logging day**:

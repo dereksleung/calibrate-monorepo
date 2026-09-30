@@ -16,7 +16,7 @@ Replace the Goals page’s hard-coded seven-day weight and fat chart values with
   - fat bars use the existing 60g placeholder nutrition target;
   - x-axis labels are dynamically derived weekday abbreviations for all seven slots.
 - Missing weights remain null in the chart data. Recharts should use connectNulls so nearby recorded points are visually connected without inventing inferred values.
-- The weight-change label is the latest observed weight minus the earliest observed weight in the range. If fewer than two observations exist, show a neutral placeholder rather than zero.
+- The weight-change label is the latest available weight minus the earliest available weight in the range. If fewer than two available weights exist, show a neutral placeholder rather than zero.
 - Initial loading shows a usable loading state; fetch failures show a non-blocking Sonner error toast with a spacious Try again action inside the toast. During a background refresh failure, keep the last successful charts visible.
 - This task is read-only for weight because the current weight UI has no active mutation path. Future weight writes must invalidate both the selected-day query and the day-log range prefix.
 
@@ -57,7 +57,7 @@ The builder should:
 - preserve all seven response slots and their chronological order;
 - derive the current weekday abbreviation from each ISO date;
 - map nullable weights without replacing nulls;
-- calculate the first-to-last observed weight change from actual non-null observations;
+- calculate the first-to-last available weight change from actual non-null weights;
 - return daily fat totals using getDayLogNutritionTotals;
 - apply DAILY_TARGETS.totalFatGrams consistently;
 - expose a small typed result that can be tested without importing Recharts.
@@ -72,7 +72,7 @@ Update the weight chart to:
 - accept nullable weights and enable visual connection across missing values;
 - show the live first-to-last change label;
 - describe values as weight in pounds rather than “pounds lost”;
-- avoid rendering a fabricated line when there are no observations.
+- avoid rendering a fabricated line when there are no available weights.
 
 Update the fat chart to consume live daily totals and the canonical 60g limit. Keep its existing click behavior and Fats drawer navigation.
 
@@ -95,7 +95,7 @@ Likely files:
 The extracted goals-chart-data module has direct pure-function coverage. Cover:
 
 - seven slots with dynamically derived weekday labels;
-- weight values, null observations, first-to-last change, and insufficient observations;
+- weight values, null weights, first-to-last change, and insufficient weights;
 - fat totals spread across breakfast, lunch, dinner, and snacks;
 - known-empty days producing missing fat slots rather than zero-valued bars, with the chart’s missing-value treatment visually bridging them, plus the 60g limit;
 - range order remaining oldest to newest.
@@ -117,7 +117,7 @@ Update Dashboard model tests only as needed for the extracted date-range helper.
 - Goals never renders the old seven-day fixture numbers after the live query is wired.
 - The two seven-day charts request and consume exactly one existing day-log range response.
 - The x-axis shows seven dynamically derived weekday labels in response order.
-- Missing weight observations do not become zero or new data points; the rendered line visually connects nearby observations.
+- Missing weight recordings do not become zero or new data points; the rendered line visually connects nearby weight values.
 - Fat bars use summed live food-entry data and the existing 60g target.
 - Known-empty Day Log slots do not render zero-fat bars; the chart visually bridges missing slots without fabricating a value.
 - Initial loading and error states do not show misleading fixture values.

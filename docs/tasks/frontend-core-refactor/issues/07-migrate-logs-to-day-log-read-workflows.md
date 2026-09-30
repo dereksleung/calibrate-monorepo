@@ -7,7 +7,7 @@
 **What to build:** Complete the Day Log read slice used by Logs. Move `GET /daylogs/{date}` and range request formation/response validation into private `api/day-logs/get-day-log.ts` and `get-day-log-range.ts`, each with its own pure Day Log response mapper. The public read workflows call those mappers and return `DayLogSnapshot`/domain values, preserving Known-empty and unloaded semantics. Migrate Logs to the new read, sync, save, and weight leaves. Move portable nutrition totals and meal definitions into cohesive core verticals; retain route, component, and UI-state choices in web.
 
 - [ ] Treat the single-date and range endpoints as one cohesive “read Day Logs” goal, with separate private mappers and shared domain output; do not expose API response wrappers or contract request types from public leaves.
-- [ ] Preserve date/range query-key identity and account-scoped cache observations from 04.
+- [ ] Preserve date/range query-key identity and account-scoped `CachedDayLogState` from 04.
 - [ ] Keep nullable meal collections and the `null`/`undefined` slot distinction through both mappers.
 - [ ] Test each request/mapper and the public read workflow before migrating web consumers; cover loaded, Known-empty, unloaded, and invalid response cases.
 - [ ] Replace API-shaped fixtures with core `__mocks__` builders where they model shared data.

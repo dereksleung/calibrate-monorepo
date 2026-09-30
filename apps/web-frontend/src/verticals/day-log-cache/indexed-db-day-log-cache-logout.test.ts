@@ -1,6 +1,6 @@
+import { DAY_LOG_CACHE_BUSTER } from "@calibrate/frontend-core/verticals/day-log-cache/persistence-policy";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DAY_LOG_CACHE_BUSTER } from "./day-log-cache.ts";
 import {
   commitFence,
   completeDayLogCacheLogout,

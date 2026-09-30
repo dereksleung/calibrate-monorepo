@@ -1,6 +1,11 @@
 // @vitest-environment jsdom
 
 import { authenticatedSessionQueryKey } from "#/verticals/auth/authenticated-session.ts";
+import {
+  dayLogSlotQueryKey,
+  type CachedDayLog,
+} from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
+import { DAY_LOG_CACHE_BUSTER } from "@calibrate/frontend-core/verticals/day-log-cache/persistence-policy";
 import { QueryClient, QueryClientProvider, dehydrate, useQuery } from "@tanstack/react-query";
 import {
   RouterContextProvider,
@@ -14,7 +19,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DayLogCacheAccess } from "./indexed-db-day-log-cache.ts";
 
-import { DAY_LOG_CACHE_BUSTER, dayLogSlotQueryKey, type CachedDayLog } from "./day-log-cache.ts";
 import { PrivateDayLogCacheProvider } from "./private-day-log-cache-provider.tsx";
 
 const { acquireDayLogCacheAccess } = vi.hoisted(() => ({ acquireDayLogCacheAccess: vi.fn() }));

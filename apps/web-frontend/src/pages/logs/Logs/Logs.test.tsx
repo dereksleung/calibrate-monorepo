@@ -3,13 +3,13 @@
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { createDayLogSyncResponse } from "@calibrate/api-contracts";
+import { dayLogSlotQueryKey } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { routeTree } from "../../../routeTree.gen.ts";
-import { dayLogSlotQueryKey } from "../../../verticals/day-log-cache/day-log-cache.ts";
 import { coffeeFixture, oatmealFixture } from "../log-page-fixtures.ts";
 
 vi.mock("@tanstack/react-devtools", () => ({

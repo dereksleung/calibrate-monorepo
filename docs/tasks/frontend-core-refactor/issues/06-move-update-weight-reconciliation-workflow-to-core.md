@@ -4,7 +4,7 @@
 
 **Status:** ready-for-agent
 
-**What to build:** Deliver Update Weight as a separate complete slice. Add frontend weight-command, observation, and acknowledgement models/builders to the Day Log vertical. Move the weight endpoint's request formation, request/response validation, and pure response mapper together into private `src/api/day-logs/update-day-log-weight.ts`; the operation returns the validated API response. Put the public option factory/hook and result-specific `applyWeightObservationToDayLogCache` logic in `src/feature-workflows/day-logs/update-day-log-weight.ts`.
+**What to build:** Deliver Update Weight as a separate complete slice. Add frontend weight-command, updated-weight, and acknowledgement models/builders to the Day Log vertical. Move the weight endpoint's request formation, request/response validation, and pure response mapper together into private `src/api/day-logs/update-day-log-weight.ts`; the operation returns the validated API response. Put the public option factory/hook and result-specific `applyUpdatedWeightToDayLogCache` logic in `src/feature-workflows/day-logs/update-day-log-weight.ts`.
 
 - [ ] Map frontend command input to the API request inside the workflow; call the endpoint's mapper before returning or caching frontend-domain data.
 - [ ] Preserve account-scoped cache keys, aggregate creation, predecessor-version acceptance, unverified acknowledgements, conditional single-date sync, and reconciliation-failure fallback.

@@ -4,12 +4,12 @@ import type { DayLogRangeResponse } from "@calibrate/api-contracts";
 
 import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
 import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
+import { applyDayLogSyncResult } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 import {
-  applyDayLogSyncResult,
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,
   dayLogSlotVersionQueryKey,
-} from "#/verticals/day-log-cache/day-log-cache.ts";
+} from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { dehydrate, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";

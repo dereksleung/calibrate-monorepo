@@ -3,8 +3,8 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
-import { dayLogSlotQueryKey } from "#/verticals/day-log-cache/day-log-cache.ts";
 import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { dayLogSlotQueryKey } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRootRoute, createRouter } from "@tanstack/react-router";
 import { useMemo } from "react";

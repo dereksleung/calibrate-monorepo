@@ -2,11 +2,10 @@
 
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { dayLogSlotQueryKey } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
-import { dayLogSlotQueryKey } from "./day-log-cache.ts";
 
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
 const range = { startDate: "2026-09-03", endDate: "2026-09-03" };

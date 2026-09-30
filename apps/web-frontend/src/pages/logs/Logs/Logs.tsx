@@ -2,13 +2,12 @@ import { apiTransport } from "#/shared/api/api-client.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
+import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { useUpdateDayLogWeight } from "@calibrate/frontend-core/feature-workflows/day-logs/update-day-log-weight";
 import {
-  applyWeightObservationToDayLogCache,
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
-} from "#/verticals/day-log-cache/day-log-cache.ts";
-import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
-import { useUpdateDayLogWeight } from "@calibrate/frontend-core/day-logs/update-day-log-weight";
+} from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
@@ -83,9 +82,9 @@ function LogsOverviewSkeleton() {
 
 /**
  * On clicking to view a day without fresh cache data, it syncs that day and
- * the previous 6 days as the likeliest next days to be browsed, to reduce 
+ * the previous 6 days as the likeliest next days to be browsed, to reduce
  * network round trips.
- * When updating logs, most users will not go much farther than that, 
+ * When updating logs, most users will not go much farther than that,
  * it is hard to remember what you ate past 1 week ago.
  */
 export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsProps) {
@@ -95,7 +94,7 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
   const session = useAuthenticatedSession();
   const accountId = session!.user.id;
   const queryClient = useQueryClient();
-  const weightMutation = useUpdateDayLogWeight(apiTransport, selectedDate);
+  const weightMutation = useUpdateDayLogWeight(apiTransport, accountId, selectedDate);
   const isUpcoming = selectedDate > todayDate;
   const selectedDayWithPastWeek = { startDate: addDaysToIsoDate(selectedDate, -6), endDate: selectedDate };
   const selectedDateOnlyAsRange = { startDate: selectedDate, endDate: selectedDate };
@@ -135,8 +134,7 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
       );
 
   async function saveWeight(weight: number) {
-    const result = await weightMutation.mutateAsync({ weight });
-    await applyWeightObservationToDayLogCache(queryClient, accountId, selectedDate, weight, result);
+    await weightMutation.mutateAsync({ weight });
   }
 
   return (

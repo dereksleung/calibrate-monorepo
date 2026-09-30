@@ -2,7 +2,7 @@
 
 **What to build:** Choosing **Log weight** in Quick log does not open a second form. It dismisses the drawer, scrolls the daily-summary weight field into view, focuses it, and shows a blinking caret so the user can type and blur using the same save path as the pencil.
 
-**Blocked by:** 01: Record or replace a Weight observation from the daily summary.
+**Blocked by:** 01: Save or replace the daily weight recording.
 
 **Status:** ready-for-agent
 

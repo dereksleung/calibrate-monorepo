@@ -3,7 +3,10 @@
 import type { FoodEntryResponse } from "@calibrate/api-contracts";
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
-import { dayLogSlotQueryKey, dayLogSlotVersionQueryKey } from "#/verticals/day-log-cache/day-log-cache.ts";
+import {
+  dayLogSlotQueryKey,
+  dayLogSlotVersionQueryKey,
+} from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryHistory, createRouter } from "@tanstack/react-router";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";

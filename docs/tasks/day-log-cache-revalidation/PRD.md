@@ -50,7 +50,7 @@ type DayLogSlotResult = CachedDayLog | NotYetLoaded;
 ```
 
 - The canonical durable client shape is one account-scoped date-slot query per calendar date. Its data is the raw `DayLogResponse` or `KnownEmptyResponse`; TanStack Query's own dehydrated query state supplies `dataUpdatedAt` and `isInvalidated`. Do not duplicate freshness, validation, or unverified fields in the payload.
-- A missing query entry is `NotYetLoaded`. `KnownEmptyResponse` is a confirmed absence. An Empty Day Log is a present aggregate, potentially with a weight observation, and is not an absence.
+- A missing query entry is `NotYetLoaded`. `KnownEmptyResponse` is a confirmed absence. An Empty Day Log is a present aggregate, potentially with a weight recording, and is not an absence.
 - Query keys include account ID. The existing root `QueryClientProvider` remains because session-gate, Header, and auth UI use React Query. A `PersistQueryClientProvider` using the same client mounts only below server-authenticated content and is remounted for an account or cache-generation change.
 - Dehydration is an explicit allow list: Day Log slot queries and their TanStack query state only. Never persist auth/session queries, access or refresh tokens, mutations, or unrelated queries.
 - Retain a slot for 30 days after its `dataUpdatedAt`. Explicitly prune stale-retention records before hydration and persistence; do not rely on a 30-day JavaScript garbage-collection timer. IndexedDB errors are caught and result in a no-op persister plus online behavior.

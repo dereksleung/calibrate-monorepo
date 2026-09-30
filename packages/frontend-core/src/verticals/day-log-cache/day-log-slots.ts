@@ -1,11 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { DayLog, DayLogSnapshot, DayLogSlotResult } from "../../shared/models/day-logs/day-log.js";
+import type { DayLog, DayLogSnapshot } from "../../shared/models/day-logs/day-log.js";
 
 export type DayLogDateRange = { startDate: string; endDate: string };
 export type CachedDayLog = DayLog | null;
 export type DayLogCacheReader = Pick<QueryClient, "getQueryState" | "getQueryData">;
-export type DayLogSlotSnapshot = DayLogSnapshot & {
+export type CachedDayLogState = DayLogSnapshot & {
   dataUpdatedAt: number;
   isError: boolean;
   isInvalidated: boolean;
@@ -65,7 +65,7 @@ export function getDayLogsWithStalenessState(
   queryClient: DayLogCacheReader,
   accountId: string,
   range: { startDate: string; endDate: string },
-): DayLogSlotSnapshot[] {
+): CachedDayLogState[] {
   return dateRange(range.startDate, range.endDate).map((date) => {
     const queryState = queryClient.getQueryState<CachedDayLog>(dayLogSlotQueryKey(accountId, date));
 
@@ -87,7 +87,7 @@ export function getDayLogsWithStalenessState(
  */
 export function doesDayLogRangeNeedValidation(
   range: { startDate: string; endDate: string },
-  slots: readonly DayLogSlotSnapshot[],
+  slots: readonly CachedDayLogState[],
   now: number,
 ): boolean {
   const slotsByDate = new Map(slots.map((slot) => [slot.date, slot]));
@@ -98,7 +98,7 @@ export function doesDayLogRangeNeedValidation(
   });
 }
 
-export function doesDayLogSlotNeedValidation(slot: DayLogSlotSnapshot, now: number): boolean {
+export function doesDayLogSlotNeedValidation(slot: CachedDayLogState, now: number): boolean {
   return (
     slot.data === undefined ||
     slot.isError ||
