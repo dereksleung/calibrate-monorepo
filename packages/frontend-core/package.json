@@ -15,10 +15,6 @@
       "types": "./src/feature-workflows/auth/account-email-verification.ts",
       "default": "./src/feature-workflows/auth/account-email-verification.ts"
     },
-    "./auth/local-development-passkey-enrollment": {
-      "types": "./src/auth/local-development-passkey-enrollment.ts",
-      "default": "./src/auth/local-development-passkey-enrollment.ts"
-    },
     "./day-logs/get-day-log": {
       "types": "./src/day-logs/get-day-log.ts",
       "default": "./src/day-logs/get-day-log.ts"
@@ -162,6 +158,18 @@
     "./verticals/auth/models/__mocks__/passkey-registration": {
       "types": "./src/verticals/auth/models/__mocks__/passkey-registration.ts",
       "default": "./src/verticals/auth/models/__mocks__/passkey-registration.ts"
+    },
+    "./feature-workflows/auth/local-development-passkey-enrollment": {
+      "types": "./src/feature-workflows/auth/local-development-passkey-enrollment.ts",
+      "default": "./src/feature-workflows/auth/local-development-passkey-enrollment.ts"
+    },
+    "./verticals/auth/models/local-development-passkey-enrollment": {
+      "types": "./src/verticals/auth/models/local-development-passkey-enrollment.ts",
+      "default": "./src/verticals/auth/models/local-development-passkey-enrollment.ts"
+    },
+    "./verticals/auth/models/__mocks__/local-development-passkey-enrollment": {
+      "types": "./src/verticals/auth/models/__mocks__/local-development-passkey-enrollment.ts",
+      "default": "./src/verticals/auth/models/__mocks__/local-development-passkey-enrollment.ts"
     }
   },
   "dependencies": {

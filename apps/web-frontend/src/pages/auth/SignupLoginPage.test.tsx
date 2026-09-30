@@ -2,6 +2,7 @@
 
 import { createQueryClient } from "#/shared/api/query-client";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { buildLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/local-development-passkey-enrollment";
 import {
   buildPasskeyAuthenticationChallenge,
   buildVerifyPasskeyAuthenticationCommand,
@@ -14,6 +15,7 @@ import { SignupLoginPage, SignUpLoginForm } from "./SignupLoginPage";
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
   cleanup();
   vi.clearAllMocks();
   mockConditionalPasskeyAuthenticationSupported.mockResolvedValue(false);
@@ -58,13 +60,16 @@ vi.mock(
   },
 );
 
-vi.mock("@calibrate/frontend-core/auth/local-development-passkey-enrollment", async (importOriginal) => {
-  const original = (await importOriginal()) as object;
-  return {
-    ...original,
-    requestLocalDevelopmentPasskeyEnrollment: mockRequestLocalDevelopmentPasskeyEnrollment,
-  };
-});
+vi.mock(
+  "@calibrate/frontend-core/feature-workflows/auth/local-development-passkey-enrollment",
+  async (importOriginal) => {
+    const original = (await importOriginal()) as object;
+    return {
+      ...original,
+      requestLocalDevelopmentPasskeyEnrollment: mockRequestLocalDevelopmentPasskeyEnrollment,
+    };
+  },
+);
 
 vi.mock("@calibrate/frontend-core/feature-workflows/auth/passkey-authentication", async (importOriginal) => {
   const original = (await importOriginal()) as object;
@@ -121,6 +126,17 @@ describe("SignupLoginPage", () => {
     expect(screen.getByText(/Enter your email and we'll send a code to continue./i)).toBeTruthy();
   });
 
+  it("hides local enrollment when the development build flag is off", () => {
+    vi.stubEnv("DEV", false);
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <SignupLoginPage />
+      </QueryClientProvider>,
+    );
+    expect(screen.queryByRole("button", { name: "Authorize create passkey" })).toBeNull();
+    expect(mockRequestLocalDevelopmentPasskeyEnrollment).not.toHaveBeenCalled();
+  });
+
   it("offers local logout recovery for a server-confirmed logout", async () => {
     const record = {
       accountId: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
@@ -147,11 +163,7 @@ describe("SignupLoginPage", () => {
   });
 
   it("authorizes a local passkey signup and navigates to enrollment", async () => {
-    mockRequestLocalDevelopmentPasskeyEnrollment.mockResolvedValue({
-      email: "local-123@example.test",
-      next: "passkey-registration",
-      expiresAt: "2030-01-01T00:05:00.000Z",
-    });
+    mockRequestLocalDevelopmentPasskeyEnrollment.mockResolvedValue(buildLocalDevelopmentPasskeyEnrollment());
     render(
       <QueryClientProvider client={createQueryClient()}>
         <SignupLoginPage />

@@ -29,9 +29,9 @@ import {
   retryDayLogCacheLogoutRecovery,
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
-import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/auth/local-development-passkey-enrollment";
 import { ApiError } from "@calibrate/frontend-core/errors";
 import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/feature-workflows/auth/account-email-verification";
+import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/feature-workflows/auth/local-development-passkey-enrollment";
 import {
   parsePasskeyAuthenticationError,
   requestPasskeyAuthenticationOptions,
