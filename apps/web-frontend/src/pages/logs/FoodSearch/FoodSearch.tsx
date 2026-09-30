@@ -1,7 +1,6 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { useSaveFoodEntry } from "#/verticals/day-log-cache/use-save-food-entry.ts";
 import {
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
@@ -10,6 +9,7 @@ import {
   type FoodSearchResult,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
+import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
 import { useFoodSearch } from "@calibrate/frontend-core/foods/search-foods";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -111,7 +111,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [addingFoodIds, setAddingFoodIds] = useState<ReadonlySet<string>>(new Set());
   const [recentFoodsRevision, setRecentFoodsRevision] = useState(0);
-  const save = useSaveFoodEntry(selectedDate, {
+  const save = useSaveFoodEntry(apiTransport, session!.user.id, selectedDate, {
     onError: () => {
       toast.error("We couldn't save that food.", { closeButton: true });
     },

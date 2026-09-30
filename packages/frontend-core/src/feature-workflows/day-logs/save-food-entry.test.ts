@@ -68,6 +68,37 @@ describe("Save Food Entry workflow", () => {
     expect(request).toHaveBeenCalledTimes(1);
   });
 
+  it("preserves caller success and error callbacks in hook mutation options", async () => {
+    const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+    client.setQueryData(dayLogSlotQueryKey(accountId, date), null);
+    const onSuccess = vi.fn();
+    const onError = vi.fn();
+    const request = vi
+      .fn()
+      .mockImplementationOnce(async ({ responseBodySchema }) =>
+        responseBodySchema.parse({ foodEntryId: "entry-2", versionNumber: 1 }),
+      )
+      .mockRejectedValueOnce(new Error("save unavailable"));
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client }, children);
+    const { result } = renderHook(
+      () =>
+        useSaveFoodEntry({ request } as unknown as ApiTransport, accountId, date, {
+          onSuccess,
+          onError,
+        }),
+      { wrapper },
+    );
+
+    await result.current.mutateAsync(command);
+    await expect(result.current.mutateAsync(command)).rejects.toThrow("save unavailable");
+
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onSuccess.mock.calls[0]?.[0].foodEntry.id).toBe("entry-2");
+    expect(onError).toHaveBeenCalledOnce();
+    expect(onError.mock.calls[0]?.[0]).toMatchObject({ message: "save unavailable" });
+  });
+
   it("keeps an acknowledgement unverified when a version mismatch cannot reconcile", async () => {
     const client = new QueryClient();
     client.setQueryData(dayLogSlotQueryKey(accountId, date), buildDayLog({ date, lunch: [] }));
