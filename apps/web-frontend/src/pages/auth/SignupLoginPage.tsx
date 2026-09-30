@@ -1,3 +1,5 @@
+import type { RequestAccountEmailVerificationCommand } from "@calibrate/frontend-core/verticals/auth/models/account-email-verification";
+
 import { apiTransport } from "#/shared/api/api-client";
 import { Button } from "#/shared/components/base/Button";
 import {
@@ -11,6 +13,7 @@ import {
 } from "#/shared/components/base/Field";
 import { WarningBanner } from "#/shared/components/base/WarningBanner";
 import {
+  AccountEmailSchema,
   createAccountEmailVerificationHandoff,
   createPasskeyEnrollmentHandoff,
 } from "#/verticals/auth/account-email-verification-handoff";
@@ -26,12 +29,7 @@ import {
   retryDayLogCacheLogoutRecovery,
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
-import {
-  RequestAccountEmailVerificationRequestBodySchema,
-  type PasskeyAuthenticationErrorCode,
-  type RequestAccountEmailVerificationRequestBody,
-} from "@calibrate/api-contracts";
-import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/auth/account-email-verification";
+import { type PasskeyAuthenticationErrorCode } from "@calibrate/api-contracts";
 import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/auth/local-development-passkey-enrollment";
 import {
   parsePasskeyAuthenticationError,
@@ -39,13 +37,14 @@ import {
   verifyPasskeyAuthentication,
 } from "@calibrate/frontend-core/auth/passkey-authentication";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/feature-workflows/auth/account-email-verification";
 import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/feature-workflows/auth/start-local-development-test-session";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-type SignUpLoginFormValues = RequestAccountEmailVerificationRequestBody;
+type SignUpLoginFormValues = RequestAccountEmailVerificationCommand;
 
 const PASSKEY_AUTHENTICATION_ERROR_MESSAGES: Partial<Record<PasskeyAuthenticationErrorCode, string>> = {
   ORIGIN_NOT_ALLOWED: "Passkey sign-in is unavailable from this site.",
@@ -55,8 +54,8 @@ const PASSKEY_AUTHENTICATION_ERROR_MESSAGES: Partial<Record<PasskeyAuthenticatio
 const DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE =
   "We couldn't verify that passkey. Try the Log in with Passkey button again, or use the email field to verify and recover your account.";
 
-function firstContractError(field: "email", value: string): string | undefined {
-  const result = RequestAccountEmailVerificationRequestBodySchema.shape[field].safeParse(value);
+function firstEmailError(value: string): string | undefined {
+  const result = AccountEmailSchema.safeParse(value);
   return result.success ? undefined : result.error.issues[0]?.message;
 }
 
@@ -115,8 +114,8 @@ function SignUpLoginForm({ onSubmitStart = () => undefined }: { onSubmitStart?: 
         <form.Field
           name="email"
           validators={{
-            onBlur: ({ value }) => firstContractError("email", value),
-            onSubmit: ({ value }) => firstContractError("email", value),
+            onBlur: ({ value }) => firstEmailError(value),
+            onSubmit: ({ value }) => firstEmailError(value),
           }}
         >
           {(field) => {

@@ -11,7 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "#/verticals/auth/componen
 import {
   useRequestAccountEmailVerification,
   useVerifyAccountEmailVerification,
-} from "@calibrate/frontend-core/auth/account-email-verification";
+} from "@calibrate/frontend-core/feature-workflows/auth/account-email-verification";
 import { useNavigate } from "@tanstack/react-router";
 import { MailCheck } from "lucide-react";
 import { useEffect, useState } from "react";

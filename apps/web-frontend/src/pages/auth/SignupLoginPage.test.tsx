@@ -38,15 +38,18 @@ const {
   mockVerifyPasskeyAuthentication: vi.fn(),
 }));
 
-vi.mock("@calibrate/frontend-core/auth/account-email-verification", async (importOriginal) => {
-  const original = (await importOriginal()) as object;
-  return {
-    ...original,
-    useRequestAccountEmailVerification: vi.fn(() => ({
-      mutateAsync: mockMutateAsync,
-    })),
-  };
-});
+vi.mock(
+  "@calibrate/frontend-core/feature-workflows/auth/account-email-verification",
+  async (importOriginal) => {
+    const original = (await importOriginal()) as object;
+    return {
+      ...original,
+      useRequestAccountEmailVerification: vi.fn(() => ({
+        mutateAsync: mockMutateAsync,
+      })),
+    };
+  },
+);
 
 vi.mock("@calibrate/frontend-core/auth/local-development-passkey-enrollment", async (importOriginal) => {
   const original = (await importOriginal()) as object;

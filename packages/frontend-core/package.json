@@ -11,9 +11,9 @@
       "types": "./src/errors.ts",
       "default": "./src/errors.ts"
     },
-    "./auth/account-email-verification": {
-      "types": "./src/auth/account-email-verification.ts",
-      "default": "./src/auth/account-email-verification.ts"
+    "./feature-workflows/auth/account-email-verification": {
+      "types": "./src/feature-workflows/auth/account-email-verification.ts",
+      "default": "./src/feature-workflows/auth/account-email-verification.ts"
     },
     "./auth/signup-passkey-registration": {
       "types": "./src/auth/signup-passkey-registration.ts",
@@ -138,6 +138,14 @@
     "./verticals/auth/authenticated-session": {
       "types": "./src/verticals/auth/authenticated-session.ts",
       "default": "./src/verticals/auth/authenticated-session.ts"
+    },
+    "./verticals/auth/models/account-email-verification": {
+      "types": "./src/verticals/auth/models/account-email-verification.ts",
+      "default": "./src/verticals/auth/models/account-email-verification.ts"
+    },
+    "./verticals/auth/models/__mocks__/account-email-verification": {
+      "types": "./src/verticals/auth/models/__mocks__/account-email-verification.ts",
+      "default": "./src/verticals/auth/models/__mocks__/account-email-verification.ts"
     }
   },
   "dependencies": {

@@ -111,3 +111,75 @@ describe("signup email verification routing", () => {
     expect(router.state.location.pathname).toBe("/signup-login");
   });
 });
+
+describe("email confirmation through the core workflow", () => {
+  async function requestChallenge(verificationBody: unknown, status = 200) {
+    const fetch = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            challengeId: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
+            expiresInSeconds: 600,
+            resendAfterSeconds: 60,
+          }),
+          { status: 202, headers: { "content-type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(verificationBody), {
+          status,
+          headers: { "content-type": "application/json" },
+        }),
+      );
+    const router = renderRoute("/signup-login");
+    fireEvent.change(await screen.findByLabelText("Email Address"), {
+      target: { value: "person@example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue with email" }));
+    const input = await screen.findByLabelText("Verification code");
+    fireEvent.change(input, { target: { value: "012345" } });
+    fireEvent.click(screen.getByRole("button", { name: "Verify Code" }));
+    return { fetch, router };
+  }
+  it.each([
+    {
+      next: "passkey-registration",
+      expiresAt: "2030-01-01T00:05:00.000Z",
+      path: "/auth/passkey-enrollment",
+      heading: "Set up your passkey",
+      stateKey: "passkeyEnrollment",
+    },
+    {
+      next: "login-or-recovery",
+      path: "/auth/login-recovery",
+      heading: "Email verified",
+      stateKey: "loginRecovery",
+    },
+  ])("hands $next metadata to its web route", async ({ next, expiresAt, path, heading, stateKey }) => {
+    const response = next === "passkey-registration" ? { next, expiresAt } : { next };
+    const { fetch, router } = await requestChallenge(response);
+    expect(await screen.findByRole("heading", { name: heading })).toBeTruthy();
+    expect(router.state.location.pathname).toBe(path);
+    expect(router.state.location.state[stateKey as "passkeyEnrollment" | "loginRecovery"]).toEqual({
+      email: "person@example.com",
+      ...response,
+    });
+    const [url, init] = fetch.mock.calls[1] as [string, RequestInit];
+    expect(new URL(url, "http://localhost").pathname).toBe("/api/v1/auth/email-verification/verify");
+    expect(init.credentials).toBe("include");
+    expect(JSON.parse(init.body as string)).toEqual({
+      challengeId: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
+      code: "012345",
+    });
+  });
+  it.each(["INVALID_CODE", "EXPIRED_CODE"])("keeps OTP state on %s", async (error) => {
+    const { fetch, router } = await requestChallenge({ error }, 400);
+    expect((await screen.findByRole("alert")).textContent).toContain("invalid or has expired");
+    expect(router.state.location.pathname).toBe("/auth/otp");
+    expect(router.state.location.state.accountEmailVerification?.challengeId).toBe(
+      "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
+    );
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+});
