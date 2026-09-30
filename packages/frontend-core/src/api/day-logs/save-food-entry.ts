@@ -6,9 +6,12 @@ import {
   type CreateFoodEntryRequest,
   type CreateFoodEntryResponse,
 } from "@calibrate/api-contracts";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
+import type {
+  SaveFoodEntryAcknowledgement,
+  SaveFoodEntryCommand,
+} from "../../verticals/day-logs/models/save-food-entry.js";
 
 export function saveFoodEntry(
   transport: ApiTransport,
@@ -26,20 +29,14 @@ export function saveFoodEntry(
   });
 }
 
-export function getSaveFoodEntryMutationOptions(transport: ApiTransport, date: string) {
+export function mapSaveFoodEntryResponse(
+  response: CreateFoodEntryResponse,
+  command: SaveFoodEntryCommand,
+): SaveFoodEntryAcknowledgement {
+  const normalized = normalizeFoodEntryForStorage(CreateFoodEntryRequestSchema.parse(command));
   return {
-    mutationFn: (input: CreateFoodEntryRequest) => saveFoodEntry(transport, date, input),
+    foodEntry: { ...normalized, id: response.foodEntryId },
+    versionNumber: response.versionNumber,
+    ...(response.createdDayLogId ? { dayLogId: response.createdDayLogId } : {}),
   };
-}
-
-/** Portable save hook. Cache patching belongs to the app's Day Log date-slot cache. */
-export function useSaveFoodEntry(
-  transport: ApiTransport,
-  date: string,
-  options?: Omit<UseMutationOptions<CreateFoodEntryResponse, Error, CreateFoodEntryRequest>, "mutationFn">,
-) {
-  return useMutation({
-    ...getSaveFoodEntryMutationOptions(transport, date),
-    ...options,
-  });
 }

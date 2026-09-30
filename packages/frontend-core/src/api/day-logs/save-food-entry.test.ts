@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
 
-import { saveFoodEntry } from "./save-food-entry.js";
+import { mapSaveFoodEntryResponse, saveFoodEntry } from "./save-food-entry.js";
 
 const tofuEntry = {
   name: "Tofu",
@@ -57,5 +57,27 @@ describe("saveFoodEntry", () => {
       }),
     );
     expect(request.mock.calls[0]?.[0].body).not.toHaveProperty("versionNumber");
+  });
+
+  it("maps the validated acknowledgement and normalized command to frontend data", () => {
+    expect(
+      mapSaveFoodEntryResponse(
+        {
+          foodEntryId: "entry-1",
+          versionNumber: 1,
+          createdDayLogId: "day-log-1",
+        },
+        tofuEntry,
+      ),
+    ).toMatchObject({
+      foodEntry: {
+        id: "entry-1",
+        chosenQuantity: 0.33,
+        calories: 73.9,
+        quantityServing: 1.23,
+      },
+      versionNumber: 1,
+      dayLogId: "day-log-1",
+    });
   });
 });

@@ -43,6 +43,18 @@
       "types": "./src/feature-workflows/day-logs/sync-day-logs.ts",
       "default": "./src/feature-workflows/day-logs/sync-day-logs.ts"
     },
+    "./feature-workflows/day-logs/save-food-entry": {
+      "types": "./src/feature-workflows/day-logs/save-food-entry.ts",
+      "default": "./src/feature-workflows/day-logs/save-food-entry.ts"
+    },
+    "./verticals/day-logs/models/save-food-entry": {
+      "types": "./src/verticals/day-logs/models/save-food-entry.ts",
+      "default": "./src/verticals/day-logs/models/save-food-entry.ts"
+    },
+    "./verticals/day-logs/models/__mocks__/save-food-entry": {
+      "types": "./src/verticals/day-logs/models/__mocks__/save-food-entry.ts",
+      "default": "./src/verticals/day-logs/models/__mocks__/save-food-entry.ts"
+    },
     "./shared/models/day-logs/day-log": {
       "types": "./src/shared/models/day-logs/day-log.ts",
       "default": "./src/shared/models/day-logs/day-log.ts"
@@ -58,10 +70,6 @@
     "./verticals/day-log-cache/persistence-policy": {
       "types": "./src/verticals/day-log-cache/persistence-policy.ts",
       "default": "./src/verticals/day-log-cache/persistence-policy.ts"
-    },
-    "./day-logs/save-food-entry": {
-      "types": "./src/day-logs/save-food-entry.ts",
-      "default": "./src/day-logs/save-food-entry.ts"
     },
     "./day-logs/update-day-log-weight": {
       "types": "./src/day-logs/update-day-log-weight.ts",

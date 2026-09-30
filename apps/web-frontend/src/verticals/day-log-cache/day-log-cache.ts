@@ -1,15 +1,7 @@
 import type { DayLogSlotResult } from "@calibrate/frontend-core/shared/models/day-logs/day-log";
 import type { QueryClient } from "@tanstack/react-query";
 
-import {
-  normalizeFoodEntryForStorage,
-  type CreateFoodEntryRequest,
-  type CreateFoodEntryResponse,
-  type DayLogResponse,
-  type FoodEntryResponse,
-  type MealNameEnumType,
-  type UpdateDayLogWeightResponse,
-} from "@calibrate/api-contracts";
+import { type DayLogResponse, type UpdateDayLogWeightResponse } from "@calibrate/api-contracts";
 import {
   dayLogSlotQueryKey,
   dayLogSlotVersionQueryKey,
@@ -48,13 +40,6 @@ export type {
 export type KnownEmptyResponse = null;
 export type { CachedDayLog } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 
-const MEAL_SLOT_BY_NAME = {
-  BREAKFAST: "breakfast",
-  LUNCH: "lunch",
-  DINNER: "dinner",
-  SNACKS: "snacks",
-} as const satisfies Record<MealNameEnumType, "breakfast" | "lunch" | "dinner" | "snacks">;
-
 type PresentDayLog = Exclude<DayLogResponse, null>;
 
 function emptyPresentDayLog(date: string, dayLogId?: string): PresentDayLog {
@@ -69,19 +54,6 @@ function emptyPresentDayLog(date: string, dayLogId?: string): PresentDayLog {
   };
 }
 
-function withCreatedFoodEntry(
-  dayLog: PresentDayLog,
-  created: CreateFoodEntryRequest,
-  foodEntryId: string,
-): PresentDayLog {
-  const slot = MEAL_SLOT_BY_NAME[created.meal];
-  const foodEntry: FoodEntryResponse = { ...created, id: foodEntryId };
-  return {
-    ...dayLog,
-    [slot]: [...(dayLog[slot] ?? []), foodEntry],
-  };
-}
-
 function isPredecessor(
   cached: DayLogSlotResult,
   cachedVersion: number | undefined,
@@ -90,45 +62,6 @@ function isPredecessor(
   if (cached === null) return versionNumber === 1;
   if (cached === undefined) return false;
   return cachedVersion !== undefined && cachedVersion + 1 === versionNumber;
-}
-
-/**
- * Helps cut API requests from queryClient.invalidateQueries, and server outbound egress.
- * Allows the server response for creating a food entry to be very minimal.
- * On a success, stamps the server Food Entry ID onto the create payload and writes that
- * entry into the date slot. If the existing day log version number is the direct predecessor
- * of what the server returns, it raises `versionNumber`
- * without sync; otherwise it treats the change as locally acknowledged but unverified,
- * and invalidates the day log slot for syncing with the latest server state.
- */
-export async function applyFoodEntryCreateToDayLogCache(
-  queryClient: QueryClient,
-  accountId: string,
-  date: string,
-  created: CreateFoodEntryRequest,
-  result: CreateFoodEntryResponse,
-  now = Date.now(),
-): Promise<{ needsSingleDateSync: boolean }> {
-  const slotKey = dayLogSlotQueryKey(accountId, date);
-  const versionKey = dayLogSlotVersionQueryKey(accountId, date);
-  const cached = queryClient.getQueryData<CachedDayLog>(slotKey);
-  const cachedVersion = queryClient.getQueryData<number>(versionKey);
-  const normalizedCreated = normalizeFoodEntryForStorage(created);
-  const next = withCreatedFoodEntry(
-    cached ?? emptyPresentDayLog(date, result.createdDayLogId),
-    normalizedCreated,
-    result.foodEntryId,
-  );
-
-  queryClient.setQueryData(slotKey, next, { updatedAt: now });
-
-  if (isPredecessor(cached, cachedVersion, result.versionNumber)) {
-    queryClient.setQueryData(versionKey, result.versionNumber, { updatedAt: now });
-    return { needsSingleDateSync: false };
-  }
-
-  await queryClient.invalidateQueries({ queryKey: slotKey });
-  return { needsSingleDateSync: true };
 }
 
 function normalizeWeightForStorage(value: number): number {
