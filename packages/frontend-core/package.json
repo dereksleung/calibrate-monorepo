@@ -114,6 +114,30 @@
     "./verticals/dashboard/__mocks__/dashboard-v2-model": {
       "types": "./src/verticals/dashboard/__mocks__/dashboard-v2-model.ts",
       "default": "./src/verticals/dashboard/__mocks__/dashboard-v2-model.ts"
+    },
+    "./feature-workflows/auth/get-current-session": {
+      "types": "./src/feature-workflows/auth/get-current-session.ts",
+      "default": "./src/feature-workflows/auth/get-current-session.ts"
+    },
+    "./feature-workflows/auth/refresh-session": {
+      "types": "./src/feature-workflows/auth/refresh-session.ts",
+      "default": "./src/feature-workflows/auth/refresh-session.ts"
+    },
+    "./feature-workflows/auth/start-local-development-test-session": {
+      "types": "./src/feature-workflows/auth/start-local-development-test-session.ts",
+      "default": "./src/feature-workflows/auth/start-local-development-test-session.ts"
+    },
+    "./feature-workflows/auth/delete-current-session": {
+      "types": "./src/feature-workflows/auth/delete-current-session.ts",
+      "default": "./src/feature-workflows/auth/delete-current-session.ts"
+    },
+    "./verticals/auth/models/authenticated-user-context": {
+      "types": "./src/verticals/auth/models/authenticated-user-context.ts",
+      "default": "./src/verticals/auth/models/authenticated-user-context.ts"
+    },
+    "./verticals/auth/models/__mocks__/authenticated-user-context": {
+      "types": "./src/verticals/auth/models/__mocks__/authenticated-user-context.ts",
+      "default": "./src/verticals/auth/models/__mocks__/authenticated-user-context.ts"
     }
   },
   "dependencies": {

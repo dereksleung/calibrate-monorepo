@@ -1,6 +1,7 @@
 import { z } from "zod";
-import { ApiError } from "./errors.js";
+
 import { validateBySchema } from "./common/validate-by-schema.js";
+import { ApiError } from "./errors.js";
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -8,6 +9,7 @@ export type ApiHeaders = HeadersInit | Promise<HeadersInit>;
 
 export interface ApiTransportOptions {
   baseUrl: string;
+  credentials?: RequestCredentials;
   fetch?: FetchLike;
   getAccessToken?: () => string | null | Promise<string | null>;
   getHeaders?: () => ApiHeaders;
@@ -24,9 +26,7 @@ export interface ApiRequestOptions<TSchema extends z.ZodTypeAny = z.ZodTypeAny> 
 }
 
 export interface ApiTransport {
-  request<TSchema extends z.ZodTypeAny>(
-    options: ApiRequestOptions<TSchema>
-  ): Promise<z.infer<TSchema>>;
+  request<TSchema extends z.ZodTypeAny>(options: ApiRequestOptions<TSchema>): Promise<z.infer<TSchema>>;
 }
 
 function buildUrl(baseUrl: string, path: string, query?: ApiRequestOptions["query"]): string {
@@ -55,7 +55,11 @@ async function readResponseBody(response: Response): Promise<unknown> {
   return text.length > 0 ? text : null;
 }
 
-async function buildHeaders(options: ApiTransportOptions, requestHeaders?: HeadersInit, body?: unknown): Promise<Headers> {
+async function buildHeaders(
+  options: ApiTransportOptions,
+  requestHeaders?: HeadersInit,
+  body?: unknown,
+): Promise<Headers> {
   const headers = new Headers(await options.getHeaders?.());
   const accessToken = await options.getAccessToken?.();
 
@@ -93,7 +97,7 @@ export function createApiTransport(options: ApiTransportOptions): ApiTransport {
 
       const response = await fetchImplementation(buildUrl(options.baseUrl, path, query), {
         method,
-        credentials: "include",
+        credentials: options.credentials ?? "include",
         headers: await buildHeaders(options, requestHeaders, body),
         body: body === undefined ? undefined : JSON.stringify(body),
         signal,
@@ -108,9 +112,7 @@ export function createApiTransport(options: ApiTransportOptions): ApiTransport {
           statusText: response.statusText,
           body: responseBody,
           retryAfterSeconds:
-            retryAfterSeconds !== undefined &&
-            Number.isFinite(retryAfterSeconds) &&
-            retryAfterSeconds > 0
+            retryAfterSeconds !== undefined && Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0
               ? retryAfterSeconds
               : undefined,
         });
