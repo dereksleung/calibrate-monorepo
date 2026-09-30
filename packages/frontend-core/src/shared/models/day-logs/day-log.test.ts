@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { buildDayLog, buildFoodEntry } from "./__mocks__/day-log.js";
-import { DayLogSchema, type DayLogSnapshot } from "./day-log.js";
+import { DayLogSchema, type DatedDayLogCacheResult } from "./day-log.js";
 
 describe("Day Log frontend model", () => {
   it("keeps nullable meals and distinguishes Known-empty from unloaded snapshots", () => {
     const dayLog = buildDayLog({ lunch: [buildFoodEntry()] });
-    const snapshots: DayLogSnapshot[] = [
+    const snapshots: DatedDayLogCacheResult[] = [
       { date: dayLog.date, data: dayLog },
       { date: "2026-09-04", data: null },
       { date: "2026-09-05", data: undefined },

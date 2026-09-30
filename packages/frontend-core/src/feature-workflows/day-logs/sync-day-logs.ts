@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 import type {
   DayLogSyncResult,
-  DayLogSnapshot,
+  DatedDayLogCacheResult,
   DayLogSlotResult,
 } from "../../shared/models/day-logs/day-log.js";
 import type { ApiTransport } from "../../transport.js";
@@ -63,7 +63,7 @@ export function useSyncDayLogsForDateRange(
       queryFn: skipToken,
       gcTime: Infinity,
       staleTime: Infinity,
-      select: (data: DayLogSlotResult): DayLogSnapshot => ({ date, data }),
+      select: (data: DayLogSlotResult): DatedDayLogCacheResult => ({ date, data }),
     })),
   });
   // Errored slot observers still expose cached data. Treat them as unverified:

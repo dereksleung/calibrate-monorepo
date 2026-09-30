@@ -1,4 +1,9 @@
-import type { DayLog, DayLogSnapshot, FoodEntry, MealName } from "../../shared/models/day-logs/day-log.js";
+import type {
+  DayLog,
+  DatedDayLogCacheResult,
+  FoodEntry,
+  MealName,
+} from "../../shared/models/day-logs/day-log.js";
 
 const MEAL_ORDER = ["BREAKFAST", "LUNCH", "DINNER", "SNACKS"] as const satisfies readonly MealName[];
 
@@ -24,20 +29,20 @@ export function rankRecentFoodsFromCache({
   today,
   preselectedMeal,
 }: {
-  slots: readonly DayLogSnapshot[];
+  slots: readonly DatedDayLogCacheResult[];
   today: string;
   preselectedMeal?: MealName;
 }): RankedRecentFood[] {
   const sourceDays = slots
     .filter(
-      (slot): slot is DayLogSnapshot & { data: DayLog } =>
+      (slot): slot is DatedDayLogCacheResult & { data: DayLog } =>
         slot.date < today && slot.data !== null && slot.data !== undefined,
     )
     .sort((left, right) => right.date.localeCompare(left.date));
   const seen = new Set<string>();
   const ranked: RankedRecentFood[] = [];
 
-  function addMeal(day: DayLogSnapshot & { data: DayLog }, meal: MealName) {
+  function addMeal(day: DatedDayLogCacheResult & { data: DayLog }, meal: MealName) {
     for (const food of day.data[dayLogEntriesByMeal[meal]] ?? []) {
       if (ranked.length === 20) return;
       const key = foodKey(food);

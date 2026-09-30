@@ -18,7 +18,7 @@
 
 ## Implementation
 
-- Moved Dashboard V2 projections to `@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model`, accepting domain `DayLogSnapshot` inputs directly. Dashboard retains its core sync/read workflow and passes the cached snapshots into the projection.
+- Moved Dashboard V2 projections to `@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model`, accepting domain `DatedDayLogCacheResult` inputs directly. Dashboard retains its core sync/read workflow and passes the cached snapshots into the projection.
 - Moved shared nutrition totals and targets to `@calibrate/frontend-core/shared/models/nutrition/nutrition-totals`; migrated Dashboard, Logs, stories, and tests to the explicit core leaves. Chart props and components remain in web.
 - Audited the entire repository for the legacy module path and its exported functions before deletion. References were limited to the legacy implementation/test and refactor documentation; there were no production importers. Removed the legacy model/test and the replaced web projection/nutrition files.
 - Preserved the nine projection tests using core domain builders; added tests for unloaded/known-empty habit history, targets, inclusive 28-day boundaries, and nutrition totals.

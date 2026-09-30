@@ -1,11 +1,11 @@
 import type { QueryClient } from "@tanstack/react-query";
 
-import type { DayLog, DayLogSnapshot } from "../../shared/models/day-logs/day-log.js";
+import type { DayLog, DatedDayLogCacheResult } from "../../shared/models/day-logs/day-log.js";
 
 export type DayLogDateRange = { startDate: string; endDate: string };
 export type CachedDayLog = DayLog | null;
 export type DayLogCacheReader = Pick<QueryClient, "getQueryState" | "getQueryData">;
-export type CachedDayLogState = DayLogSnapshot & {
+export type CachedDayLogState = DatedDayLogCacheResult & {
   dataUpdatedAt: number;
   isError: boolean;
   isInvalidated: boolean;

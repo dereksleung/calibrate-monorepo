@@ -39,7 +39,7 @@ export type DayLog = {
 export type KnownEmpty = null;
 export type NotYetLoaded = undefined;
 export type DayLogSlotResult = DayLog | KnownEmpty | NotYetLoaded;
-export type DayLogSnapshot = { date: string; data: DayLogSlotResult };
+export type DatedDayLogCacheResult = { date: string; data: DayLogSlotResult };
 
 export type DayLogSyncSlot = {
   date: string;

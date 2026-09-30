@@ -29,7 +29,7 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
         endDate: dateRange.endDate,
-        dayLogs: cached.map((query) => query.data),
+        dayLogs: cached,
       })
     : undefined;
 

@@ -14,7 +14,7 @@ The purpose is to stop API contract response shapes from flowing through web fea
 - Private `api/<area>/<endpoint>.ts` modules own network requests: request-body validation, URL/path/query construction, HTTP method, and validation of the returned response. An endpoint needing response conversion also defines its pure validated-response-to-frontend-domain mapper in that file. The request operation returns the validated API response without calling the mapper; the mapper is available to core workflows through an internal import. These modules contain no TanStack Query options, hooks, cache writes, or user-goal policy. Their reasons to change include transport/validator technology, network-request details, and response-shape mapping.
 - Public `feature-workflows/<workflow-group>/<goal>` modules own the application-layer orchestration for a cohesive user goal. They map frontend inputs to requests, call private API operations and their co-located response mappers, then coordinate account context, server commands, cache writes required by the result, reconciliation, and fallback behavior through TanStack Query options and hooks. Result-application functions such as `applyDayLogSyncResult`, `applyFoodEntryCreateToDayLogCache`, and `applyUpdatedWeightToDayLogCache` belong inside their respective `<goal>.ts` workflow files. The workflow group is chosen for discoverability and need not match a vertical or an endpoint; a workflow may use models from several verticals.
 - `verticals/<area>/` is a portable feature folder for one cohesive area of functionality shared by web and mobile. It may contain pure calculations, frontend-domain and portable presentation models, reusable QueryClient cache operations, and persistence policy; purity is not required. `verticals/day-log-cache/` groups shared query keys, `CachedDayLogState`, freshness behavior, persistence filtering, persisted-snapshot validation, and pruning, without becoming a collection of result-specific cache writes. Vertical modules do not import API-contract types or platform-specific browser/native APIs; feature workflows call endpoint mappers before passing frontend-domain data to them.
-- Day Log cache data uses shared `DayLogSnapshot` with `DayLog | null | undefined`; this preserves loaded, Known-empty, and unloaded semantics. The existing one-hour validation, version reconciliation, 30-day retention, and account-scoped privacy fence remain behaviorally unchanged.
+- Day Log cache data uses shared `DatedDayLogCacheResult` with `DayLog | null | undefined`; this preserves loaded, Known-empty, and unloaded semantics. The existing one-hour validation, version reconciliation, 30-day retention, and account-scoped privacy fence remain behaviorally unchanged.
 - Core owns portable query keys, shared operations for reading cached Day Log state through QueryClient, query options/hooks, result-specific cache writes, conditional synchronization, and Day Log persistence policy (buster, retention, account-scoped allowlist, validation, and pruning). Shared cache mechanics may live in `verticals/day-log-cache/`; feature workflows own the writes that apply their results. Each app composes the persistence policy and its own persister with `PersistQueryClientProvider`. Web retains the IndexedDB persister, durable cache fence, `window`/`document`/BroadcastChannel behavior, routing, and UI.
 - Core exports portable nutrition, meal, recent-food, and Dashboard V2 analytics projections from the appropriate area folders. Move portable behavior from web's `rank-recent-foods-from-cache.ts`, `confirm-food-nutrition.ts`, `log-page-helpers.ts`, and `day-log-cache.ts` by responsibility; do not move mixed files wholesale. Route and display choices specific to web, chart-component props, and visual components remain in web. Browser-dependent `indexed-db-day-log-cache.ts` and `browser-passkey-registration-adapter.ts` remain in web.
 - Legacy `dashboard-nutrition-model` is deleted when the production-import audit remains empty.
@@ -52,7 +52,7 @@ packages/frontend-core/
 
 ```ts
 import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
-import type { DayLogSnapshot } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
+import type { DatedDayLogCacheResult } from "@calibrate/frontend-core/verticals/day-logs/models/day-log";
 ```
 
 The existing `packages/api-client/src/day-logs/save-food-entry.ts` combines three responsibilities. Split it as follows:
@@ -68,16 +68,16 @@ The private endpoint file defines the mapper, and the workflow calls it after th
 
 ```ts
 // src/api/day-logs/get-day-log.ts
-export function toDayLogSnapshot(response: DayLogResponse | null | undefined, date: string): DayLogSnapshot {
+export function toDatedDayLogCacheResult(response: DayLogResponse | null | undefined, date: string): DatedDayLogCacheResult {
   return { date, data: response === undefined ? undefined : response === null ? null : toDayLog(response) };
 }
 
 // src/feature-workflows/day-logs/get-day-log.ts
 const response = await getDayLog(transport, date);
-const snapshot = toDayLogSnapshot(response, date);
+const snapshot = toDatedDayLogCacheResult(response, date);
 ```
 
-The API contract type in this example remains inside core. The public `DayLogSnapshot` and `DayLog` types do not import it, and public workflow results contain frontend-domain data. A workflow's internal dependency on `api/**` includes both the request operation and its response mapper; the export map still prevents application imports of private `api/**` paths. Vertical modules do not depend on API contracts.
+The API contract type in this example remains inside core. The public `DatedDayLogCacheResult` and `DayLog` types do not import it, and public workflow results contain frontend-domain data. A workflow's internal dependency on `api/**` includes both the request operation and its response mapper; the export map still prevents application imports of private `api/**` paths. Vertical modules do not depend on API contracts.
 
 ## Testing strategy
 
