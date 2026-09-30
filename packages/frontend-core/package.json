@@ -110,6 +110,10 @@
     "./shared/models/nutrition/nutrition-totals": {
       "types": "./src/shared/models/nutrition/nutrition-totals.ts",
       "default": "./src/shared/models/nutrition/nutrition-totals.ts"
+    },
+    "./verticals/dashboard/__mocks__/dashboard-v2-model": {
+      "types": "./src/verticals/dashboard/__mocks__/dashboard-v2-model.ts",
+      "default": "./src/verticals/dashboard/__mocks__/dashboard-v2-model.ts"
     }
   },
   "dependencies": {

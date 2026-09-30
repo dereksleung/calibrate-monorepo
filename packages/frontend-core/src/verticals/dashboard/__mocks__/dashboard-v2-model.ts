@@ -1,7 +1,6 @@
-import type { DashboardV2ViewModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
+import type { DashboardV2ViewModel } from "../dashboard-v2-model.js";
 
-import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
-import { DAILY_TARGETS } from "@calibrate/frontend-core/shared/models/nutrition/nutrition-totals";
+import { DAILY_TARGETS } from "../../../shared/models/nutrition/nutrition-totals.js";
 
 const DASHBOARD_END_DATE = "2026-09-27";
 
@@ -22,7 +21,7 @@ function sevenDayAmounts(endDate: string, amounts: number[]) {
       amount,
       date,
       hasData: true,
-      label: getLocalWeekdayAbbreviation(date),
+      label: ["Sn", "M", "T", "W", "Th", "F", "Sa"][new Date(`${date}T12:00:00Z`).getUTCDay()],
     };
   });
 }
@@ -107,28 +106,28 @@ export const dashboardV2PageViewModelMock: DashboardV2ViewModel = {
   },
   nutritionCards: {
     calories: {
-      amount: sevenDayCalories.at(-1) ?? 0,
+      amount: sevenDayCalories[sevenDayCalories.length - 1] ?? 0,
       metric: "calories",
       target: DAILY_TARGETS.calories,
       title: "Calories",
       unit: "kcal",
     },
     proteinGrams: {
-      amount: sevenDayProtein.at(-1) ?? 0,
+      amount: sevenDayProtein[sevenDayProtein.length - 1] ?? 0,
       metric: "proteinGrams",
       target: DAILY_TARGETS.proteinGrams,
       title: "Protein",
       unit: "g",
     },
     totalFatGrams: {
-      amount: sevenDayFat.at(-1) ?? 0,
+      amount: sevenDayFat[sevenDayFat.length - 1] ?? 0,
       metric: "totalFatGrams",
       target: DAILY_TARGETS.totalFatGrams,
       title: "Fats",
       unit: "g",
     },
     totalCarbohydrateGrams: {
-      amount: sevenDayCarbs.at(-1) ?? 0,
+      amount: sevenDayCarbs[sevenDayCarbs.length - 1] ?? 0,
       metric: "totalCarbohydrateGrams",
       target: DAILY_TARGETS.totalCarbohydrateGrams,
       title: "Carbs",

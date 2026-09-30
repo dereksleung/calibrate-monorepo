@@ -6,7 +6,7 @@ import { buildDashboardV2ViewModel } from "@calibrate/frontend-core/verticals/da
 import { useIsRestoring } from "@tanstack/react-query";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
-// import { dashboardV2PageViewModelMock } from "./DashboardV2Page.viewModel.mock.ts";
+// import { dashboardV2PageViewModelMock } from "@calibrate/frontend-core/verticals/dashboard/__mocks__/dashboard-v2-model";
 
 export function DashboardV2Container() {
   const isRestoring = useIsRestoring();
