@@ -10,13 +10,12 @@ import {
   showPlatformUiForClientPasskeyFailedToRegisterOnServer,
   type BrowserPasskeyRegistrationAdapter,
 } from "#/verticals/auth/browser-passkey-registration-adapter";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import {
   parsePasskeyRegistrationError,
-  requestPasskeyRegistrationOptions,
-  verifyPasskeyRegistration,
-} from "@calibrate/frontend-core/auth/signup-passkey-registration";
-import { ApiError } from "@calibrate/frontend-core/errors";
-import { useMutation } from "@tanstack/react-query";
+  useRequestPasskeyRegistrationOptions,
+  useVerifyPasskeyRegistration,
+} from "@calibrate/frontend-core/feature-workflows/auth/passkey-registration";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -53,18 +52,10 @@ export function PasskeyEnrollmentPage({
     return new Date(handoff.expiresAt).getTime() <= Date.now() ? { kind: "expired" } : { kind: "ready" };
   });
 
-  const { isPending: isRequestOptionsPending, mutateAsync: requestOptions } = useMutation({
-    mutationKey: ["requestPasskeyRegistrationOptions"],
-    mutationFn: () => requestPasskeyRegistrationOptions(apiTransport),
-    retry: false,
-  });
-
-  const { isPending: isVerificationPending, mutateAsync: verifyRegistration } = useMutation({
-    mutationKey: ["verifyPasskeyRegistration"],
-    mutationFn: (input: Parameters<typeof verifyPasskeyRegistration>[1]) =>
-      verifyPasskeyRegistration(apiTransport, input),
-    retry: false,
-  });
+  const { isPending: isRequestOptionsPending, mutateAsync: requestOptions } =
+    useRequestPasskeyRegistrationOptions(apiTransport, { retry: false });
+  const { isPending: isVerificationPending, mutateAsync: verifyRegistration } =
+    useVerifyPasskeyRegistration(apiTransport);
 
   useEffect(() => {
     // If initialUiState is defined, this is a Storybook story for testing
@@ -107,10 +98,10 @@ export function PasskeyEnrollmentPage({
 
     try {
       const options = await requestOptions();
-      const credential = await browserRegistration.createPasskey(options);
+      const credential = await browserRegistration.createPasskey(options.options);
       createdCredential = {
         credentialId: credential.id,
-        rpId: options.rp?.id ?? window.location.hostname,
+        rpId: options.options.rp.id ?? window.location.hostname,
       };
       await verifyRegistration({
         credential,

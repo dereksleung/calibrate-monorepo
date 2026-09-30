@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ApiError } from "../errors.js";
-import type { ApiTransport } from "../transport.js";
+import type { ApiTransport } from "../../transport.js";
 
+import { ApiError } from "../../errors.js";
 import {
   getRequestPasskeyRegistrationOptionsMutationOptions,
   getVerifyPasskeyRegistrationMutationOptions,
   parsePasskeyRegistrationError,
   requestPasskeyRegistrationOptions,
   verifyPasskeyRegistration,
-} from "./signup-passkey-registration.js";
+} from "./passkey-registration.js";
 
 const registrationOptions = {
   challenge: "challenge-value",
@@ -42,9 +42,7 @@ const authenticatedSession = {
 
 describe("requestPasskeyRegistrationOptions", () => {
   it("posts to the options endpoint with credentialed transport", async () => {
-    const request = vi.fn(async ({ responseBodySchema }) =>
-      responseBodySchema.parse(registrationOptions),
-    );
+    const request = vi.fn(async ({ responseBodySchema }) => responseBodySchema.parse(registrationOptions));
     const transport = { request } as unknown as ApiTransport;
 
     const result = await requestPasskeyRegistrationOptions(transport);
@@ -54,7 +52,7 @@ describe("requestPasskeyRegistrationOptions", () => {
       method: "POST",
       responseBodySchema: expect.any(Object),
     });
-    expect(result.challenge).toBe("challenge-value");
+    expect(result).toEqual({ options: registrationOptions });
   });
 });
 
@@ -72,7 +70,12 @@ describe("verifyPasskeyRegistration", () => {
         rememberDevice: true,
       }),
     ).resolves.toMatchObject({
-      user: { email: "person@example.com", tier: "FREE" },
+      user: {
+        email: "person@example.com",
+        tier: "FREE",
+        createdAt: new Date(authenticatedSession.user.createdAt),
+        updatedAt: new Date(authenticatedSession.user.updatedAt),
+      },
       sessionTransport: "cookie",
     });
     expect(request).toHaveBeenCalledWith({
@@ -116,13 +119,43 @@ describe("parsePasskeyRegistrationError", () => {
 
 describe("getRequestPasskeyRegistrationOptionsMutationOptions", () => {
   it("requests fresh options when invoked", async () => {
-    const request = vi.fn(async ({ responseBodySchema }) =>
-      responseBodySchema.parse(registrationOptions),
-    );
+    const request = vi.fn(async ({ responseBodySchema }) => responseBodySchema.parse(registrationOptions));
     const transport = { request } as unknown as ApiTransport;
     const options = getRequestPasskeyRegistrationOptionsMutationOptions(transport);
 
-    await expect(options.mutationFn?.(undefined, {} as never)).resolves.toEqual(registrationOptions);
+    await expect(options.mutationFn?.(undefined, {} as never)).resolves.toEqual({
+      options: registrationOptions,
+    });
     expect(request).toHaveBeenCalledOnce();
+  });
+});
+
+describe("registration failures", () => {
+  it.each([
+    "ORIGIN_NOT_ALLOWED",
+    "ENROLLMENT_AUTHORIZATION_REQUIRED",
+    "PASSKEY_REGISTRATION_FAILED",
+    "PASSKEY_REGISTRATION_STATE_CONFLICT",
+    "PASSKEY_REGISTRATION_RATE_LIMITED",
+    "PASSKEY_REGISTRATION_UNAVAILABLE",
+  ])("recognizes %s without swallowing the original failure", async (code) => {
+    const error = new ApiError({ status: 400, statusText: "Bad Request", body: { error: code } });
+    const transport = { request: vi.fn().mockRejectedValue(error) };
+    expect(parsePasskeyRegistrationError(error)).toBe(code);
+    await expect(requestPasskeyRegistrationOptions(transport)).rejects.toBe(error);
+    await expect(
+      verifyPasskeyRegistration(transport, { credential: registrationCredential, rememberDevice: false }),
+    ).rejects.toBe(error);
+  });
+  it("rejects unknown or malformed errors", () => {
+    for (const body of [
+      null,
+      { error: "UNKNOWN" },
+      { error: "PASSKEY_REGISTRATION_FAILED", extra: "private" },
+    ]) {
+      expect(
+        parsePasskeyRegistrationError(new ApiError({ status: 400, statusText: "Bad Request", body })),
+      ).toBeNull();
+    }
   });
 });

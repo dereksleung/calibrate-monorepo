@@ -5,7 +5,8 @@ import type { BrowserPasskeyRegistrationAdapter } from "#/verticals/auth/browser
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { ApiError } from "@calibrate/frontend-core/errors";
 import { authenticatedSessionQueryKey } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { buildPasskeyRegistrationChallenge } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/passkey-registration";
+import { QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,12 +16,17 @@ const mockRequestOptions = vi.fn();
 const mockVerifyRegistration = vi.fn();
 const mockNavigate = vi.fn();
 
-vi.mock("@calibrate/frontend-core/auth/signup-passkey-registration", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/passkey-registration", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,
-    requestPasskeyRegistrationOptions: (...args: unknown[]) => mockRequestOptions(...args),
-    verifyPasskeyRegistration: (...args: unknown[]) => mockVerifyRegistration(...args),
+    useRequestPasskeyRegistrationOptions: (transport: unknown) =>
+      useMutation({ mutationFn: () => mockRequestOptions(transport), retry: false }),
+    useVerifyPasskeyRegistration: (transport: unknown) =>
+      useMutation({
+        mutationFn: (command: unknown) => mockVerifyRegistration(transport, command),
+        retry: false,
+      }),
   };
 });
 
@@ -68,7 +74,7 @@ beforeEach(() => {
 
 describe("PasskeyEnrollmentPage", () => {
   it("defers publishing the authenticated session to the restoration gate after successful enrollment", async () => {
-    mockRequestOptions.mockResolvedValue({ challenge: "abc" });
+    mockRequestOptions.mockResolvedValue(buildPasskeyRegistrationChallenge());
     vi.mocked(browserAdapter.createPasskey).mockResolvedValue({
       id: "credential-id",
       rawId: "credential-id",
@@ -95,7 +101,7 @@ describe("PasskeyEnrollmentPage", () => {
 
     await waitFor(() => {
       expect(mockRequestOptions).toHaveBeenCalledOnce();
-      expect(browserAdapter.createPasskey).toHaveBeenCalledOnce();
+      expect(browserAdapter.createPasskey).toHaveBeenCalledWith(buildPasskeyRegistrationChallenge().options);
       expect(mockVerifyRegistration).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ rememberDevice: true }),
@@ -106,7 +112,7 @@ describe("PasskeyEnrollmentPage", () => {
   });
 
   it("starts a fresh ceremony when Try again is clicked after cancellation", async () => {
-    mockRequestOptions.mockResolvedValue({ challenge: "abc" });
+    mockRequestOptions.mockResolvedValue(buildPasskeyRegistrationChallenge());
     vi.mocked(browserAdapter.createPasskey)
       .mockRejectedValueOnce(Object.assign(new Error("cancelled"), { name: "NotAllowedError" }))
       .mockResolvedValueOnce({
@@ -193,10 +199,14 @@ describe("PasskeyEnrollmentPage", () => {
   });
 
   it("signals a credential that could not be saved after device verification", async () => {
-    mockRequestOptions.mockResolvedValue({
-      challenge: "abc",
-      rp: { id: "example.com", name: "Calibrate" },
-    });
+    mockRequestOptions.mockResolvedValue(
+      buildPasskeyRegistrationChallenge({
+        options: {
+          ...buildPasskeyRegistrationChallenge().options,
+          rp: { id: "example.com", name: "Calibrate" },
+        },
+      }),
+    );
     vi.mocked(browserAdapter.createPasskey).mockResolvedValue({
       id: "credential-id",
       rawId: "credential-id",

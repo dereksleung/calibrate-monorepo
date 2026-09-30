@@ -1,9 +1,12 @@
-import type { PasskeyRegistrationOptionsResponse, RegistrationResponseJSON } from "@calibrate/api-contracts";
+import type {
+  PasskeyRegistrationChallenge,
+  PasskeyRegistrationCredential,
+} from "@calibrate/frontend-core/verticals/auth/models/passkey-registration";
 
-import { startRegistration, type PublicKeyCredentialCreationOptionsJSON } from "@simplewebauthn/browser";
+import { startRegistration } from "@simplewebauthn/browser";
 
 export interface BrowserPasskeyRegistrationAdapter {
-  createPasskey(options: PasskeyRegistrationOptionsResponse): Promise<RegistrationResponseJSON>;
+  createPasskey(options: PasskeyRegistrationChallenge["options"]): Promise<PasskeyRegistrationCredential>;
 }
 
 export function isBrowserPasskeyRegistrationSupported(): boolean {
@@ -16,11 +19,12 @@ export function isBrowserPasskeyRegistrationSupported(): boolean {
 
 export function createBrowserPasskeyRegistrationAdapter(): BrowserPasskeyRegistrationAdapter {
   return {
-    async createPasskey(options) {
+    async createPasskey(options): Promise<PasskeyRegistrationCredential> {
       const credential = await startRegistration({
-        optionsJSON: options as unknown as PublicKeyCredentialCreationOptionsJSON,
+        optionsJSON: options,
       });
-      return credential as RegistrationResponseJSON;
+      // The SDK includes legacy transport labels; the verification endpoint validates the payload.
+      return credential as PasskeyRegistrationCredential;
     },
   };
 }
