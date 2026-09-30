@@ -2,8 +2,8 @@ import { ConfirmFood } from "#/pages/logs/ConfirmFood/ConfirmFood.tsx";
 import { parseFoodConfirmationState } from "#/pages/logs/food-confirmation-state.ts";
 import { normalizeFoodSearchRouteSearch } from "#/pages/logs/log-page-helpers.ts";
 import { apiTransport } from "#/shared/api/api-client.ts";
-import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
+import { useAuthenticatedSession } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { createFileRoute, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 

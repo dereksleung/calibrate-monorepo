@@ -3,8 +3,8 @@
 import type { BrowserPasskeyRegistrationAdapter } from "#/verticals/auth/browser-passkey-registration-adapter.ts";
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
-import { authenticatedSessionQueryKey } from "#/verticals/auth/authenticated-session.ts";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { authenticatedSessionQueryKey } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

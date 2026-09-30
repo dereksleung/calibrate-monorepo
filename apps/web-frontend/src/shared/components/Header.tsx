@@ -3,10 +3,6 @@ import { getTodayDateString } from "#/pages/logs/log-page-helpers.ts";
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
 import {
-  clearAuthenticatedSession,
-  useAuthenticatedSession,
-} from "#/verticals/auth/authenticated-session.ts";
-import {
   broadcastDayLogCacheRevocation,
   beginDayLogCacheLogout,
   clearPendingDayLogCacheLogout,
@@ -15,6 +11,10 @@ import {
 import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider.tsx";
 import { ApiError } from "@calibrate/frontend-core/errors";
 import { deleteCurrentSession } from "@calibrate/frontend-core/feature-workflows/auth/delete-current-session";
+import {
+  clearAuthenticatedSession,
+  useAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { UserRound, UserRoundPlus } from "lucide-react";

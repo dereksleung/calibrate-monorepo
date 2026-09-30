@@ -1,7 +1,7 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
-import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { useAuthenticatedSession } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { buildDashboardV2ViewModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 import { useIsRestoring } from "@tanstack/react-query";
 

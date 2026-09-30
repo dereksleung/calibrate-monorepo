@@ -1,12 +1,12 @@
+import {
+  authenticatedSessionQueryKey,
+  setAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { buildAuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/authenticated-user-context";
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  authenticatedSessionQueryKey,
-  establishAuthenticatedSession,
-  setAuthenticatedSession,
-} from "./authenticated-session.ts";
+import { establishAuthenticatedSession } from "./authenticated-session.ts";
 
 const { broadcastDayLogCacheRevocation, confirmDayLogCacheAccount } = vi.hoisted(() => ({
   broadcastDayLogCacheRevocation: vi.fn(),

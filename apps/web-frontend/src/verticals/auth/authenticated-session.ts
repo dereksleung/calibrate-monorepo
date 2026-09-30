@@ -1,19 +1,17 @@
 import type { AuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/authenticated-user-context";
+import type { QueryClient } from "@tanstack/react-query";
 
-import { skipToken, useQuery, type QueryClient } from "@tanstack/react-query";
+import {
+  getAuthenticatedSession,
+  setAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 
 import { broadcastDayLogCacheRevocation } from "../day-log-cache/indexed-db-day-log-cache-logout.ts";
 import { confirmDayLogCacheAccount } from "../day-log-cache/indexed-db-day-log-cache.ts";
 
-export const authenticatedSessionQueryKey = ["authenticatedSession"] as const;
-
 export type AuthenticatedSessionTransition = {
   previousAccountId?: string;
 };
-
-export function setAuthenticatedSession(queryClient: QueryClient, session: AuthenticatedUserContext): void {
-  queryClient.setQueryData(authenticatedSessionQueryKey, session);
-}
 
 export async function establishAuthenticatedSession(
   queryClient: QueryClient,
@@ -33,23 +31,4 @@ export async function establishAuthenticatedSession(
   }
   setAuthenticatedSession(queryClient, session);
   return previousAccountId && previousAccountId !== session.user.id ? { previousAccountId } : {};
-}
-
-export function getAuthenticatedSession(queryClient: QueryClient): AuthenticatedUserContext | undefined {
-  return queryClient.getQueryData(authenticatedSessionQueryKey);
-}
-
-export function clearAuthenticatedSession(queryClient: QueryClient): void {
-  queryClient.removeQueries({ queryKey: authenticatedSessionQueryKey });
-}
-
-/** Subscribes a component to changes in the data set by the manual methods above */
-export function useAuthenticatedSession(): AuthenticatedUserContext | undefined {
-  const { data } = useQuery({
-    queryKey: authenticatedSessionQueryKey,
-    queryFn: skipToken,
-    gcTime: Infinity,
-    staleTime: Infinity,
-  });
-  return data as AuthenticatedUserContext | undefined;
 }

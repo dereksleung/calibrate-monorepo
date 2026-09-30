@@ -2,7 +2,6 @@ import type { DayLogSlotResult, FoodEntry } from "@calibrate/frontend-core/share
 import type { FoodSearchResult } from "@calibrate/frontend-core/verticals/foods/models/search-foods";
 
 import { apiTransport } from "#/shared/api/api-client.ts";
-import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
@@ -10,6 +9,7 @@ import {
 } from "@calibrate/api-contracts";
 import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
 import { useFoodSearch } from "@calibrate/frontend-core/feature-workflows/foods/search-foods";
+import { useAuthenticatedSession } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { dayLogSlotQueryKeyPrefix } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
 import {
   getFoodUnitOptions,

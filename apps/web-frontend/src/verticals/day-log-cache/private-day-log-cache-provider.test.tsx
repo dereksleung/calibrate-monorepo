@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { authenticatedSessionQueryKey } from "#/verticals/auth/authenticated-session.ts";
+import { authenticatedSessionQueryKey } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import {
   dayLogSlotQueryKey,
   type CachedDayLog,

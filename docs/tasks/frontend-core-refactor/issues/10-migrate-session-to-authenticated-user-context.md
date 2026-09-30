@@ -29,3 +29,11 @@
 - Removed the superseded core session adapter/export and its replaced tests after auditing all callers. The web coordinator and restoration gate remain because they own the browser lifecycle.
 - Session endpoints explicitly parse responses because the shared transport validator logs malformed data and returns it. Session endpoints now reject malformed success responses; other endpoints retain their existing validation behavior.
 - Verification passed: focused session/transport tests (25), focused web session/logout/local-session tests (37), restoration ordering tests (7), all core tests (97), all web fast tests (196), core/web typechecks, scoped formatting, and the obsolete-import/diff audits. The first checkpoint's commit hook also passed affected lint/typecheck/test targets.
+
+
+### Portable session cache follow-up
+
+- Moved `authenticatedSessionQueryKey`, `setAuthenticatedSession`, `getAuthenticatedSession`, `clearAuthenticatedSession`, and `useAuthenticatedSession` to the public `verticals/auth/authenticated-session` core leaf. Migrated production and test callers directly to that leaf, with no web re-exports.
+- Kept `establishAuthenticatedSession` and its transition type in web, preserving durable account confirmation and revocation before publishing the context.
+- Added core coverage for context replacement, session-only removal, and QueryClient subscription without fetching.
+- Verification passed: focused core cache tests (3), focused web lifecycle tests (34), all core tests (100), all web fast tests (196), both typechecks, scoped formatting, and the web import audit. Cache helpers accept only the QueryClient methods they use, matching existing core cache boundaries.

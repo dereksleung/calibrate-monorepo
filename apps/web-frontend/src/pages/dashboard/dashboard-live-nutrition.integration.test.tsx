@@ -3,8 +3,8 @@
 import type { DayLogRangeResponse } from "@calibrate/api-contracts";
 
 import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
-import { setAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { applyDayLogSyncResult } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { setAuthenticatedSession } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import {
   DAY_LOG_VALIDATION_FRESHNESS_MS,
   dayLogSlotQueryKey,

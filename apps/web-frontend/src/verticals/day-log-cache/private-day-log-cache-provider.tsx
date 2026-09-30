@@ -1,4 +1,8 @@
 import {
+  clearAuthenticatedSession,
+  getAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
+import {
   dayLogSlotQueryKeyPrefix,
   dayLogSlotVersionQueryKeyPrefix,
 } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
@@ -12,7 +16,6 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { clearAuthenticatedSession, getAuthenticatedSession } from "../auth/authenticated-session.ts";
 import {
   DAY_LOG_CACHE_BROADCAST_CHANNEL,
   acquireDayLogCacheAccess,

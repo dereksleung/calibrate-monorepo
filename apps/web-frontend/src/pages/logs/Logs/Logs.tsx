@@ -1,9 +1,9 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
-import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 import { useUpdateDayLogWeight } from "@calibrate/frontend-core/feature-workflows/day-logs/update-day-log-weight";
+import { useAuthenticatedSession } from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import {
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,

@@ -6,6 +6,10 @@ import { WarningBanner } from "#/shared/components/base/WarningBanner.tsx";
 import { ApiError } from "@calibrate/frontend-core/errors";
 import { getCurrentSession } from "@calibrate/frontend-core/feature-workflows/auth/get-current-session";
 import { refreshSession } from "@calibrate/frontend-core/feature-workflows/auth/refresh-session";
+import {
+  clearAuthenticatedSession,
+  getAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
@@ -19,11 +23,7 @@ import {
   PrivateDayLogCacheProvider,
   clearPrivateDayLogMemory,
 } from "../day-log-cache/private-day-log-cache-provider.tsx";
-import {
-  clearAuthenticatedSession,
-  establishAuthenticatedSession,
-  getAuthenticatedSession,
-} from "./authenticated-session.ts";
+import { establishAuthenticatedSession } from "./authenticated-session.ts";
 
 type State = "checking" | "refreshing" | "available" | "unavailable";
 

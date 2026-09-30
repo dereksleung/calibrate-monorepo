@@ -134,6 +134,10 @@
     "./verticals/auth/models/__mocks__/authenticated-user-context": {
       "types": "./src/verticals/auth/models/__mocks__/authenticated-user-context.ts",
       "default": "./src/verticals/auth/models/__mocks__/authenticated-user-context.ts"
+    },
+    "./verticals/auth/authenticated-session": {
+      "types": "./src/verticals/auth/authenticated-session.ts",
+      "default": "./src/verticals/auth/authenticated-session.ts"
     }
   },
   "dependencies": {

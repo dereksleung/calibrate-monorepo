@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 
 import { ApiError } from "@calibrate/frontend-core/errors";
+import {
+  authenticatedSessionQueryKey,
+  setAuthenticatedSession,
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { buildAuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/authenticated-user-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -13,7 +17,6 @@ import {
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { authenticatedSessionQueryKey, setAuthenticatedSession } from "./authenticated-session.ts";
 import { SessionRestorationGate } from "./session-restoration-gate.tsx";
 
 const {

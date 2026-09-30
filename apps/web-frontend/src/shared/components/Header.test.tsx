@@ -2,11 +2,11 @@
 
 import { createQueryClient } from "#/shared/api/query-client.ts";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
+import { ApiError } from "@calibrate/frontend-core/errors";
 import {
   authenticatedSessionQueryKey,
   setAuthenticatedSession,
-} from "#/verticals/auth/authenticated-session.ts";
-import { ApiError } from "@calibrate/frontend-core/errors";
+} from "@calibrate/frontend-core/verticals/auth/authenticated-session";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterContextProvider,
