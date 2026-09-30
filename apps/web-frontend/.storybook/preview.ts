@@ -2,7 +2,7 @@ import type { Preview } from "@storybook/react-vite";
 
 import { sb } from "storybook/test";
 
-sb.mock(import("../src/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts"));
+sb.mock(import("../../../packages/frontend-core/src/feature-workflows/day-logs/sync-day-logs.ts"));
 
 const preview: Preview = {
   parameters: {

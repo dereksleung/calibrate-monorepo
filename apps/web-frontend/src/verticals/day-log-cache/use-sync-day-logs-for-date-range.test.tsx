@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
+import { apiTransport } from "#/shared/api/api-client.ts";
+import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { dayLogSlotQueryKey } from "./day-log-cache.ts";
-import { useSyncDayLogsForDateRange } from "./use-sync-day-logs-for-date-range.ts";
 
 const accountId = "e74942b3-78d7-48e8-bd20-dc5eba7f82ff";
 const range = { startDate: "2026-09-03", endDate: "2026-09-03" };
@@ -17,7 +18,7 @@ function SyncHarness({
   dateRange?: { startDate: string; endDate: string };
   enabled?: boolean;
 }) {
-  useSyncDayLogsForDateRange({ accountId, dateRange, enabled });
+  useSyncDayLogsForDateRange(apiTransport, { accountId, dateRange, enabled });
   return null;
 }
 

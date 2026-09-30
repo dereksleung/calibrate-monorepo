@@ -7,7 +7,7 @@ import {
   doesDayLogRangeNeedValidation,
   getDayLogsWithStalenessState,
 } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
+import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 import { useUpdateDayLogWeight } from "@calibrate/frontend-core/day-logs/update-day-log-weight";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
@@ -104,7 +104,7 @@ export function Logs({ selectedDate, todayDate = getTodayDateString() }: LogsPro
     getDayLogsWithStalenessState(queryClient, accountId, selectedDateOnlyAsRange),
     Date.now(),
   );
-  const selectedDaySync = useSyncDayLogsForDateRange({
+  const selectedDaySync = useSyncDayLogsForDateRange(apiTransport, {
     accountId,
     dateRange: selectedDayWithPastWeek,
     enabled: !isUpcoming && selectedDateNeedsValidation,

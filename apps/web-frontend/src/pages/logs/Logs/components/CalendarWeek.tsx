@@ -1,5 +1,6 @@
+import { apiTransport } from "#/shared/api/api-client.ts";
 import { dayLogSlotQueryKeyPrefix } from "#/verticals/day-log-cache/day-log-cache.ts";
-import { useSyncDayLogsForDateRange } from "#/verticals/day-log-cache/use-sync-day-logs-for-date-range.ts";
+import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -170,7 +171,7 @@ export function CalendarWeek({ accountId, selectedDate, todayDate }: CalendarWee
     startDate: addDaysToIsoDate(activeWeekStart, -7),
     endDate: calendarWeek.at(-1)! > todayDate ? todayDate : calendarWeek.at(-1)!,
   };
-  const calendarDaySync = useSyncDayLogsForDateRange({
+  const calendarDaySync = useSyncDayLogsForDateRange(apiTransport, {
     accountId,
     dateRange: calendarRange,
     enabled: selectedDate <= todayDate,
