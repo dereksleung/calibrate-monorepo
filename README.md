@@ -36,7 +36,7 @@ The main dashboard follows the same approach. Seven-day nutrition, logging habit
 
 ## Engineering highlights
 
-- **Composable frontend architecture.** Dashboard data is transformed into presentation-oriented view models before reaching UI components. Components such as `MiniAnalyticsCard` use a compound-component API to share layout and semantics while allowing different analytics cards to compose only the pieces they need.
+- **Portable frontend core.** `@calibrate/frontend-core` defines frontend-domain models, user-goal workflows, cache behavior, and view-independent projections once for web and an upcoming mobile client. Both can follow the same data and reconciliation rules, reducing duplicated implementation and inconsistent behavior. Browser-specific routing, storage, authentication adapters, and UI remain in web. 
 
 - **Persisted, cache-first data access.** Day Logs are persisted in IndexedDB through TanStack Query and keyed by date. Multiple views derive their data from the same cached records rather than independently fetching equivalent server state.
 
@@ -67,13 +67,16 @@ packages/
 
 ### Frontend architecture
 
-Routes handle URL and search state, pages compose screens, and verticals own feature behavior such as authentication, dashboard view models, and the shared Day Log cache.
+`@calibrate/frontend-core` holds logic and types shareable between web and an upcoming mobile client. A private API layer validates and maps HTTP responses into frontend-domain models to limit the blast radius of changes to API responses. Public feature workflows orchestrate operations for goals such as saving a food entry, including cache updates and reconciliation. Verticals are like feature folders holding logic and types related to a cohesive area of functionality. 
 
-The frontend keeps reusable server data separate from page-specific presentation models. For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
+The web client supplies a configured API transport, UI, and IndexedDB implementations for the browser cache persistence and its logout fence.
+With Tanstack Router, route files handle URL and search state, page files compose screens, and verticals own feature behavior that need web-specific details.
 
-At the component level, the same attention to capturing what is shared while leaving context-specific composition flexible shapes components like `MiniAnalyticsCard`, a compound component. Common pieces such as titles, chart areas, summary values, separators, and interaction affordances are reusable, while individual Habit and Nutrition cards compose only the pieces appropriate to their behavior.
+The frontend keeps reusable server data cached and separate from page-specific presentation models. For the dashboard, API Day Log data remains in the shared TanStack Query cache while a pure transformation produces the view model consumed by the page. This lets presentation components depend on the shape the interface needs without changing the canonical cached representation.
 
-### Backend boundaries
+At the component level, the same attention to capturing what is shared while leaving context-specific composition flexible shapes components like `MiniAnalyticsCard`, a compound component. Common pieces such as titles, chart areas, summary values, separators, and interaction affordances capture reusable styling and layout, while individual Habit and Nutrition cards compose only the pieces appropriate to their behavior.
+
+### Backend architecture
 
 The backend uses Express as a thin HTTP layer around application and domain code rather than making framework concepts the application's architectural boundaries.
 
