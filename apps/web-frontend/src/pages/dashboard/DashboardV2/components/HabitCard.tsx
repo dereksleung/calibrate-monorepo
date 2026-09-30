@@ -1,4 +1,4 @@
-import type { HabitCardModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { HabitCardModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 
 import { cn } from "#/lib/utils.ts";
 

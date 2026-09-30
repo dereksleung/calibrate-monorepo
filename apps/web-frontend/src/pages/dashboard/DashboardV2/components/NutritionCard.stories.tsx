@@ -1,4 +1,7 @@
-import type { DashboardNutritionMetric, NutritionCardModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type {
+  DashboardNutritionMetric,
+  NutritionCardModel,
+} from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { NutritionCard, PendingNutritionCard } from "./NutritionCard.tsx";

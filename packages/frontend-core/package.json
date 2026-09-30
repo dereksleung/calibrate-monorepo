@@ -102,6 +102,14 @@
     "./verticals/recent-foods/rank-recent-foods-from-cache": {
       "types": "./src/verticals/recent-foods/rank-recent-foods-from-cache.ts",
       "default": "./src/verticals/recent-foods/rank-recent-foods-from-cache.ts"
+    },
+    "./verticals/dashboard/dashboard-v2-model": {
+      "types": "./src/verticals/dashboard/dashboard-v2-model.ts",
+      "default": "./src/verticals/dashboard/dashboard-v2-model.ts"
+    },
+    "./shared/models/nutrition/nutrition-totals": {
+      "types": "./src/shared/models/nutrition/nutrition-totals.ts",
+      "default": "./src/shared/models/nutrition/nutrition-totals.ts"
     }
   },
   "dependencies": {

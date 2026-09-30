@@ -1,4 +1,4 @@
-import type { NutrientAnalyticsModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 import type { RefObject } from "react";
 
 import {
@@ -46,9 +46,7 @@ function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardA
               : "Nutrient contribution details."}
           </DrawerDescription>
         </DrawerHeader>
-        {model ? (
-          <NutrientAnalytics key={model.metric} model={model} />
-        ) : null}
+        {model ? <NutrientAnalytics key={model.metric} model={model} /> : null}
       </DrawerContent>
     </Drawer>
   );

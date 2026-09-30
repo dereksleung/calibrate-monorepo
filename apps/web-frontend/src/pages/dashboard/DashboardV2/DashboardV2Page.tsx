@@ -1,4 +1,7 @@
-import type { DashboardNutritionMetric, DashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type {
+  DashboardNutritionMetric,
+  DashboardV2ViewModel,
+} from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { APP_CONTENT_FRAME_CLASS_NAME } from "#/shared/layout/app-content-frame.ts";
@@ -6,7 +9,11 @@ import { useRef, useState } from "react";
 
 import { DashboardAnalyticsDrawer } from "./components/DashboardAnalyticsDrawer.tsx";
 import { HabitCard, PendingHabitCard, PENDING_HABIT_TITLES } from "./components/HabitCard.tsx";
-import { NutritionCard, PendingNutritionCard, PENDING_NUTRITION_TITLES } from "./components/NutritionCard.tsx";
+import {
+  NutritionCard,
+  PendingNutritionCard,
+  PENDING_NUTRITION_TITLES,
+} from "./components/NutritionCard.tsx";
 import { PendingSevenDayNutrition, SevenDayNutrition } from "./components/SevenDayNutrition.tsx";
 
 const NUTRITION_CARD_ORDER: DashboardNutritionMetric[] = [

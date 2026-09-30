@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { SevenDayNutritionRowModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { SevenDayNutritionRowModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";

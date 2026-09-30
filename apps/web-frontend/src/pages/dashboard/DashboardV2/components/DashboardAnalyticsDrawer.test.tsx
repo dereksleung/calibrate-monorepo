@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { NutrientAnalyticsModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 import type { RefObject } from "react";
 
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";

@@ -1,7 +1,7 @@
-import type { DashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
+import type { DashboardV2ViewModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 
 import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
-import { DAILY_TARGETS } from "#/shared/nutrition/nutrition-totals.ts";
+import { DAILY_TARGETS } from "@calibrate/frontend-core/shared/models/nutrition/nutrition-totals";
 
 const DASHBOARD_END_DATE = "2026-09-27";
 

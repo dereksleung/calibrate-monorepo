@@ -1,4 +1,4 @@
-import type { DayLogResponse, FoodEntryResponse } from "@calibrate/api-contracts";
+import type { DayLog, FoodEntry } from "../day-logs/day-log.js";
 
 export const DAILY_TARGETS = {
   calories: 1800,
@@ -21,7 +21,7 @@ const emptyNutritionTotals = (): NutritionTotals => ({
   totalCarbohydrateGrams: 0,
 });
 
-export function getFoodEntryNutritionTotals(entries: readonly FoodEntryResponse[]): NutritionTotals {
+export function getFoodEntryNutritionTotals(entries: readonly FoodEntry[]): NutritionTotals {
   return entries.reduce<NutritionTotals>(
     (totals, entry) => ({
       calories: totals.calories + entry.calories,
@@ -33,7 +33,7 @@ export function getFoodEntryNutritionTotals(entries: readonly FoodEntryResponse[
   );
 }
 
-export function getDayLogNutritionTotals(dayLog: DayLogResponse): NutritionTotals {
+export function getDayLogNutritionTotals(dayLog: DayLog | null | undefined): NutritionTotals {
   return [dayLog?.breakfast ?? [], dayLog?.lunch ?? [], dayLog?.dinner ?? [], dayLog?.snacks ?? []].reduce(
     (totals, mealEntries) => {
       const mealTotals = getFoodEntryNutritionTotals(mealEntries);

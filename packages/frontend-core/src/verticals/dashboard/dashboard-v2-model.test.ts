@@ -1,77 +1,74 @@
-import type { DayLogRangeResponse, FoodEntryResponse } from "@calibrate/api-contracts";
-
 import { describe, expect, it } from "vitest";
 
-import {
-  buildDashboardV2ViewModel,
-  buildNutrientAnalyticsModel,
-  type CachedDayLogQuery,
-  type DashboardHistoryDay,
-} from "./dashboard-v2-model.ts";
+import type { DayLog, DayLogSnapshot } from "../../shared/models/day-logs/day-log.js";
 
-function buildFoodEntry(overrides: Partial<FoodEntryResponse> = {}): FoodEntryResponse {
-  return {
-    id: "food-entry-1",
-    meal: "BREAKFAST",
-    name: "Food",
-    brand: null,
-    chosenQuantity: 1,
-    chosenUnit: "serving",
-    quantityServing: 1,
-    servingLabel: "serving",
-    quantityMass: null,
-    massUnit: null,
-    quantityVolume: null,
-    volumeUnit: null,
-    calories: 100,
-    totalFatGrams: 10,
-    saturatedFatGrams: null,
-    cholesterolMg: null,
-    sodiumMg: null,
-    totalCarbohydrateGrams: 20,
-    fiberGrams: null,
-    sugarGrams: null,
-    proteinGrams: 30,
-    ...overrides,
-  };
-}
+import { buildDayLog, buildFoodEntry } from "../../shared/models/day-logs/__mocks__/day-log.js";
+import { buildDashboardV2ViewModel, buildNutrientAnalyticsModel } from "./dashboard-v2-model.js";
 
-function buildDay(
-  date: string,
-  overrides: Partial<Exclude<DayLogRangeResponse["days"][number]["dayLog"], null>> = {},
-): DayLogRangeResponse["days"][number] {
+function buildDay(date: string, overrides: Partial<DayLog> = {}): DayLogSnapshot {
   return {
     date,
-    dayLog: {
-      id: `00000000-0000-0000-0000-${date.replaceAll("-", "")}`,
-      date,
-      breakfast: [],
-      lunch: [],
-      dinner: [],
-      snacks: [],
-      weight: null,
-      ...overrides,
-    },
+    data: buildDayLog({ date, breakfast: [], lunch: [], dinner: [], snacks: [], ...overrides }),
   };
 }
 
-function cachedQuery(
-  date: string,
-  dayLog: DayLogRangeResponse["days"][number]["dayLog"] | undefined,
-): CachedDayLogQuery {
+function snapshot(date: string, data: DayLogSnapshot["data"]): DayLogSnapshot {
   return {
-    data: dayLog === undefined ? undefined : { date, data: dayLog },
+    date,
+    data,
   };
-}
-
-function cachedQueries(days: DayLogRangeResponse["days"]): CachedDayLogQuery[] {
-  return days.map((day) => cachedQuery(day.date, day.dayLog));
 }
 
 describe("buildDashboardV2ViewModel", () => {
+  it("preserves targets and distinguishes known-empty from unloaded habit history", () => {
+    const model = buildDashboardV2ViewModel({
+      endDate: "2026-09-01",
+      dayLogs: [undefined, { date: "2026-08-30", data: undefined }, { date: "2026-08-31", data: null }],
+    });
+
+    expect(model.sevenDayNutrition.rows.map(({ target }) => target)).toEqual([1800, 120, 60, 220]);
+    expect(model.habits.foodLogging.days.slice(-3).map(({ status }) => status)).toEqual([
+      "unavailable",
+      "incomplete",
+      "unavailable",
+    ]);
+    expect(model.habits.weighIn.days.slice(-3).map(({ status }) => status)).toEqual([
+      "unavailable",
+      "incomplete",
+      "unavailable",
+    ]);
+    expect(model.analytics.calories.change.showInsufficientHistoryBanner).toBe(false);
+    expect(model.nutritionCards.calories.amount).toBe(0);
+  });
+
+  it("uses only the inclusive 28-day comparison windows and seven-day totals", () => {
+    const model = buildDashboardV2ViewModel({
+      endDate: "2026-08-30",
+      dayLogs: [
+        buildDay("2026-08-02", { breakfast: [buildFoodEntry({ name: "Too old", calories: 999 })] }),
+        buildDay("2026-08-03", { breakfast: [buildFoodEntry({ name: "Food", calories: 100 })] }),
+        buildDay("2026-08-16", { breakfast: [buildFoodEntry({ name: "Food", calories: 100 })] }),
+        buildDay("2026-08-17", { breakfast: [buildFoodEntry({ name: "Food", calories: 50 })] }),
+        buildDay("2026-08-24", { breakfast: [buildFoodEntry({ name: "Food", calories: 25 })] }),
+        buildDay("2026-08-30", { breakfast: [buildFoodEntry({ name: "Food", calories: 25 })] }),
+        buildDay("2026-08-31", { breakfast: [buildFoodEntry({ name: "Future", calories: 999 })] }),
+      ],
+    });
+
+    expect(model.analytics.calories.total).toEqual({
+      amount: 50,
+      contributions: [{ name: "Food", amount: 50, share: 1 }],
+    });
+    expect(model.analytics.calories.change.sections).toEqual({
+      reductions: [{ name: "Food", amount: 100, change: -0.5 }],
+      increases: [],
+      newFoods: [],
+    });
+  });
+
   it("derives all nutrition metrics from every meal and preserves seven chronological days", () => {
     const model = buildDashboardV2ViewModel({
-      dayLogs: cachedQueries([
+      dayLogs: [
         buildDay("2026-08-24", {
           breakfast: [
             buildFoodEntry({ calories: 100, totalFatGrams: 1, proteinGrams: 2, totalCarbohydrateGrams: 3 }),
@@ -87,11 +84,11 @@ describe("buildDashboardV2ViewModel", () => {
             }),
           ],
         }),
-        { date: "2026-08-25", dayLog: null },
+        { date: "2026-08-25", data: null },
         buildDay("2026-08-26"),
-        { date: "2026-08-27", dayLog: null },
+        { date: "2026-08-27", data: null },
         buildDay("2026-08-28"),
-        { date: "2026-08-29", dayLog: null },
+        { date: "2026-08-29", data: null },
         buildDay("2026-08-30", {
           dinner: [
             buildFoodEntry({
@@ -104,7 +101,7 @@ describe("buildDashboardV2ViewModel", () => {
             }),
           ],
         }),
-      ]),
+      ],
     });
 
     expect(model.sevenDayNutrition.rows.map(({ metric }) => metric)).toEqual([
@@ -133,11 +130,11 @@ describe("buildDashboardV2ViewModel", () => {
   it("omits unloaded slot queries while keeping known-empty days", () => {
     const model = buildDashboardV2ViewModel({
       dayLogs: [
-        cachedQuery("2026-08-25", null),
-        cachedQuery("2026-08-26", undefined),
-        cachedQuery(
+        snapshot("2026-08-25", null),
+        snapshot("2026-08-26", undefined),
+        snapshot(
           "2026-08-31",
-          buildDay("2026-08-31", { breakfast: [buildFoodEntry({ calories: 40 })] }).dayLog,
+          buildDay("2026-08-31", { breakfast: [buildFoodEntry({ calories: 40 })] }).data,
         ),
       ],
     });
@@ -156,20 +153,20 @@ describe("buildDashboardV2ViewModel", () => {
   it("anchors the seven-day nutrition chart on the response end date and fills missing prior days", () => {
     const model = buildDashboardV2ViewModel({
       dayLogs: [
-        cachedQuery(
+        snapshot(
           "2026-08-25",
-          buildDay("2026-08-25", { breakfast: [buildFoodEntry({ calories: 125 })] }).dayLog,
+          buildDay("2026-08-25", { breakfast: [buildFoodEntry({ calories: 125 })] }).data,
         ),
-        cachedQuery(
+        snapshot(
           "2026-08-28",
           buildDay("2026-08-28", { lunch: [buildFoodEntry({ id: "friday", calories: 280, meal: "LUNCH" })] })
-            .dayLog,
+            .data,
         ),
-        cachedQuery(
+        snapshot(
           "2026-08-31",
           buildDay("2026-08-31", {
             dinner: [buildFoodEntry({ id: "today", calories: 310, meal: "DINNER" })],
-          }).dayLog,
+          }).data,
         ),
       ],
     });
@@ -187,15 +184,15 @@ describe("buildDashboardV2ViewModel", () => {
 
   it("marks unavailable history separately from completed and incomplete live habit days", () => {
     const model = buildDashboardV2ViewModel({
-      dayLogs: cachedQueries([
+      dayLogs: [
         buildDay("2026-08-24", { weight: 180 }),
         buildDay("2026-08-25", { breakfast: [buildFoodEntry()] }),
-        { date: "2026-08-26", dayLog: null },
+        { date: "2026-08-26", data: null },
         buildDay("2026-08-27"),
         buildDay("2026-08-28", { weight: 179 }),
         buildDay("2026-08-29", { snacks: [buildFoodEntry({ id: "snack", meal: "SNACKS" })] }),
-        { date: "2026-08-30", dayLog: null },
-      ]),
+        { date: "2026-08-30", data: null },
+      ],
     });
 
     expect(model.habits.weighIn.days).toHaveLength(30);
@@ -224,7 +221,7 @@ describe("buildDashboardV2ViewModel", () => {
 
   it("groups total food contributions by exact name and sorts them by nutrient amount", () => {
     const model = buildDashboardV2ViewModel({
-      dayLogs: cachedQueries([
+      dayLogs: [
         buildDay("2026-08-24", { breakfast: [buildFoodEntry({ name: "Pineapple", calories: 50 })] }),
         buildDay("2026-08-25", {
           lunch: [buildFoodEntry({ id: "pineapple-two", name: "Pineapple", meal: "LUNCH", calories: 30 })],
@@ -236,7 +233,7 @@ describe("buildDashboardV2ViewModel", () => {
         buildDay("2026-08-28"),
         buildDay("2026-08-29"),
         buildDay("2026-08-30"),
-      ]),
+      ],
     });
 
     expect(model.analytics.calories.total.contributions).toEqual([
@@ -247,7 +244,7 @@ describe("buildDashboardV2ViewModel", () => {
 
   it("keeps total contributions scoped to the last seven days when older history is available", () => {
     const model = buildDashboardV2ViewModel({
-      dayLogs: cachedQueries([
+      dayLogs: [
         buildDay("2026-08-03", { breakfast: [buildFoodEntry({ name: "Older food", calories: 250 })] }),
         buildDay("2026-08-24"),
         buildDay("2026-08-25"),
@@ -256,7 +253,7 @@ describe("buildDashboardV2ViewModel", () => {
         buildDay("2026-08-28"),
         buildDay("2026-08-29"),
         buildDay("2026-08-30", { breakfast: [buildFoodEntry({ name: "Recent food", calories: 100 })] }),
-      ]),
+      ],
     });
 
     expect(model.analytics.calories.total).toEqual({
@@ -296,7 +293,7 @@ describe("buildDashboardV2ViewModel", () => {
   });
 
   it("calculates and groups reductions, increases, removals, and new foods from arbitrary dated history", () => {
-    const days: DashboardHistoryDay[] = [
+    const days: DayLogSnapshot[] = [
       buildDay("2026-08-03", { breakfast: [buildFoodEntry({ name: "Tofu", calories: 100 })] }),
       buildDay("2026-08-05", {
         breakfast: [buildFoodEntry({ id: "removed", name: "Crackers", calories: 80 })],

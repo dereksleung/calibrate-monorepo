@@ -1,8 +1,8 @@
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { getRollingThirtyDayDateRange } from "#/shared/date/local-date-range.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
-import { buildDashboardV2ViewModel } from "#/verticals/dashboard/dashboard-v2-model.ts";
 import { useSyncDayLogsForDateRange } from "@calibrate/frontend-core/feature-workflows/day-logs/sync-day-logs";
+import { buildDashboardV2ViewModel } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 import { useIsRestoring } from "@tanstack/react-query";
 
 import { DashboardV2Page } from "./DashboardV2Page.tsx";
@@ -28,9 +28,9 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
   });
   const viewModel = cached.some((query) => query.data !== undefined)
     ? buildDashboardV2ViewModel({
-      endDate: dateRange.endDate,
-      dayLogs: cached,
-    })
+        endDate: dateRange.endDate,
+        dayLogs: cached.map((query) => query.data),
+      })
     : undefined;
 
   return (
@@ -41,7 +41,7 @@ function DashboardV2Content({ accountId }: { accountId: string }) {
         void syncResponse.refetch();
       }}
       viewModel={viewModel}
-    // viewModel={dashboardV2PageViewModelMock}
+      // viewModel={dashboardV2PageViewModelMock}
     />
   );
 }

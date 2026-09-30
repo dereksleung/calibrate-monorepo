@@ -1,17 +1,11 @@
-import type { DayLogRangeResponse, FoodEntryResponse } from "@calibrate/api-contracts";
-import type { DayLogSnapshot } from "@calibrate/frontend-core/shared/models/day-logs/day-log";
+import type { DayLogSnapshot, FoodEntry } from "../../shared/models/day-logs/day-log.js";
 
-import { getLocalWeekdayAbbreviation } from "#/shared/date/local-date-range.ts";
 import {
   DAILY_TARGETS,
   getDayLogNutritionTotals,
   type NutritionTotals,
-} from "#/shared/nutrition/nutrition-totals.ts";
+} from "../../shared/models/nutrition/nutrition-totals.js";
 
-export type DashboardHistoryDay = DayLogRangeResponse["days"][number];
-export type CachedDayLogQuery = {
-  data: DayLogSnapshot | undefined;
-};
 export type DashboardNutritionMetric = keyof NutritionTotals;
 
 type NutrientConfiguration = {
@@ -105,17 +99,18 @@ export function buildDashboardV2ViewModel({
   dayLogs,
 }: {
   endDate?: string;
-  dayLogs: ReadonlyArray<CachedDayLogQuery>;
+  dayLogs: ReadonlyArray<DayLogSnapshot | undefined>;
 }): DashboardV2ViewModel {
-  const history = historyDaysFromSlotQueries(dayLogs);
-  const endDate = endDateInput ?? endDateFromSlotQueries(dayLogs) ?? history.at(-1)?.date ?? "";
+  const history = historyDaysFromSnapshots(dayLogs);
+  const endDate = endDateInput ?? endDateFromSnapshots(dayLogs) ?? history[history.length - 1]?.date ?? "";
   const sevenDayHistory = historyWithinInclusiveWindow(history, endDate, 7);
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
     buildSevenDayNutritionRow(sevenDayHistory, endDate, configuration),
   );
   const nutritionCards = NUTRIENT_CONFIGURATIONS.reduce<Partial<DashboardV2ViewModel["nutritionCards"]>>(
     (cards, configuration) => {
-      const today = rows.find(({ metric }) => metric === configuration.metric)?.days.at(-1)?.amount ?? 0;
+      const days = rows.find(({ metric }) => metric === configuration.metric)?.days;
+      const today = days?.[days.length - 1]?.amount ?? 0;
 
       cards[configuration.metric] = {
         amount: today,
@@ -158,10 +153,10 @@ export function buildNutrientAnalyticsModel({
   metric,
   totalDays,
 }: {
-  contributionDays: readonly DashboardHistoryDay[];
+  contributionDays: readonly DayLogSnapshot[];
   endDate: string;
   metric: DashboardNutritionMetric;
-  totalDays: readonly DashboardHistoryDay[];
+  totalDays: readonly DayLogSnapshot[];
 }): NutrientAnalyticsModel {
   const configuration = getNutrientConfiguration(metric);
   const totalContributions = collectFoodContributions(totalDays, metric);
@@ -196,7 +191,7 @@ export function buildNutrientAnalyticsModel({
 }
 
 function buildSevenDayNutritionRow(
-  days: readonly DashboardHistoryDay[],
+  days: readonly DayLogSnapshot[],
   endDate: string,
   configuration: NutrientConfiguration,
 ): SevenDayNutritionRowModel {
@@ -209,9 +204,9 @@ function buildSevenDayNutritionRow(
       const day = daysByDate.get(date);
 
       return {
-        amount: getDayLogNutritionTotals(day?.dayLog ?? null)[configuration.metric],
+        amount: getDayLogNutritionTotals(day?.data ?? null)[configuration.metric],
         date,
-        hasData: Boolean(day?.dayLog),
+        hasData: Boolean(day?.data),
         label: getLocalWeekdayAbbreviation(date),
       };
     }),
@@ -222,19 +217,18 @@ function buildSevenDayNutritionRow(
   };
 }
 
-function historyDaysFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): DashboardHistoryDay[] {
-  return queries.flatMap((query) => {
-    const snapshot = query.data;
+function historyDaysFromSnapshots(queries: ReadonlyArray<DayLogSnapshot | undefined>): DayLogSnapshot[] {
+  return queries.flatMap((snapshot) => {
     if (snapshot === undefined || snapshot.data === undefined) return [];
-    return [{ date: snapshot.date, dayLog: snapshot.data }];
+    return [snapshot];
   });
 }
 
 function historyWithinInclusiveWindow(
-  days: readonly DashboardHistoryDay[],
+  days: readonly DayLogSnapshot[],
   endDate: string,
   dayCount: number,
-): DashboardHistoryDay[] {
+): DayLogSnapshot[] {
   if (endDate === "") return [...days];
 
   const startDate = offsetDate(endDate, -(dayCount - 1));
@@ -242,26 +236,23 @@ function historyWithinInclusiveWindow(
   return days.filter(({ date }) => date >= startDate && date <= endDate);
 }
 
-function endDateFromSlotQueries(queries: ReadonlyArray<CachedDayLogQuery>): string | undefined {
+function endDateFromSnapshots(queries: ReadonlyArray<DayLogSnapshot | undefined>): string | undefined {
   for (let index = queries.length - 1; index >= 0; index -= 1) {
-    const date = queries[index]?.data?.date;
+    const date = queries[index]?.date;
     if (typeof date === "string") return date;
   }
 
   return undefined;
 }
 
-function buildHabitModels(
-  days: readonly DashboardHistoryDay[],
-  endDate: string,
-): DashboardV2ViewModel["habits"] {
+function buildHabitModels(days: readonly DayLogSnapshot[], endDate: string): DashboardV2ViewModel["habits"] {
   const firstDate = offsetDate(endDate, -29);
   const liveDays = new Map(days.map((day) => [day.date, day]));
   const historyDates = Array.from({ length: 30 }, (_, index) => offsetDate(firstDate, index));
 
   const buildHabit = (
     title: HabitCardModel["title"],
-    isComplete: (day: DashboardHistoryDay) => boolean,
+    isComplete: (day: DayLogSnapshot) => boolean,
   ): HabitCardModel => {
     const days = historyDates.map((date) => {
       const day = liveDays.get(date);
@@ -282,7 +273,7 @@ function buildHabitModels(
 
   return {
     foodLogging: buildHabit("Food Logs", (day) => getFoodEntries(day).length > 0),
-    weighIn: buildHabit("Weighing", (day) => day.dayLog?.weight !== null && day.dayLog?.weight !== undefined),
+    weighIn: buildHabit("Weighing", (day) => day.data?.weight !== null && day.data?.weight !== undefined),
   };
 }
 
@@ -333,7 +324,7 @@ function buildChangeSections(
 }
 
 function collectFoodContributions(
-  days: readonly DashboardHistoryDay[],
+  days: readonly DayLogSnapshot[],
   metric: DashboardNutritionMetric,
 ): Map<string, number> {
   return days.reduce((contributions, day) => {
@@ -349,8 +340,8 @@ function collectFoodContributions(
   }, new Map<string, number>());
 }
 
-function getFoodEntries(day: DashboardHistoryDay): FoodEntryResponse[] {
-  const dayLog = day.dayLog;
+function getFoodEntries(day: DayLogSnapshot): FoodEntry[] {
+  const dayLog = day.data;
 
   return [
     ...(dayLog?.breakfast ?? []),
@@ -379,4 +370,9 @@ function offsetDate(date: string, offset: number): string {
 
 function sumContributions(contributions: ReadonlyMap<string, number>): number {
   return [...contributions.values()].reduce((sum, amount) => sum + amount, 0);
+}
+
+function getLocalWeekdayAbbreviation(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  return ["Sn", "M", "T", "W", "Th", "F", "Sa"][new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
 }

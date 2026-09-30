@@ -4,7 +4,7 @@ import {
   DAILY_TARGETS,
   getFoodEntryNutritionTotals,
   type NutritionTotals,
-} from "#/shared/nutrition/nutrition-totals.ts";
+} from "@calibrate/frontend-core/shared/models/nutrition/nutrition-totals";
 
 export { DAILY_TARGETS };
 
