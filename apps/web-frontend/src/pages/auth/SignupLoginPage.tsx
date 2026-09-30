@@ -29,16 +29,16 @@ import {
   retryDayLogCacheLogoutRecovery,
   type LogoutRecord,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout";
-import { type PasskeyAuthenticationErrorCode } from "@calibrate/api-contracts";
 import { requestLocalDevelopmentPasskeyEnrollment } from "@calibrate/frontend-core/auth/local-development-passkey-enrollment";
+import { ApiError } from "@calibrate/frontend-core/errors";
+import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/feature-workflows/auth/account-email-verification";
 import {
   parsePasskeyAuthenticationError,
   requestPasskeyAuthenticationOptions,
   verifyPasskeyAuthentication,
-} from "@calibrate/frontend-core/auth/passkey-authentication";
-import { ApiError } from "@calibrate/frontend-core/errors";
-import { useRequestAccountEmailVerification } from "@calibrate/frontend-core/feature-workflows/auth/account-email-verification";
+} from "@calibrate/frontend-core/feature-workflows/auth/passkey-authentication";
 import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/feature-workflows/auth/start-local-development-test-session";
+import { type PasskeyAuthenticationErrorCode } from "@calibrate/frontend-core/verticals/auth/models/passkey-authentication";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
@@ -380,8 +380,7 @@ function PasskeyLogin() {
     try {
       cancelPasskeyAuthentication();
       const options =
-        activeOptionsResponse.current &&
-        new Date(activeOptionsResponse.current.expiresAt).getTime() > Date.now()
+        activeOptionsResponse.current && activeOptionsResponse.current.expiresAt.getTime() > Date.now()
           ? activeOptionsResponse.current
           : await requestPasskeyAuthenticationOptions(apiTransport);
       activeOptionsResponse.current = options;

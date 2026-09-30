@@ -23,10 +23,6 @@
       "types": "./src/auth/local-development-passkey-enrollment.ts",
       "default": "./src/auth/local-development-passkey-enrollment.ts"
     },
-    "./auth/passkey-authentication": {
-      "types": "./src/auth/passkey-authentication.ts",
-      "default": "./src/auth/passkey-authentication.ts"
-    },
     "./day-logs/get-day-log": {
       "types": "./src/day-logs/get-day-log.ts",
       "default": "./src/day-logs/get-day-log.ts"

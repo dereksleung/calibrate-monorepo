@@ -101,6 +101,31 @@ describe("passkey authentication workflow", () => {
     expect(options.retry).toBe(false);
   });
 
+  it.each([
+    "PASSKEY_AUTHENTICATION_FAILED",
+    "ORIGIN_NOT_ALLOWED",
+    "PASSKEY_AUTHENTICATION_STATE_CONFLICT",
+    "PASSKEY_AUTHENTICATION_RATE_LIMITED",
+    "PASSKEY_AUTHENTICATION_UNAVAILABLE",
+  ])("preserves stable error code %s", (error) => {
+    expect(
+      parsePasskeyAuthenticationError(
+        new ApiError({ status: 400, statusText: "Bad Request", body: { error } }),
+      ),
+    ).toBe(error);
+  });
+  it("ignores unknown or malformed API errors", () => {
+    for (const body of [
+      { error: "UNKNOWN" },
+      { error: "PASSKEY_AUTHENTICATION_FAILED", detail: "private" },
+      null,
+    ]) {
+      expect(
+        parsePasskeyAuthenticationError(new ApiError({ status: 400, statusText: "Bad Request", body })),
+      ).toBeNull();
+    }
+  });
+
   it("recognizes only stable passkey-authentication errors", () => {
     expect(
       parsePasskeyAuthenticationError(

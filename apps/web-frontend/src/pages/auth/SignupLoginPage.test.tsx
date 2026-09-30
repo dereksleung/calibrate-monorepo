@@ -2,6 +2,10 @@
 
 import { createQueryClient } from "#/shared/api/query-client";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import {
+  buildPasskeyAuthenticationChallenge,
+  buildVerifyPasskeyAuthenticationCommand,
+} from "@calibrate/frontend-core/verticals/auth/models/__mocks__/passkey-authentication";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -12,9 +16,11 @@ afterEach(() => {
   vi.useRealTimers();
   cleanup();
   vi.clearAllMocks();
+  mockConditionalPasskeyAuthenticationSupported.mockResolvedValue(false);
 });
 
 const {
+  mockCancelPasskeyAuthentication,
   mockMutateAsync,
   mockConditionalPasskeyAuthenticationSupported,
   mockGetDayLogCacheLogoutRecoveryPending,
@@ -26,6 +32,7 @@ const {
   mockStartPasskeyAuthentication,
   mockVerifyPasskeyAuthentication,
 } = vi.hoisted(() => ({
+  mockCancelPasskeyAuthentication: vi.fn(),
   mockMutateAsync: vi.fn(),
   mockConditionalPasskeyAuthenticationSupported: vi.fn(async () => false),
   mockGetDayLogCacheLogoutRecoveryPending: vi.fn<() => Promise<unknown[]>>(async () => []),
@@ -59,7 +66,7 @@ vi.mock("@calibrate/frontend-core/auth/local-development-passkey-enrollment", as
   };
 });
 
-vi.mock("@calibrate/frontend-core/auth/passkey-authentication", async (importOriginal) => {
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/passkey-authentication", async (importOriginal) => {
   const original = (await importOriginal()) as object;
   return {
     ...original,
@@ -80,10 +87,10 @@ vi.mock(
 );
 
 vi.mock("#/verticals/auth/browser-passkey-authentication-adapter", () => ({
-  cancelPasskeyAuthentication: vi.fn(),
+  cancelPasskeyAuthentication: mockCancelPasskeyAuthentication,
   isBrowserPasskeyAuthenticationSupported: () => true,
   isConditionalPasskeyAuthenticationSupported: mockConditionalPasskeyAuthenticationSupported,
-  isPasskeyAuthenticationCancellation: () => false,
+  isPasskeyAuthenticationCancellation: (error: { name?: string }) => error?.name === "NotAllowedError",
   startPasskeyAuthentication: mockStartPasskeyAuthentication,
 }));
 
@@ -238,6 +245,78 @@ describe("SignupLoginPage", () => {
     );
     expect(screen.queryByText("backend detail")).toBeNull();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("requests a challenge, obtains an assertion, verifies it, then navigates", async () => {
+    const challenge = buildPasskeyAuthenticationChallenge();
+    const command = buildVerifyPasskeyAuthenticationCommand({ rememberDevice: false });
+    mockRequestPasskeyAuthenticationOptions.mockResolvedValue(challenge);
+    mockStartPasskeyAuthentication.mockResolvedValue(command.credential);
+    mockVerifyPasskeyAuthentication.mockResolvedValue({ sessionTransport: "cookie" });
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <SignupLoginPage />
+      </QueryClientProvider>,
+    );
+    fireEvent.click(screen.getByRole("checkbox", { name: /keep me signed in/i }));
+    fireEvent.click(screen.getByRole("button", { name: /log in with passkey/i }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith({ to: "/" }));
+    expect(mockStartPasskeyAuthentication).toHaveBeenCalledWith(challenge.options, "explicit");
+    expect(mockVerifyPasskeyAuthentication).toHaveBeenCalledWith(expect.any(Object), command);
+    expect(mockRequestPasskeyAuthenticationOptions.mock.invocationCallOrder[0]).toBeLessThan(
+      mockStartPasskeyAuthentication.mock.invocationCallOrder[0],
+    );
+    expect(mockStartPasskeyAuthentication.mock.invocationCallOrder[0]).toBeLessThan(
+      mockVerifyPasskeyAuthentication.mock.invocationCallOrder[0],
+    );
+    expect(mockVerifyPasskeyAuthentication.mock.invocationCallOrder[0]).toBeLessThan(
+      mockNavigate.mock.invocationCallOrder[0],
+    );
+  });
+
+  it.each([false, true])(
+    "reuses a cancelled challenge only while it is valid (expired: %s)",
+    async (expired) => {
+      const challenge = buildPasskeyAuthenticationChallenge();
+      mockRequestPasskeyAuthenticationOptions.mockResolvedValue(challenge);
+      mockStartPasskeyAuthentication.mockRejectedValue({ name: "NotAllowedError" });
+      render(
+        <QueryClientProvider client={createQueryClient()}>
+          <SignupLoginPage />
+        </QueryClientProvider>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /log in with passkey/i }));
+      await waitFor(() => expect(mockStartPasskeyAuthentication).toHaveBeenCalledOnce());
+      await waitFor(() =>
+        expect(
+          (screen.getByRole("button", { name: /log in with passkey/i }) as HTMLButtonElement).disabled,
+        ).toBe(false),
+      );
+      if (expired) challenge.expiresAt = new Date(0);
+      fireEvent.click(screen.getByRole("button", { name: /log in with passkey/i }));
+      await waitFor(() => expect(mockStartPasskeyAuthentication).toHaveBeenCalledTimes(2));
+      expect(mockRequestPasskeyAuthenticationOptions).toHaveBeenCalledTimes(expired ? 2 : 1);
+      expect(mockVerifyPasskeyAuthentication).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    },
+  );
+
+  it("hands conditional authentication to the browser and cancels on unmount", async () => {
+    const challenge = buildPasskeyAuthenticationChallenge();
+    mockConditionalPasskeyAuthenticationSupported.mockResolvedValue(true);
+    mockRequestPasskeyAuthenticationOptions.mockResolvedValue(challenge);
+    mockStartPasskeyAuthentication.mockRejectedValue({ name: "NotAllowedError" });
+    const view = render(
+      <QueryClientProvider client={createQueryClient()}>
+        <SignupLoginPage />
+      </QueryClientProvider>,
+    );
+    await waitFor(() =>
+      expect(mockStartPasskeyAuthentication).toHaveBeenCalledWith(challenge.options, "conditional"),
+    );
+    view.unmount();
+    expect(mockCancelPasskeyAuthentication).toHaveBeenCalledOnce();
+    expect(mockVerifyPasskeyAuthentication).not.toHaveBeenCalled();
   });
 
   it("counts down before allowing another passkey request after rate limiting", async () => {

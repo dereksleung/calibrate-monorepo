@@ -32,16 +32,14 @@ describe("passkey authentication hooks", () => {
     const context = buildAuthenticatedUserContext();
     const onSuccess = vi.fn();
     const transport = {
-      request: vi
-        .fn()
-        .mockResolvedValue({
-          ...context,
-          user: {
-            ...context.user,
-            createdAt: context.user.createdAt.toISOString(),
-            updatedAt: context.user.updatedAt.toISOString(),
-          },
-        }),
+      request: vi.fn().mockResolvedValue({
+        ...context,
+        user: {
+          ...context.user,
+          createdAt: context.user.createdAt.toISOString(),
+          updatedAt: context.user.updatedAt.toISOString(),
+        },
+      }),
     };
     const { result } = renderHook(() => useVerifyPasskeyAuthentication(transport, { onSuccess }), {
       wrapper,

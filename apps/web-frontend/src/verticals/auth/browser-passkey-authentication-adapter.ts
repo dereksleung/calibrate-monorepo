@@ -1,15 +1,14 @@
-import type { PasskeyAuthenticationOptionsResponse } from "@calibrate/api-contracts";
+import type {
+  PasskeyAuthenticationChallenge,
+  PasskeyAuthenticationCredential,
+} from "@calibrate/frontend-core/verticals/auth/models/passkey-authentication";
 
 import {
   startAuthentication,
   WebAuthnAbortService,
-  type PublicKeyCredentialRequestOptionsJSON,
-  type AuthenticationResponseJSON,
   browserSupportsWebAuthn,
   browserSupportsWebAuthnAutofill,
 } from "@simplewebauthn/browser";
-
-export { type PublicKeyCredentialRequestOptionsJSON, type AuthenticationResponseJSON };
 
 export function isBrowserPasskeyAuthenticationSupported(): boolean {
   return browserSupportsWebAuthn();
@@ -20,13 +19,13 @@ export async function isConditionalPasskeyAuthenticationSupported(): Promise<boo
 }
 
 export function startPasskeyAuthentication(
-  options: PasskeyAuthenticationOptionsResponse["options"],
+  options: PasskeyAuthenticationChallenge["options"],
   mode: "conditional" | "explicit",
-): Promise<AuthenticationResponseJSON> {
+): Promise<PasskeyAuthenticationCredential> {
   return startAuthentication({
-    optionsJSON: options as PublicKeyCredentialRequestOptionsJSON,
+    optionsJSON: options,
     useBrowserAutofill: mode === "conditional",
-  }) as Promise<AuthenticationResponseJSON>;
+  });
 }
 
 export function cancelPasskeyAuthentication(): void {
