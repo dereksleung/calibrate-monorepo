@@ -54,15 +54,15 @@ Calibrate is organized as an Nx monorepo:
 
 ```text
 apps/
-  web-frontend/   React web application
-  backend/        Express API and application/domain layers
-  web-e2e/        Playwright browser validation
+  web-frontend/          React UI, routing, and browser integrations
+  backend/               Express API, application, and domain layers
+  web-e2e/               Playwright browser validation
 
 packages/
-  api-client/             Shared frontend API access
-  api-contracts/          HTTP request/response contracts
-  dev-bindings/           Development port/origin configuration
-  local-runtime-config/   Generated local runtime configuration
+  frontend-core/         Portable frontend models, workflows, feature behavior, and cache policy
+  api-contracts/         HTTP request/response contracts
+  dev-bindings/          Development port/origin configuration
+  local-runtime-config/  Generated local runtime configuration
 ```
 
 ### Frontend architecture
