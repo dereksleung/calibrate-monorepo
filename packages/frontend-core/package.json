@@ -146,6 +146,18 @@
     "./verticals/auth/models/__mocks__/account-email-verification": {
       "types": "./src/verticals/auth/models/__mocks__/account-email-verification.ts",
       "default": "./src/verticals/auth/models/__mocks__/account-email-verification.ts"
+    },
+    "./feature-workflows/auth/passkey-authentication": {
+      "types": "./src/feature-workflows/auth/passkey-authentication.ts",
+      "default": "./src/feature-workflows/auth/passkey-authentication.ts"
+    },
+    "./verticals/auth/models/passkey-authentication": {
+      "types": "./src/verticals/auth/models/passkey-authentication.ts",
+      "default": "./src/verticals/auth/models/passkey-authentication.ts"
+    },
+    "./verticals/auth/models/__mocks__/passkey-authentication": {
+      "types": "./src/verticals/auth/models/__mocks__/passkey-authentication.ts",
+      "default": "./src/verticals/auth/models/__mocks__/passkey-authentication.ts"
     }
   },
   "dependencies": {
