@@ -1,30 +1,20 @@
-import type { DayLogResponse, FoodEntryResponse, MealNameEnumType } from "@calibrate/api-contracts";
+import type { DayLog, DayLogSnapshot, FoodEntry, MealName } from "../../shared/models/day-logs/day-log.js";
 
-const MEAL_ORDER = ["BREAKFAST", "LUNCH", "DINNER", "SNACKS"] as const satisfies readonly MealNameEnumType[];
+const MEAL_ORDER = ["BREAKFAST", "LUNCH", "DINNER", "SNACKS"] as const satisfies readonly MealName[];
 
-type PresentDayLog = NonNullable<DayLogResponse>;
-
-const dayLogEntriesByMeal: Record<
-  MealNameEnumType,
-  keyof Pick<PresentDayLog, "breakfast" | "lunch" | "dinner" | "snacks">
-> = {
+const dayLogEntriesByMeal = {
   BREAKFAST: "breakfast",
   LUNCH: "lunch",
   DINNER: "dinner",
   SNACKS: "snacks",
-};
-
-export type CachedDayLogSlot = {
-  date: string;
-  data: PresentDayLog | null | undefined;
-};
+} as const satisfies Record<MealName, keyof Pick<DayLog, "breakfast" | "lunch" | "dinner" | "snacks">>;
 
 export type RankedRecentFood = {
   date: string;
-  food: FoodEntryResponse;
+  food: FoodEntry;
 };
 
-function foodKey(food: Pick<FoodEntryResponse, "name" | "brand">): string {
+function foodKey(food: Pick<FoodEntry, "name" | "brand">): string {
   return `${food.name}\0${food.brand ?? ""}`;
 }
 
@@ -34,20 +24,20 @@ export function rankRecentFoodsFromCache({
   today,
   preselectedMeal,
 }: {
-  slots: readonly CachedDayLogSlot[];
+  slots: readonly DayLogSnapshot[];
   today: string;
-  preselectedMeal?: MealNameEnumType;
+  preselectedMeal?: MealName;
 }): RankedRecentFood[] {
   const sourceDays = slots
     .filter(
-      (slot): slot is CachedDayLogSlot & { data: PresentDayLog } =>
+      (slot): slot is DayLogSnapshot & { data: DayLog } =>
         slot.date < today && slot.data !== null && slot.data !== undefined,
     )
     .sort((left, right) => right.date.localeCompare(left.date));
   const seen = new Set<string>();
   const ranked: RankedRecentFood[] = [];
 
-  function addMeal(day: CachedDayLogSlot & { data: PresentDayLog }, meal: MealNameEnumType) {
+  function addMeal(day: DayLogSnapshot & { data: DayLog }, meal: MealName) {
     for (const food of day.data[dayLogEntriesByMeal[meal]] ?? []) {
       if (ranked.length === 20) return;
       const key = foodKey(food);

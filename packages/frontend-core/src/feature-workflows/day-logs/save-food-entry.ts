@@ -69,16 +69,21 @@ async function applyFoodEntryCreateToDayLogCache(
   return true;
 }
 
-export function getSaveFoodEntryMutationOptions(
+export function useSaveFoodEntry(
   transport: ApiTransport,
-  queryClient: QueryClient,
   accountId: string,
   date: string,
+  options?: Omit<UseMutationOptions<SaveFoodEntryAcknowledgement, Error, SaveFoodEntryCommand>, "mutationFn">,
 ) {
-  return {
+  const queryClient = useQueryClient();
+  return useMutation({
     mutationFn: async (command: SaveFoodEntryCommand): Promise<SaveFoodEntryAcknowledgement> => {
-      const response = await saveFoodEntry(transport, date, command);
-      const acknowledgement = mapSaveFoodEntryResponse(response, command);
+      const formattedRequestBody = {
+        ...command,
+        brand: command.brand ?? null,
+      };
+      const response = await saveFoodEntry(transport, date, formattedRequestBody);
+      const acknowledgement = mapSaveFoodEntryResponse(response, formattedRequestBody);
       const needsSingleDateSync = await applyFoodEntryCreateToDayLogCache(
         queryClient,
         accountId,
@@ -98,18 +103,6 @@ export function getSaveFoodEntryMutationOptions(
       }
       return acknowledgement;
     },
-  };
-}
-
-export function useSaveFoodEntry(
-  transport: ApiTransport,
-  accountId: string,
-  date: string,
-  options?: Omit<UseMutationOptions<SaveFoodEntryAcknowledgement, Error, SaveFoodEntryCommand>, "mutationFn">,
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
     ...options,
-    ...getSaveFoodEntryMutationOptions(transport, queryClient, accountId, date),
   });
 }

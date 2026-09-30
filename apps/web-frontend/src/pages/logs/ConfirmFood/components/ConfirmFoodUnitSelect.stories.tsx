@@ -1,8 +1,7 @@
+import type { FoodUnitOption } from "@calibrate/frontend-core/verticals/foods/confirm-food-nutrition";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { useState } from "react";
-
-import type { FoodUnitOption } from "../confirm-food-nutrition.ts";
 
 import "../../../../styles.css";
 import { ConfirmFoodUnitSelect } from "./ConfirmFoodUnitSelect.tsx";

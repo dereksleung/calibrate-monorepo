@@ -6,6 +6,11 @@ import {
   type CreateFoodEntryRequest,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
+import {
+  getFoodUnitOptions,
+  recoverCatalogReferenceNutrition,
+  scaleFoodNutrition,
+} from "@calibrate/frontend-core/verticals/foods/confirm-food-nutrition";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -13,11 +18,6 @@ import type { FoodConfirmationState } from "../food-confirmation-state.ts";
 
 import { ConfirmFoodUnitSelect } from "./components/ConfirmFoodUnitSelect.tsx";
 import { DailyGoalProgress, NutritionAtGlance, NutritionFacts } from "./components/FoodNutritionPanels.tsx";
-import {
-  getFoodUnitOptions,
-  recoverCatalogReferenceNutrition,
-  scaleFoodNutrition,
-} from "./confirm-food-nutrition.ts";
 
 type ConfirmFoodProps = {
   confirmation: FoodConfirmationState;

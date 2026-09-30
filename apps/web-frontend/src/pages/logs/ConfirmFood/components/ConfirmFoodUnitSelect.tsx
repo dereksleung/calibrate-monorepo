@@ -1,7 +1,7 @@
+import type { FoodUnitOption } from "@calibrate/frontend-core/verticals/foods/confirm-food-nutrition";
+
 import { Select } from "@base-ui/react/select";
 import { ChevronDown } from "lucide-react";
-
-import type { FoodUnitOption } from "../confirm-food-nutrition.ts";
 
 /** Matches the Confirm Food card: min(viewport, 450px) minus 24px. */
 export const CONFIRM_FOOD_UNIT_SELECT_POPUP_MAX_WIDTH_CLASS = "max-w-[calc(min(100vw,450px)-24px)]";

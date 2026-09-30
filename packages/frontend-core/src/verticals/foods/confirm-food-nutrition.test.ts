@@ -1,13 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
+import type { ConfirmableFood } from "./confirm-food-nutrition.js";
 
-import { recoverCatalogReferenceNutrition, scaleFoodNutrition } from "./confirm-food-nutrition.ts";
+import { recoverCatalogReferenceNutrition, scaleFoodNutrition } from "./confirm-food-nutrition.js";
 
-const food: SelectedFoodForConfirmation = {
-  id: "food-1",
-  name: "Greek yogurt",
-  brand: "Calibrate Kitchen",
+const food: ConfirmableFood = {
   calories: 300,
   totalFatGrams: 10,
   saturatedFatGrams: null,

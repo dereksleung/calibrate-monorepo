@@ -1,48 +1,34 @@
-import type { DayLogResponse, FoodEntryResponse, MealNameEnumType } from "@calibrate/api-contracts";
-
 import { describe, expect, it } from "vitest";
 
-import { rankRecentFoodsFromCache } from "./rank-recent-foods-from-cache.ts";
+import type { DayLog, FoodEntry, MealName } from "../../shared/models/day-logs/day-log.js";
 
-function entry(id: string, name: string, brand: string | null, meal: MealNameEnumType): FoodEntryResponse {
-  return {
+import { buildDayLog, buildFoodEntry } from "../../shared/models/day-logs/__mocks__/day-log.js";
+import { rankRecentFoodsFromCache } from "./rank-recent-foods-from-cache.js";
+
+function entry(id: string, name: string, brand: string | null, meal: MealName): FoodEntry {
+  return buildFoodEntry({
     id,
     name,
     brand,
     meal,
     calories: 100,
     totalFatGrams: 1,
-    saturatedFatGrams: null,
-    cholesterolMg: null,
-    sodiumMg: null,
     totalCarbohydrateGrams: 10,
-    fiberGrams: null,
-    sugarGrams: null,
     proteinGrams: 5,
-    quantityServing: 1,
-    servingLabel: "serving",
-    quantityMass: null,
-    massUnit: null,
-    quantityVolume: null,
-    volumeUnit: null,
-    chosenQuantity: 1,
-    chosenUnit: "serving",
-  };
+  });
 }
 
 function dayLog(
   date: string,
-  meals: Partial<Record<"breakfast" | "lunch" | "dinner" | "snacks", FoodEntryResponse[]>>,
-): DayLogResponse {
-  return {
-    id: `log-${date}`,
+  meals: Partial<Record<"breakfast" | "lunch" | "dinner" | "snacks", FoodEntry[]>>,
+): DayLog {
+  return buildDayLog({
     date,
     breakfast: meals.breakfast ?? [],
     lunch: meals.lunch ?? [],
     dinner: meals.dinner ?? [],
     snacks: meals.snacks ?? [],
-    weight: null,
-  };
+  });
 }
 
 describe("rankRecentFoodsFromCache", () => {

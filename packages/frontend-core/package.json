@@ -83,9 +83,25 @@
       "types": "./src/verticals/day-log-cache/persistence-policy.ts",
       "default": "./src/verticals/day-log-cache/persistence-policy.ts"
     },
-    "./foods/search-foods": {
-      "types": "./src/foods/search-foods.ts",
-      "default": "./src/foods/search-foods.ts"
+    "./feature-workflows/foods/search-foods": {
+      "types": "./src/feature-workflows/foods/search-foods.ts",
+      "default": "./src/feature-workflows/foods/search-foods.ts"
+    },
+    "./verticals/foods/models/search-foods": {
+      "types": "./src/verticals/foods/models/search-foods.ts",
+      "default": "./src/verticals/foods/models/search-foods.ts"
+    },
+    "./verticals/foods/models/__mocks__/search-foods": {
+      "types": "./src/verticals/foods/models/__mocks__/search-foods.ts",
+      "default": "./src/verticals/foods/models/__mocks__/search-foods.ts"
+    },
+    "./verticals/foods/confirm-food-nutrition": {
+      "types": "./src/verticals/foods/confirm-food-nutrition.ts",
+      "default": "./src/verticals/foods/confirm-food-nutrition.ts"
+    },
+    "./verticals/recent-foods/rank-recent-foods-from-cache": {
+      "types": "./src/verticals/recent-foods/rank-recent-foods-from-cache.ts",
+      "default": "./src/verticals/recent-foods/rank-recent-foods-from-cache.ts"
     }
   },
   "dependencies": {

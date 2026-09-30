@@ -11,7 +11,7 @@ import {
   dayLogSlotQueryKey,
   dayLogSlotVersionQueryKey,
 } from "../../verticals/day-log-cache/day-log-slots.js";
-import { getSaveFoodEntryMutationOptions, useSaveFoodEntry } from "./save-food-entry.js";
+import { useSaveFoodEntry } from "./save-food-entry.js";
 
 const date = "2026-09-03";
 const accountId = "account-1";
@@ -22,19 +22,24 @@ function transportReturning(response: Record<string, unknown>) {
   return { transport: { request } as unknown as ApiTransport, request };
 }
 
+function renderSaveFoodEntry(client: QueryClient, transport: ApiTransport) {
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
+  return renderHook(() => useSaveFoodEntry(transport, accountId, date), { wrapper });
+}
+
 describe("Save Food Entry workflow", () => {
-  it("patches a trusted predecessor through the options factory without syncing", async () => {
+  it("patches a trusted predecessor without syncing", async () => {
     const client = new QueryClient();
     const original = buildDayLog({ date, lunch: [] });
     client.setQueryData(dayLogSlotQueryKey(accountId, date), original);
     client.setQueryData(dayLogSlotVersionQueryKey(accountId, date), 7);
     const { transport, request } = transportReturning({ foodEntryId: "entry-2", versionNumber: 8 });
+    const { result } = renderSaveFoodEntry(client, transport);
 
-    const result = await getSaveFoodEntryMutationOptions(transport, client, accountId, date).mutationFn(
-      command,
-    );
+    const saved = await result.current.mutateAsync(command);
 
-    expect(result.foodEntry).toEqual({ ...command, id: "entry-2" });
+    expect(saved.foodEntry).toEqual({ ...command, id: "entry-2" });
     expect(client.getQueryData(dayLogSlotQueryKey(accountId, date))).toEqual({
       ...original,
       lunch: [{ ...command, id: "entry-2" }],
@@ -109,9 +114,11 @@ describe("Save Food Entry workflow", () => {
     );
     request.mockRejectedValueOnce(new Error("sync unavailable"));
 
-    await expect(
-      getSaveFoodEntryMutationOptions(transport, client, accountId, date).mutationFn(command),
-    ).resolves.toMatchObject({ foodEntry: { id: "entry-2" } });
+    const { result } = renderSaveFoodEntry(client, transport);
+
+    await expect(result.current.mutateAsync(command)).resolves.toMatchObject({
+      foodEntry: { id: "entry-2" },
+    });
 
     expect(client.getQueryData(dayLogSlotQueryKey(accountId, date))).toMatchObject({
       lunch: [{ ...command, id: "entry-2" }],
@@ -131,18 +138,17 @@ describe("Save Food Entry workflow", () => {
       calories: 73.926,
       quantityServing: 1.234,
     };
+    const { result } = renderSaveFoodEntry(client, transport);
 
-    const result = await getSaveFoodEntryMutationOptions(transport, client, accountId, date).mutationFn(
-      preciseCommand,
-    );
+    const saved = await result.current.mutateAsync(preciseCommand);
 
-    expect(result.foodEntry).toMatchObject({
+    expect(saved.foodEntry).toMatchObject({
       chosenQuantity: 0.33,
       calories: 73.9,
       quantityServing: 1.23,
     });
     expect(client.getQueryData(dayLogSlotQueryKey(accountId, date))).toMatchObject({
-      lunch: [result.foodEntry],
+      lunch: [saved.foodEntry],
     });
   });
 
@@ -165,7 +171,9 @@ describe("Save Food Entry workflow", () => {
       }),
     );
 
-    await getSaveFoodEntryMutationOptions(transport, client, accountId, date).mutationFn(command);
+    const { result } = renderSaveFoodEntry(client, transport);
+
+    await result.current.mutateAsync(command);
 
     expect(request.mock.calls[1]?.[0].body.known).toEqual({});
     expect(client.getQueryData(dayLogSlotVersionQueryKey(accountId, date))).toBe(3);

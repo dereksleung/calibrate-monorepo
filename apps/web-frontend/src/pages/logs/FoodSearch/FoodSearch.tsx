@@ -1,16 +1,21 @@
+import type { DayLogSlotResult, FoodEntry } from "@calibrate/frontend-core/shared/models/day-logs/day-log";
+import type { FoodSearchResult } from "@calibrate/frontend-core/verticals/foods/models/search-foods";
+
 import { apiTransport } from "#/shared/api/api-client.ts";
 import { useAuthenticatedSession } from "#/verticals/auth/authenticated-session.ts";
 import {
   normalizeFoodEntryForStorage,
   type CreateFoodEntryRequest,
-  type DayLogResponse,
-  type FoodEntryResponse,
-  type FoodSearchResult,
   type MealNameEnumType,
 } from "@calibrate/api-contracts";
 import { useSaveFoodEntry } from "@calibrate/frontend-core/feature-workflows/day-logs/save-food-entry";
-import { useFoodSearch } from "@calibrate/frontend-core/foods/search-foods";
+import { useFoodSearch } from "@calibrate/frontend-core/feature-workflows/foods/search-foods";
 import { dayLogSlotQueryKeyPrefix } from "@calibrate/frontend-core/verticals/day-log-cache/day-log-slots";
+import {
+  getFoodUnitOptions,
+  scaleFoodNutrition,
+} from "@calibrate/frontend-core/verticals/foods/confirm-food-nutrition";
+import { rankRecentFoodsFromCache } from "@calibrate/frontend-core/verticals/recent-foods/rank-recent-foods-from-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -18,11 +23,9 @@ import { toast } from "sonner";
 
 import type { FoodConfirmationState, SelectedFoodForConfirmation } from "../food-confirmation-state.ts";
 
-import { getFoodUnitOptions, scaleFoodNutrition } from "../ConfirmFood/confirm-food-nutrition.ts";
 import { getTodayDateString } from "../log-page-helpers.ts";
 import { MEAL_SECTIONS } from "../log-page-helpers.ts";
 import { FoodSearchPage } from "./components/FoodSearchPage.tsx";
-import { rankRecentFoodsFromCache } from "./rank-recent-foods-from-cache.ts";
 
 type FoodSearchProps = {
   selectedDate: string;
@@ -65,20 +68,20 @@ export function toFoodEntry(
 }
 
 function isRecentSearchResult(
-  food: FoodSearchResult | FoodEntryResponse,
+  food: FoodSearchResult | FoodEntry,
 ): food is Extract<FoodSearchResult, { source: "recent" }> {
   return "source" in food && food.source === "recent";
 }
 
 function toConfirmationFood(
-  food: FoodSearchResult | FoodEntryResponse,
+  food: FoodSearchResult | FoodEntry,
   lastUsedLabel?: string,
 ): SelectedFoodForConfirmation {
   const recentSearch = isRecentSearchResult(food) ? food : null;
   const hasChosenServing = "chosenQuantity" in food && "chosenUnit" in food;
 
   return {
-    id: "source" in food ? (food.source === "catalog" ? food.catalogFoodId : food.foodEntryId) : food.id,
+    id: food.id,
     name: food.name,
     brand: food.brand ?? undefined,
     calories: food.calories,
@@ -155,7 +158,7 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
   const cachedFoods = useMemo(() => {
     if (!session) return [];
     const slots = queryClient
-      .getQueriesData<DayLogResponse | null | undefined>({
+      .getQueriesData<DayLogSlotResult>({
         queryKey: dayLogSlotQueryKeyPrefix(session.user.id),
       })
       .map(([queryKey, data]) => ({ date: String(queryKey[3]), data }));

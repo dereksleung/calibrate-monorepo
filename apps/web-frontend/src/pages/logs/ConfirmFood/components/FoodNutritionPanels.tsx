@@ -1,4 +1,4 @@
-import type { ScaledFoodNutrition } from "../confirm-food-nutrition.ts";
+import type { ScaledFoodNutrition } from "@calibrate/frontend-core/verticals/foods/confirm-food-nutrition";
 
 import { DAILY_TARGETS, MACRO_PROGRESS_COLORS } from "../../log-page-helpers.ts";
 
