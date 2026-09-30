@@ -203,11 +203,12 @@ function buildSevenDayNutritionRow(
     days: Array.from({ length: 7 }, (_, index) => {
       const date = offsetDate(startDate, index);
       const day = daysByDate.get(date);
+      const totalAmount = getDayLogNutritionTotals(day?.data ?? null)[configuration.metric];
 
       return {
-        amount: getDayLogNutritionTotals(day?.data ?? null)[configuration.metric],
+        amount: totalAmount,
         date,
-        hasData: Boolean(day?.data),
+        hasData: totalAmount > 0,
         label: getLocalWeekdayAbbreviation(date),
       };
     }),

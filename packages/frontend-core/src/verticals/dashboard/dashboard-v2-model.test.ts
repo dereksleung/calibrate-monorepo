@@ -146,9 +146,9 @@ describe("buildDashboardV2ViewModel", () => {
     expect(model.sevenDayNutrition.rows[0]?.days.map(({ hasData }) => hasData)).toEqual([
       true,
       false,
-      true,
       false,
-      true,
+      false,
+      false,
       false,
       true,
     ]);
