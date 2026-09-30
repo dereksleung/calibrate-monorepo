@@ -13,8 +13,8 @@ import {
   completeDayLogCacheLogout,
 } from "#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts";
 import { clearPrivateDayLogMemory } from "#/verticals/day-log-cache/private-day-log-cache-provider.tsx";
-import { deleteCurrentSession } from "@calibrate/frontend-core/auth/session";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { deleteCurrentSession } from "@calibrate/frontend-core/feature-workflows/auth/delete-current-session";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { UserRound, UserRoundPlus } from "lucide-react";

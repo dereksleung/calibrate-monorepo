@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { buildAuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/authenticated-user-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterContextProvider,
@@ -33,11 +34,8 @@ const {
   revokeLastConfirmedDayLogCache: vi.fn(),
 }));
 
-vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@calibrate/frontend-core/auth/session")>()),
-  getCurrentSession,
-  refreshSession,
-}));
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/get-current-session", () => ({ getCurrentSession }));
+vi.mock("@calibrate/frontend-core/feature-workflows/auth/refresh-session", () => ({ refreshSession }));
 
 vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("#/verticals/day-log-cache/indexed-db-day-log-cache.ts")>()),
@@ -52,16 +50,7 @@ vi.mock("#/verticals/day-log-cache/indexed-db-day-log-cache-logout.ts", async (i
   revokeLastConfirmedDayLogCache,
 }));
 
-const session = {
-  user: {
-    id: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
-    email: "person@example.com",
-    tier: "FREE" as const,
-    createdAt: new Date("2030-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2030-01-01T00:00:00.000Z"),
-  },
-  sessionTransport: "cookie" as const,
-};
+const session = buildAuthenticatedUserContext();
 
 function unauthorized() {
   return new ApiError({ status: 401, statusText: "Unauthorized", body: null });
@@ -233,5 +222,30 @@ describe("SessionRestorationGate", () => {
     expect(await screen.findByText("Calibrate is temporarily unavailable.")).toBeTruthy();
     expect(revokeDayLogCache).not.toHaveBeenCalled();
     expect(queryClient.getQueriesData({ queryKey: ["dayLogs"] })).toHaveLength(1);
+  });
+  it("rechecks the current account after refresh before opening private storage", async () => {
+    const refreshedContext = buildAuthenticatedUserContext({
+      user: { id: "95434f9a-da1f-47dd-8175-a26ff42ee11e" },
+    });
+    let completeRefresh!: (value: typeof session) => void;
+    getCurrentSession.mockRejectedValueOnce(unauthorized()).mockResolvedValueOnce(session);
+    refreshSession.mockReturnValue(
+      new Promise((resolve) => {
+        completeRefresh = resolve;
+      }),
+    );
+    const { queryClient } = renderGate();
+    await waitFor(() => expect(refreshSession).toHaveBeenCalledTimes(1));
+    expect(getCurrentSession).toHaveBeenCalledTimes(1);
+    expect(confirmDayLogCacheAccount).not.toHaveBeenCalled();
+    expect(acquireDayLogCacheAccess).not.toHaveBeenCalled();
+
+    completeRefresh(refreshedContext);
+
+    expect(await screen.findByText("private dashboard")).toBeTruthy();
+    expect(getCurrentSession).toHaveBeenCalledTimes(2);
+    expect(queryClient.getQueryData(authenticatedSessionQueryKey)).toEqual(session);
+    expect(acquireDayLogCacheAccess).toHaveBeenCalledWith(session.user.id);
+    expect(acquireDayLogCacheAccess).not.toHaveBeenCalledWith(refreshedContext.user.id);
   });
 });

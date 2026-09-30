@@ -1,3 +1,4 @@
+import { buildAuthenticatedUserContext } from "@calibrate/frontend-core/verticals/auth/models/__mocks__/authenticated-user-context";
 import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -20,16 +21,7 @@ vi.mock("../day-log-cache/indexed-db-day-log-cache-logout.ts", () => ({
   broadcastDayLogCacheRevocation,
 }));
 
-const accountA = {
-  user: {
-    id: "e74942b3-78d7-48e8-bd20-dc5eba7f82ff",
-    email: "account-a@example.com",
-    tier: "FREE" as const,
-    createdAt: new Date("2030-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2030-01-01T00:00:00.000Z"),
-  },
-  sessionTransport: "cookie" as const,
-};
+const accountA = buildAuthenticatedUserContext({ user: { email: "account-a@example.com" } });
 
 const accountB = {
   ...accountA,

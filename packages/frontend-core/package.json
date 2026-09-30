@@ -27,10 +27,6 @@
       "types": "./src/auth/passkey-authentication.ts",
       "default": "./src/auth/passkey-authentication.ts"
     },
-    "./auth/session": {
-      "types": "./src/auth/session.ts",
-      "default": "./src/auth/session.ts"
-    },
     "./day-logs/get-day-log": {
       "types": "./src/day-logs/get-day-log.ts",
       "default": "./src/day-logs/get-day-log.ts"

@@ -65,13 +65,16 @@ vi.mock("@calibrate/frontend-core/auth/passkey-authentication", async (importOri
   };
 });
 
-vi.mock("@calibrate/frontend-core/auth/session", async (importOriginal) => {
-  const original = (await importOriginal()) as object;
-  return {
-    ...original,
-    startLocalDevelopmentTestSession: mockStartLocalDevelopmentTestSession,
-  };
-});
+vi.mock(
+  "@calibrate/frontend-core/feature-workflows/auth/start-local-development-test-session",
+  async (importOriginal) => {
+    const original = (await importOriginal()) as object;
+    return {
+      ...original,
+      startLocalDevelopmentTestSession: mockStartLocalDevelopmentTestSession,
+    };
+  },
+);
 
 vi.mock("#/verticals/auth/browser-passkey-authentication-adapter", () => ({
   cancelPasskeyAuthentication: vi.fn(),

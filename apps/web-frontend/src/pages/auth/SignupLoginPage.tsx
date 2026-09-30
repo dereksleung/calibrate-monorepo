@@ -38,8 +38,8 @@ import {
   requestPasskeyAuthenticationOptions,
   verifyPasskeyAuthentication,
 } from "@calibrate/frontend-core/auth/passkey-authentication";
-import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/auth/session";
 import { ApiError } from "@calibrate/frontend-core/errors";
+import { startLocalDevelopmentTestSession } from "@calibrate/frontend-core/feature-workflows/auth/start-local-development-test-session";
 import { useForm } from "@tanstack/react-form";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
