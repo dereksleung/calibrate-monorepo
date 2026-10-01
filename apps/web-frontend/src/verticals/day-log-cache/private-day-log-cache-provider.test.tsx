@@ -52,7 +52,10 @@ function CachedSlot() {
     },
     staleTime: Infinity,
   });
-  return <p>{data === null ? "known-empty" : isPending ? "waiting" : "unavailable"}</p>;
+  let status = "unavailable";
+  if (isPending) status = "waiting";
+  if (data === null) status = "known-empty";
+  return <p>{status}</p>;
 }
 
 function renderProvider(queryClient: QueryClient) {

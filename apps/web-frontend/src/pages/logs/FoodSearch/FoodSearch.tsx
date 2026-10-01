@@ -167,17 +167,16 @@ export function FoodSearch({ selectedDate, preselectedMeal }: FoodSearchProps) {
       ({ date, food }) => toConfirmationFood(food, formatRecentFoodDate(date)),
     );
   }, [preselectedMeal, queryClient, recentFoodsRevision, session]);
-  const state = activeSearch
-    ? search.isPending
-      ? "loading"
-      : search.isError
-        ? "error"
-        : searchFoods?.length === 0
-          ? "empty"
-          : "ready"
-    : cachedFoods.length === 0
-      ? "empty"
-      : "ready";
+  let state: "loading" | "error" | "empty" | "ready";
+  if (!activeSearch) {
+    state = cachedFoods.length === 0 ? "empty" : "ready";
+  } else if (search.isPending) {
+    state = "loading";
+  } else if (search.isError) {
+    state = "error";
+  } else {
+    state = searchFoods?.length === 0 ? "empty" : "ready";
+  }
 
   return (
     <>

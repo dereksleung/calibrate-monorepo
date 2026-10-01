@@ -31,11 +31,9 @@ class RecordingConnection implements DatabaseConnection {
     }
 
     if (query.sql.includes('count(*) as "count"')) {
-      const count = query.sql.includes('"email" =')
-        ? this.rows.emailCount
-        : query.sql.includes('"requesting_ip_digest" =')
-          ? this.rows.ipCount
-          : this.rows.globalCount;
+      let count = this.rows.globalCount;
+      if (query.sql.includes('"requesting_ip_digest" =')) count = this.rows.ipCount;
+      if (query.sql.includes('"email" =')) count = this.rows.emailCount;
 
       return { rows: [{ count: count ?? 0 }] as R[] };
     }

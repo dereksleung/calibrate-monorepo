@@ -12,6 +12,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routeTree } from "../../../routeTree.gen.ts";
 import { coffeeFixture, oatmealFixture } from "../log-page-fixtures.ts";
 
+function getRequestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if ("url" in input) return input.url;
+  return String(input);
+}
+
 vi.mock("@tanstack/react-devtools", () => ({
   TanStackDevtools: () => null,
 }));
@@ -97,7 +103,7 @@ beforeEach(() => {
   }));
 
   vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
-    const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+    const url = getRequestUrl(input);
     if (url.includes("/auth/session")) {
       return Promise.resolve(
         new Response(

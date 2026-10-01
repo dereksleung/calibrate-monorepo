@@ -39,12 +39,16 @@ function RootComponent() {
   const isConfirmFoodRoute = useRouterState({
     select: (state) => state.location.pathname === "/logs/confirm-food",
   });
+  let contentPaddingClass: string | undefined;
+  if (!isAuthRoute) {
+    contentPaddingClass = isConfirmFoodRoute ? "md:pb-0" : "pb-18 md:pb-0";
+  }
 
   const content = (
     <TooltipProvider>
       <div className={isAuthRoute ? "min-h-dvh" : "min-h-dvh subtle-aurora-fade-page-background"}>
         {/* pb-18 clears the mobile bottom nav bar. */}
-        <div className={isAuthRoute ? undefined : isConfirmFoodRoute ? "md:pb-0" : "pb-18 md:pb-0"}>
+        <div className={contentPaddingClass}>
           {!isAuthRoute && (
             <div className={isConfirmFoodRoute ? "hidden md:block" : undefined}>
               <Header />

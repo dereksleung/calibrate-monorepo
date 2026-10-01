@@ -54,20 +54,33 @@ const PASSKEY_AUTHENTICATION_ERROR_MESSAGES: Partial<Record<PasskeyAuthenticatio
 const DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE =
   "We couldn't verify that passkey. Try the Log in with Passkey button again, or use the email field to verify and recover your account.";
 
+function getPasskeyLoginButtonLabel(
+  state: "ready" | "pending" | "unavailable" | "failed",
+  isRateLimited: boolean,
+  retryAfterSeconds: number,
+): string {
+  if (state === "pending") return "Waiting for your passkey…";
+  if (!isRateLimited) return "Log in with passkey";
+
+  const unit = retryAfterSeconds === 1 ? "second" : "seconds";
+  return `Try again in ${retryAfterSeconds} ${unit}`;
+}
+
 function firstEmailError(value: string): string | undefined {
   const result = AccountEmailSchema.safeParse(value);
   return result.success ? undefined : result.error.issues[0]?.message;
 }
 
 function fieldErrors(errors: unknown[]): Array<{ message?: string }> {
-  return errors.map((error) => ({
-    message:
-      typeof error === "string"
-        ? error
-        : error && typeof error === "object" && "message" in error
-          ? String(error.message)
-          : undefined,
-  }));
+  return errors.map((error) => {
+    let message: string | undefined;
+    if (typeof error === "string") {
+      message = error;
+    } else if (error && typeof error === "object" && "message" in error) {
+      message = String(error.message);
+    }
+    return { message };
+  });
 }
 
 function SignUpLoginForm({ onSubmitStart = () => undefined }: { onSubmitStart?: () => void }) {
@@ -341,7 +354,7 @@ function PasskeyLogin() {
       } else {
         setError(
           (code && PASSKEY_AUTHENTICATION_ERROR_MESSAGES[code]) ??
-            DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE,
+          DEFAULT_PASSKEY_AUTHENTICATION_ERROR_MESSAGE,
         );
       }
       setState(code === "PASSKEY_AUTHENTICATION_UNAVAILABLE" ? "unavailable" : "failed");
@@ -423,11 +436,7 @@ function PasskeyLogin() {
         type="button"
         onClick={() => void startExplicitLogin()}
       >
-        {state === "pending"
-          ? "Waiting for your passkey…"
-          : isRateLimited
-            ? `Try again in ${retryAfterSeconds} ${retryAfterSeconds === 1 ? "second" : "seconds"}`
-            : "Log in with passkey"}
+        {getPasskeyLoginButtonLabel(state, isRateLimited, retryAfterSeconds)}
       </Button>
     </div>
   );

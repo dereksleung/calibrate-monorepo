@@ -47,7 +47,13 @@ export class DayLog {
     this._lunch = lunch;
     this._dinner = dinner;
     this._snacks = snacks;
-    this._weight = weight === null ? null : weight instanceof Weight ? weight : Weight.reconstitute(weight);
+    if (weight === null) {
+      this._weight = null;
+    } else if (weight instanceof Weight) {
+      this._weight = weight;
+    } else {
+      this._weight = Weight.reconstitute(weight);
+    }
     this._versionNumber = DayLogVersionNumber.from(versionNumber);
   }
 

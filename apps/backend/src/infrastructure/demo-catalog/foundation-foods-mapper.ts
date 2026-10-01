@@ -313,11 +313,12 @@ export function mapFoundationFood(food: unknown, sourceIndex = 0): FoundationFoo
   const reference = namedPortion ?? volumePortion;
 
   const quantityMass = round2(reference?.gramWeight ?? REFERENCE_FALLBACK_GRAMS);
-  const retainedVolume = reference
-    ? reference.kind === "volume"
-      ? reference
-      : equivalentVolume(reference, usablePortions)
-    : undefined;
+  let retainedVolume: UsablePortion | undefined;
+  if (reference?.kind === "volume") {
+    retainedVolume = reference;
+  } else if (reference) {
+    retainedVolume = equivalentVolume(reference, usablePortions);
+  }
 
   const record: FoodCatalogInput = {
     name: description,

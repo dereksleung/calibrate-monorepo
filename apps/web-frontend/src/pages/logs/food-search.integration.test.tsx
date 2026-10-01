@@ -22,6 +22,12 @@ vi.mock("@tanstack/react-router-devtools", () => ({
   TanStackRouterDevtoolsPanel: () => null,
 }));
 
+function getRequestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if ("url" in input) return input.url;
+  return String(input);
+}
+
 beforeEach(() => {
   window.scrollTo = vi.fn();
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -36,7 +42,7 @@ beforeEach(() => {
   }));
 
   vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+    const url = getRequestUrl(input);
 
     if (url.includes("/auth/session")) {
       return Promise.resolve(
@@ -204,7 +210,7 @@ describe("food search route", () => {
   it("re-enables each quick-add after overlapping saves settle", async () => {
     const createResolvers: Array<(response: Response) => void> = [];
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      const url = getRequestUrl(input);
       if (url.includes("/auth/session")) {
         return Promise.resolve(
           new Response(
@@ -308,7 +314,7 @@ describe("food search route", () => {
 
   it("keeps search usable and reports the quick-add failure", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      const url = getRequestUrl(input);
       if (url.includes("/auth/session")) {
         return Promise.resolve(
           new Response(
@@ -395,7 +401,7 @@ describe("food search route", () => {
 
   it("stays on the food entry page when create fails", async () => {
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      const url = getRequestUrl(input);
       if (url.includes("/auth/session")) {
         return Promise.resolve(
           new Response(
@@ -450,7 +456,7 @@ describe("food search route", () => {
     expect(queryClient.getQueryData(dayLogSlotVersionQueryKey(accountId, "2026-05-18"))).toBe(1);
     expect(
       vi.mocked(globalThis.fetch).mock.calls.some(([input]) => {
-        const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+        const url = getRequestUrl(input);
         return url.includes("/daylogs:sync");
       }),
     ).toBe(false);
@@ -475,7 +481,7 @@ describe("food search route", () => {
     }
 
     vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL, init) => {
-      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      const url = getRequestUrl(input);
       if (url.includes("/auth/session")) {
         return Promise.resolve(
           new Response(
@@ -536,7 +542,7 @@ describe("food search route", () => {
     await screen.findByRole("heading", { name: "Monday, May 18" });
     expect(router.state.location.pathname).toBe("/logs");
     const syncCalls = vi.mocked(globalThis.fetch).mock.calls.filter(([input]) => {
-      const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+      const url = getRequestUrl(input);
       return url.includes("/daylogs:sync");
     });
     expect(syncCalls).toHaveLength(1);

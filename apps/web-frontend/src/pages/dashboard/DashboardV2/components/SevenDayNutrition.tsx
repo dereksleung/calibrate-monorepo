@@ -30,6 +30,10 @@ function SevenDaySummaryStat({ row }: { row: SevenDayNutritionRowModel }) {
       ? 0
       : daysWithData.reduce((total, day) => total + day.amount, 0) / daysWithData.length;
   const color = ROW_COLORS[row.metric];
+  let metricLabel = "";
+  if (row.metric === "proteinGrams") metricLabel = " P";
+  if (row.metric === "totalFatGrams") metricLabel = " F";
+  if (row.metric === "totalCarbohydrateGrams") metricLabel = " C";
 
   return (
     <div className="flex min-w-0 flex-col justify-center">
@@ -39,13 +43,7 @@ function SevenDaySummaryStat({ row }: { row: SevenDayNutritionRowModel }) {
           style={{ color }}
         >
           {formatAmount(amount)}
-          {row.metric === "proteinGrams"
-            ? " P"
-            : row.metric === "totalFatGrams"
-              ? " F"
-              : row.metric === "totalCarbohydrateGrams"
-                ? " C"
-                : ""}
+          {metricLabel}
         </span>
         {row.metric === "calories" ? (
           <Flame aria-label="Calories" className="size-4 text-on-surface-variant" />

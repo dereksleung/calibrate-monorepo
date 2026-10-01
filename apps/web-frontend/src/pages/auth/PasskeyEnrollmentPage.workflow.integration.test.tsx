@@ -39,21 +39,24 @@ function setup(failure?: "options" | "verify") {
     order.push(step);
     if (step === "options") expect(init?.body).toBeUndefined();
     else expect(JSON.parse(String(init?.body))).toEqual(command);
+    let responseBody: unknown;
+    if (step === failure) {
+      responseBody = { error: "ENROLLMENT_AUTHORIZATION_REQUIRED" };
+    } else if (step === "options") {
+      responseBody = challenge.options;
+    } else {
+      responseBody = {
+        ...context,
+        user: {
+          ...context.user,
+          createdAt: context.user.createdAt.toISOString(),
+          updatedAt: context.user.updatedAt.toISOString(),
+        },
+      };
+    }
+
     return new Response(
-      JSON.stringify(
-        step === failure
-          ? { error: "ENROLLMENT_AUTHORIZATION_REQUIRED" }
-          : step === "options"
-            ? challenge.options
-            : {
-                ...context,
-                user: {
-                  ...context.user,
-                  createdAt: context.user.createdAt.toISOString(),
-                  updatedAt: context.user.updatedAt.toISOString(),
-                },
-              },
-      ),
+      JSON.stringify(responseBody),
       { status: step === failure ? 401 : 200, headers: { "content-type": "application/json" } },
     );
   });

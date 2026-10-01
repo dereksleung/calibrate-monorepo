@@ -20,12 +20,9 @@ function getDailyGoalPercent(value: number, target: number) {
 }
 
 function MacroStat({ label, value, color }: { label: string; value: number; color: string }) {
-  const target =
-    label === "Carbs"
-      ? DAILY_TARGETS.totalCarbohydrateGrams
-      : label === "Fat"
-        ? DAILY_TARGETS.totalFatGrams
-        : DAILY_TARGETS.proteinGrams;
+  let target: number = DAILY_TARGETS.proteinGrams;
+  if (label === "Carbs") target = DAILY_TARGETS.totalCarbohydrateGrams;
+  if (label === "Fat") target = DAILY_TARGETS.totalFatGrams;
   const percent = getDailyGoalPercent(value, target);
 
   return (

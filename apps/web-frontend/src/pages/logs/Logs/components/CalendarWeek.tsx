@@ -96,12 +96,10 @@ function CalendarWeekDayCell({
       <CalorieRing dotted={dotted} fillRatio={day.fillRatio} />
     </>
   );
-  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${upcoming
-    ? "cursor-default text-on-surface-variant/40"
-    : day.selected
-      ? "text-on-surface"
-      : "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-    }`;
+  let dayStateClassName = "text-on-surface-variant/60 hover:text-on-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  if (day.selected) dayStateClassName = "text-on-surface";
+  if (upcoming) dayStateClassName = "cursor-default text-on-surface-variant/40";
+  const className = `flex min-w-0 flex-col items-center gap-2 px-1 py-1.5 transition-colors ${dayStateClassName}`;
   const calories = Math.round(day.fillRatio * DAILY_TARGETS.calories);
   const ariaLabel = `${formatDate(day.date)}, ${calories.toLocaleString()} of ${DAILY_TARGETS.calories.toLocaleString()} calories${upcoming ? ", upcoming" : ""}`;
 

@@ -17,6 +17,12 @@ vi.mock("@tanstack/react-router-devtools", () => ({
   TanStackRouterDevtoolsPanel: () => null,
 }));
 
+function getRequestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if ("url" in input) return input.url;
+  return String(input);
+}
+
 beforeEach(() => {
   window.scrollTo = vi.fn();
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({
@@ -31,7 +37,7 @@ beforeEach(() => {
   }));
 
   vi.spyOn(globalThis, "fetch").mockImplementation((input: RequestInfo | URL) => {
-    const url = typeof input === "string" ? input : "url" in input ? input.url : String(input);
+    const url = getRequestUrl(input);
     if (url.includes("/auth/session")) {
       return Promise.resolve(
         new Response(
