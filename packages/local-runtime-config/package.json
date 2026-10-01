@@ -75,6 +75,7 @@
     }
   },
   "devDependencies": {
+    "@types/node": "26.4.1",
     "oxlint-tsgolint": "7.0.2001"
   }
 }
