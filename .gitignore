@@ -26,3 +26,5 @@ vite.config.*.timestamp*
 storybook-static
 
 test-output
+.vercel
+.env*
