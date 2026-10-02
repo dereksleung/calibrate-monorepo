@@ -74,6 +74,7 @@ Use the repo commit message convention in `docs/agents/commit-messages.md`.
 
 - For Nx-managed project tasks, always use `npx nx run <project_name>:<target>`; do not call package scripts directly unless the user explicitly requests them or the command is listed here as a non-Nx exception.
 - Dev server: `npx nx run <project_name>:dev`
+- Before starting `web:dev` or `backend:dev`, check for `.worktree-dev.json` at the workspace root. If it is absent, run `npx nx run workspace:worktree-setup` first. Launch either server with the worktree bindings from that file, using the environment and port arguments defined in `workspace/src/print-dev-commands.ts`; the bare Nx dev targets do not read the file themselves.
 - Tests, fast/default suite: `npx nx run <project_name>:test`
 - Tests, integration suite: `npx nx run <project_name>:test:integration`
 - Tests, project-local end-to-end suite: `npx nx run <project_name>:test:e2e`
@@ -113,7 +114,7 @@ Use the repo commit message convention in `docs/agents/commit-messages.md`.
 ## Dependency Policy
 
 - Never install new dependencies or upgrade dependencies without explicit user confirmation.
-- You may `npm ci --prefer-offline` to install known dependencies when spawning a git worktree that lacks a node_modules folder.
+- You may `npm ci --prefer-offline` to install known dependencies when the repo is missing its node_modules folder, or that folder is empty.
 - Before install/upgrade, show exact command(s) and wait for approval.
 - During a no-mistakes pipeline or phase, `npm ci --prefer-offline` is pre-approved
   when dependencies are absent; it must not modify dependency manifests or
