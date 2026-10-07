@@ -15,7 +15,7 @@ Calibrate is a full-stack nutrition-tracking application designed to turn detail
 - [Engineering highlights](#engineering-highlights)
 - [Architecture](#architecture)
   - [Frontend architecture](#frontend-architecture)
-  - [Backend boundaries](#backend-boundaries)
+  - [Backend architecture](#backend-architecture)
 - [Data access Solution Design, Tradeoffs Rationale: Expected Usage Patterns](#data-access-solution-design-tradeoffs-rationale-expected-usage-patterns)
 - [Data synchronization and caching](#data-synchronization-and-caching)
 - [Screenshots](#screenshots)
@@ -111,8 +111,8 @@ The Total view highlights the foods contributing most to a selected nutrient. Th
 
 <table>
   <tr>
-    <td><img width="1197" height="850" src="https://github.com/user-attachments/assets/7aa0e2da-0bf5-4b1e-b1f0-7328e146e43f" /></td>
-    <td><img width="487" height="906" src="https://github.com/user-attachments/assets/ff7ab55b-3382-478a-95ac-b1c7f637212a" /></td>
+    <td><img width="1128" height="946" src="https://github.com/user-attachments/assets/51b9937e-d8e7-43ec-add5-5e448c706a8e" /></td>
+    <td><img width="1114" height="947" src="https://github.com/user-attachments/assets/f7808d2d-247b-47dc-b44d-33c794025083" /></td>
   </tr>
 </table>
 
