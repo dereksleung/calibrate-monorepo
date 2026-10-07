@@ -48,18 +48,26 @@ function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsPro
     <div className="flex h-full min-h-0 flex-1 flex-col bg-analytics-surface text-on-surface">
       <Tabs className="flex min-h-0 flex-1 flex-col gap-0" defaultValue={defaultTab}>
         <div className="flex shrink-0 flex-col gap-3 px-5 pt-6">
-          <div className="space-y-3">
-            <Typography color="inherit" as="p" className="pr-12" variant="headline" weight="medium">
+          <div className="-mx-5 -mt-6 space-y-4 bg-primary-fixed px-5 pb-5 pt-6">
+            <Typography
+              color="onPrimaryFixedVariant"
+              as="p"
+              className="pr-12 text-3xl leading-9"
+              variant="h2SectionTitle"
+              weight="bold"
+            >
               {model.title}
             </Typography>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="flex items-baseline gap-2">
-                <span className="text-3xl font-medium tabular-nums tracking-tight">
+            <div className="space-y-1.5">
+              <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="font-heading text-4xl font-bold leading-tight tabular-nums tracking-[-0.02em] [overflow-wrap:anywhere]">
                   {formatAmount(model.total.amount)}
                 </span>
-                <span className="text-sm text-on-surface-variant">{model.unit} logged</span>
+                <span className="text-base font-medium text-on-primary-fixed-variant">
+                  {model.unit} logged
+                </span>
               </p>
-              <p className="text-sm text-on-surface-variant">Last 14 days</p>
+              <p className="text-sm text-on-primary-fixed-variant">Last 14 days</p>
             </div>
           </div>
 
@@ -107,7 +115,7 @@ function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsPro
 
 function TotalContributions({ model }: { model: NutrientAnalyticsModel }) {
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-4">
       <div className="space-y-1">
         <Typography color="inherit" as="h2" variant="h3">{`${model.title} by food`}</Typography>
         <p className="text-sm text-on-surface-variant">Share of your logged total</p>
@@ -122,14 +130,14 @@ function TotalContributions({ model }: { model: NutrientAnalyticsModel }) {
         ) : (
           <ul className="divide-y divide-outline-variant/30">
             {model.total.contributions.map((contribution) => (
-              <li className="flex flex-col gap-1.5 px-4 py-3" key={contribution.name}>
+              <li className="flex flex-col gap-2 px-4 py-4" key={contribution.name}>
                 <div className="flex items-baseline justify-between gap-3">
                   <Typography
                     color="inherit"
                     as="p"
                     className="min-w-0 flex-1 leading-5 [overflow-wrap:anywhere]"
                     variant="body"
-                    weight="normal"
+                    weight="medium"
                   >
                     {contribution.name}
                   </Typography>
@@ -138,7 +146,7 @@ function TotalContributions({ model }: { model: NutrientAnalyticsModel }) {
                     as="p"
                     className="shrink-0 whitespace-nowrap text-sm leading-5 tabular-nums"
                     variant="body"
-                    weight="medium"
+                    weight="semibold"
                   >
                     {formatAmountWithUnit(contribution.amount, model.unit)}
                   </Typography>
@@ -190,10 +198,10 @@ function ContributionChange({
     <section className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <Typography color="inherit" as="h2" variant="h2SectionTitle">
+          <Typography color="inherit" as="h2" variant="h3">
             Food contribution change
           </Typography>
-          <Typography as="p" color="onSurfaceVariant" variant="body">
+          <Typography as="p" className="text-sm" color="onSurfaceVariant" variant="body" weight="normal">
             {CHANGE_SUBTITLE}
           </Typography>
         </div>
@@ -210,7 +218,7 @@ function ContributionChange({
 
       {model.change.showInsufficientHistoryBanner ? (
         <div
-          className="flex items-start gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface-variant"
+          className="flex items-start gap-3 rounded-md bg-analytics-track px-4 py-3 text-sm leading-5 text-on-surface-variant"
           role="status"
         >
           <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
@@ -263,13 +271,13 @@ function ChangeSection({
       ) : (
         <ul className="divide-y divide-outline-variant/30 overflow-hidden rounded-md border border-outline-variant/40 bg-surface-container-lowest">
           {rows.map((entry) => (
-            <li className="flex items-start justify-between gap-3 px-4 py-3" key={entry.name}>
+            <li className="flex items-baseline justify-between gap-3 px-4 py-4" key={entry.name}>
               <Typography
                 color="inherit"
                 as="p"
                 className="min-w-0 flex-1 leading-5 [overflow-wrap:anywhere]"
                 variant="body"
-                weight="normal"
+                weight="medium"
               >
                 {entry.name}
               </Typography>
