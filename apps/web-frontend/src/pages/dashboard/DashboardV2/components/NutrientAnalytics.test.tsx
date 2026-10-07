@@ -102,7 +102,7 @@ describe("NutrientAnalytics", () => {
 
     expect(screen.getByText(title)).toBeTruthy();
     expect(screen.getByText(`${amount} ${unit}`, { selector: "p" })).toBeTruthy();
-    expect(screen.getByText(`Total ${title} by food for last 7 days`)).toBeTruthy();
+    expect(screen.getByText(`Total ${title} by food for last 14 days`)).toBeTruthy();
   });
 
   it("lists total contributions in descending amount order with shares and no images", () => {
@@ -132,7 +132,7 @@ describe("NutrientAnalytics", () => {
     expect(screen.getByRole("tabpanel").textContent).not.toContain("Tofu");
   });
 
-  it("shows the seven-day-safe banner and all-New rows for provisional history", () => {
+  it("shows the fourteen-day-safe banner and all-New rows for provisional history", () => {
     const { container } = render(
       <NutrientAnalytics
         defaultTab="change"
@@ -153,7 +153,7 @@ describe("NutrientAnalytics", () => {
     );
 
     expect(screen.getByRole("status").textContent).toBe(
-      "More history is needed to compare changes. Foods logged in the last 7 days are shown as New.",
+      "More history is needed to compare changes. Foods logged in the last 14 days are shown as New.",
     );
     expect(namesInRegion("New Foods")).toEqual([
       expect.stringContaining("Tofu"),

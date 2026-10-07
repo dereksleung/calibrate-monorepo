@@ -105,6 +105,7 @@ export function buildDashboardV2ViewModel({
   const history = historyDaysFromDatedResults(dayLogs);
   const endDate = endDateInput ?? endDateFromDatedResults(dayLogs) ?? history[history.length - 1]?.date ?? "";
   const sevenDayHistory = historyWithinInclusiveWindow(history, endDate, 7);
+  const fourteenDayHistory = historyWithinInclusiveWindow(history, endDate, 14);
   const rows = NUTRIENT_CONFIGURATIONS.map((configuration) =>
     buildSevenDayNutritionRow(sevenDayHistory, endDate, configuration),
   );
@@ -132,7 +133,7 @@ export function buildDashboardV2ViewModel({
         contributionDays: history,
         endDate,
         metric: configuration.metric,
-        totalDays: sevenDayHistory,
+        totalDays: fourteenDayHistory,
       });
 
       return models;

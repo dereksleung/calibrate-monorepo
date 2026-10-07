@@ -68,7 +68,7 @@ describe("buildDashboardV2ViewModel", () => {
     expect(model.nutritionCards.calories.amount).toBe(0);
   });
 
-  it("uses only the inclusive 28-day comparison windows and seven-day totals", () => {
+  it("uses only the inclusive 28-day comparison windows and fourteen-day totals", () => {
     const model = buildDashboardV2ViewModel({
       endDate: "2026-08-30",
       dayLogs: cachedResults([
@@ -83,8 +83,8 @@ describe("buildDashboardV2ViewModel", () => {
     });
 
     expect(model.analytics.calories.total).toEqual({
-      amount: 50,
-      contributions: [{ name: "Food", amount: 50, share: 1 }],
+      amount: 100,
+      contributions: [{ name: "Food", amount: 100, share: 1 }],
     });
     expect(model.analytics.calories.change.sections).toEqual({
       reductions: [{ name: "Food", amount: 100, change: -0.5 }],
@@ -269,10 +269,14 @@ describe("buildDashboardV2ViewModel", () => {
     ]);
   });
 
-  it("keeps total contributions scoped to the last seven days when older history is available", () => {
+  it("includes the full fourteen-day total window while excluding older and future history", () => {
     const model = buildDashboardV2ViewModel({
+      endDate: "2026-08-30",
       dayLogs: cachedResults([
         buildDay("2026-08-03", { breakfast: [buildFoodEntry({ name: "Older food", calories: 250 })] }),
+        buildDay("2026-08-16", { breakfast: [buildFoodEntry({ name: "Outside window", calories: 400 })] }),
+        buildDay("2026-08-17", { breakfast: [buildFoodEntry({ name: "Boundary food", calories: 200 })] }),
+        buildDay("2026-08-23", { breakfast: [buildFoodEntry({ name: "Second-week food", calories: 50 })] }),
         buildDay("2026-08-24"),
         buildDay("2026-08-25"),
         buildDay("2026-08-26"),
@@ -280,13 +284,21 @@ describe("buildDashboardV2ViewModel", () => {
         buildDay("2026-08-28"),
         buildDay("2026-08-29"),
         buildDay("2026-08-30", { breakfast: [buildFoodEntry({ name: "Recent food", calories: 100 })] }),
+        buildDay("2026-08-31", { breakfast: [buildFoodEntry({ name: "Future food", calories: 300 })] }),
       ]),
     });
 
     expect(model.analytics.calories.total).toEqual({
-      amount: 100,
-      contributions: [{ name: "Recent food", amount: 100, share: 1 }],
+      amount: 350,
+      contributions: [
+        { name: "Boundary food", amount: 200, share: 200 / 350 },
+        { name: "Recent food", amount: 100, share: 100 / 350 },
+        { name: "Second-week food", amount: 50, share: 50 / 350 },
+      ],
     });
+    expect(model.sevenDayNutrition.rows[0]?.days.map(({ amount }) => amount)).toEqual([
+      0, 0, 0, 0, 0, 0, 100,
+    ]);
     expect(model.habits.foodLogging.days.find(({ date }) => date === "2026-08-03")?.status).toBe("complete");
   });
 

@@ -11,7 +11,7 @@ import { useState } from "react";
 
 const CHANGE_SUBTITLE = "Compares the most recent two weeks with the two weeks before.";
 const INSUFFICIENT_HISTORY_COPY =
-  "More history is needed to compare changes. Foods logged in the last 7 days are shown as New.";
+  "More history is needed to compare changes. Foods logged in the last 14 days are shown as New.";
 
 type NutrientAnalyticsTab = "change" | "total";
 
@@ -52,7 +52,7 @@ function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsPro
           <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)]">
             <CardContent className="flex flex-col gap-2 px-5 py-5">
               <Typography as="p" color="muted" variant="label">
-                Last 7 days
+                Last 14 days
               </Typography>
               <Typography as="p" className="leading-none tracking-normal" variant="headline">
                 {model.title}
@@ -94,13 +94,13 @@ function TotalContributions({ model }: { model: NutrientAnalyticsModel }) {
   return (
     <section className="flex flex-col gap-4">
       <Typography as="h2" className="text-center tracking-[0.18em]" color="muted" variant="label">
-        {`Total ${model.title} by food for last 7 days`}
+        {`Total ${model.title} by food for last 14 days`}
       </Typography>
 
       <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_24px_52px_-34px_rgba(0,0,0,0.55)]">
         <CardContent className="px-5 py-6">
           {model.total.contributions.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">No food contributions in the last 7 days.</p>
+            <p className="text-sm text-on-surface-variant">No food contributions in the last 14 days.</p>
           ) : (
             <ul className="flex flex-col gap-7">
               {model.total.contributions.map((contribution) => (
