@@ -14,8 +14,15 @@
   --color-surface-bright: #f9f9f9;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-low: #f3f3f4;
-  --color-analytics-surface: #f3f6f1;
-  --color-analytics-track: #e4ebe0;
+  --color-analytics-header: #263832;
+  --color-analytics-header-foreground: #f1f7e7;
+  --color-analytics-header-muted: #cfdecd;
+  --color-analytics-surface: #eaf2df;
+  --color-analytics-foreground: #233127;
+  --color-analytics-muted: #485747;
+  --color-analytics-accent: #3c643d;
+  --color-analytics-track: #d5e3cb;
+  --color-analytics-outline: #c7d5c0;
   --color-surface-container: #eeeeee;
   --color-surface-container-high: #e8e8e8;
   --color-surface-container-highest: #e2e2e2;
