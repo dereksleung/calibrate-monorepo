@@ -4,7 +4,7 @@ import type { NutrientAnalyticsModel } from "@calibrate/frontend-core/verticals/
 import type { RefObject } from "react";
 
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { DashboardAnalyticsDrawer } from "./DashboardAnalyticsDrawer.tsx";
@@ -50,6 +50,17 @@ afterEach(() => {
 });
 
 describe("DashboardAnalyticsDrawer", () => {
+  it("lets users close the drawer with a visible, labelled button", () => {
+    const onClose = vi.fn();
+    render(
+      <DashboardAnalyticsDrawer model={caloriesModel} onClose={onClose} returnFocusRef={{ current: null }} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Close Calories analytics" }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("opens from the right on desktop and from the bottom on mobile", () => {
     const returnFocusRef: RefObject<HTMLElement | null> = { current: null };
     const { unmount } = render(

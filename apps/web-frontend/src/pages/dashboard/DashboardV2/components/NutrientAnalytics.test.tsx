@@ -102,7 +102,9 @@ describe("NutrientAnalytics", () => {
 
     expect(screen.getByText(title)).toBeTruthy();
     expect(screen.getByText(`${amount} ${unit}`, { selector: "p" })).toBeTruthy();
-    expect(screen.getByText(`Total ${title} by food for last 14 days`)).toBeTruthy();
+    expect(screen.getByText(`${title} by food`)).toBeTruthy();
+    expect(screen.getByText("Last 14 days")).toBeTruthy();
+    expect(screen.getByText(`${unit} logged`)).toBeTruthy();
   });
 
   it("lists total contributions in descending amount order with shares and no images", () => {
@@ -116,6 +118,14 @@ describe("NutrientAnalytics", () => {
     expect(items[1]?.textContent).toContain("60 kcal");
     expect(items[1]?.textContent).toContain("40%");
     expect(container.querySelectorAll("img")).toHaveLength(0);
+  });
+
+  it("explains an empty fourteen-day total and how to populate it", () => {
+    render(<NutrientAnalytics model={buildModel({ total: { amount: 0, contributions: [] } })} />);
+
+    expect(screen.getByText("No foods logged in the last 14 days.")).toBeTruthy();
+    expect(screen.getByText("Log a meal to see your food breakdown.")).toBeTruthy();
+    expect(screen.queryByText("Percentages are rounded.")).toBeNull();
   });
 
   it("keeps the selected nutrient while switching between Total and Change tabs", () => {
@@ -189,6 +199,7 @@ describe("NutrientAnalytics", () => {
     expect(within(reductions).getByText("-100%")).toBeTruthy();
     expect(within(reductions).getByText("-50%")).toBeTruthy();
     expect(within(increases).getByText("+100%")).toBeTruthy();
+    expect(within(increases).getByText("100 kcal logged")).toBeTruthy();
     expect(within(newFoods).getByText("40 kcal")).toBeTruthy();
     expect(within(newFoods).getAllByText("New")).toHaveLength(2);
   });

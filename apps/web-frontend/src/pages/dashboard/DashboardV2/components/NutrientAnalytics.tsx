@@ -3,7 +3,6 @@ import type {
   NutrientAnalyticsModel,
 } from "@calibrate/frontend-core/verticals/dashboard/dashboard-v2-model";
 
-import { Card, CardContent } from "#/shared/components/base/Card.tsx";
 import { Typography } from "#/shared/components/base/typography/Typography.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/shared/components/tabs/Tabs.tsx";
 import { ArrowDown, ArrowDownUp, ArrowUpRight, Info } from "lucide-react";
@@ -46,39 +45,55 @@ function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsPro
   const [reversed, setReversed] = useState(false);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-surface-container-low">
+    <div className="flex h-full min-h-0 flex-1 flex-col bg-analytics-surface text-on-surface">
       <Tabs className="flex min-h-0 flex-1 flex-col gap-0" defaultValue={defaultTab}>
-        <div className="flex shrink-0 flex-col gap-6 px-5 pb-4 pt-6">
-          <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-28px_rgba(0,0,0,0.5)]">
-            <CardContent className="flex flex-col gap-2 px-5 py-5">
-              <Typography as="p" color="muted" variant="label">
-                Last 14 days
-              </Typography>
-              <Typography as="p" className="leading-none tracking-normal" variant="headline">
-                {model.title}
-              </Typography>
-              <div className="flex items-baseline gap-1">
-                <Typography as="span" className="leading-none tracking-normal" variant="display">
+        <div className="flex shrink-0 flex-col gap-3 px-5 pt-6">
+          <div className="space-y-3">
+            <Typography color="inherit" as="p" className="pr-12" variant="headline" weight="medium">
+              {model.title}
+            </Typography>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <p className="flex items-baseline gap-2">
+                <span className="text-3xl font-medium tabular-nums tracking-tight">
                   {formatAmount(model.total.amount)}
-                </Typography>
-                <Typography as="span" color="muted" variant="bodyLg">
-                  {model.unit}
-                </Typography>
-              </div>
-            </CardContent>
-          </Card>
+                </span>
+                <span className="text-sm text-on-surface-variant">{model.unit} logged</span>
+              </p>
+              <p className="text-sm text-on-surface-variant">Last 14 days</p>
+            </div>
+          </div>
 
-          <TabsList aria-label={`${model.title} analytics views`}>
-            <TabsTrigger value="total">Total</TabsTrigger>
-            <TabsTrigger value="change">Change</TabsTrigger>
+          <TabsList
+            aria-label={`${model.title} analytics views`}
+            className="justify-start gap-6 border-b border-outline-variant/50"
+            variant="line"
+          >
+            <TabsTrigger
+              className="min-h-11 min-w-11 flex-none px-1 text-sm data-active:text-surface-tint after:bg-surface-tint group-data-horizontal/tabs:after:bottom-[-1px]"
+              value="total"
+            >
+              Total
+            </TabsTrigger>
+            <TabsTrigger
+              className="min-h-11 min-w-11 flex-none px-1 text-sm data-active:text-surface-tint after:bg-surface-tint group-data-horizontal/tabs:after:bottom-[-1px]"
+              value="change"
+            >
+              Change
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-2" value="total">
+        <TabsContent
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-5"
+          value="total"
+        >
           <TotalContributions model={model} />
         </TabsContent>
 
-        <TabsContent className="min-h-0 flex-1 overflow-y-auto px-5 pb-8 pt-2" value="change">
+        <TabsContent
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-8 pt-5"
+          value="change"
+        >
           <ContributionChange
             model={model}
             onReverse={() => setReversed((current) => !current)}
@@ -92,44 +107,70 @@ function NutrientAnalytics({ defaultTab = "total", model }: NutrientAnalyticsPro
 
 function TotalContributions({ model }: { model: NutrientAnalyticsModel }) {
   return (
-    <section className="flex flex-col gap-4">
-      <Typography as="h2" className="text-center tracking-[0.18em]" color="muted" variant="label">
-        {`Total ${model.title} by food for last 14 days`}
-      </Typography>
+    <section className="flex flex-col gap-3">
+      <div className="space-y-1">
+        <Typography color="inherit" as="h2" variant="h3">{`${model.title} by food`}</Typography>
+        <p className="text-sm text-on-surface-variant">Share of your logged total</p>
+      </div>
 
-      <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_24px_52px_-34px_rgba(0,0,0,0.55)]">
-        <CardContent className="px-5 py-6">
-          {model.total.contributions.length === 0 ? (
-            <p className="text-sm text-on-surface-variant">No food contributions in the last 14 days.</p>
-          ) : (
-            <ul className="flex flex-col gap-7">
-              {model.total.contributions.map((contribution) => (
-                <li className="flex flex-col gap-3" key={contribution.name}>
-                  <div className="flex items-center justify-between gap-3">
-                    <Typography as="p" className="truncate" variant="bodyLg">
-                      {contribution.name}
-                    </Typography>
-                    <Typography as="p" className="whitespace-nowrap" variant="bodyLg" weight="medium">
-                      {formatAmountWithUnit(contribution.amount, model.unit)}
-                    </Typography>
+      <div className="overflow-hidden rounded-md border border-outline-variant/40 bg-surface-container-lowest">
+        {model.total.contributions.length === 0 ? (
+          <div className="space-y-1 p-4">
+            <p className="font-medium">No foods logged in the last 14 days.</p>
+            <p className="text-sm text-on-surface-variant">Log a meal to see your food breakdown.</p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-outline-variant/30">
+            {model.total.contributions.map((contribution) => (
+              <li className="flex flex-col gap-1.5 px-4 py-3" key={contribution.name}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <Typography
+                    color="inherit"
+                    as="p"
+                    className="min-w-0 flex-1 leading-5 [overflow-wrap:anywhere]"
+                    variant="body"
+                    weight="normal"
+                  >
+                    {contribution.name}
+                  </Typography>
+                  <Typography
+                    color="inherit"
+                    as="p"
+                    className="shrink-0 whitespace-nowrap text-sm leading-5 tabular-nums"
+                    variant="body"
+                    weight="medium"
+                  >
+                    {formatAmountWithUnit(contribution.amount, model.unit)}
+                  </Typography>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    aria-hidden="true"
+                    className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-analytics-track"
+                  >
+                    <div
+                      className="h-full rounded-full bg-surface-tint"
+                      style={{ width: `${Math.min(contribution.share * 100, 100)}%` }}
+                    />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-container-low">
-                      <div
-                        className="h-full rounded-full bg-primary-fixed-dim"
-                        style={{ width: `${Math.min(contribution.share * 100, 100)}%` }}
-                      />
-                    </div>
-                    <Typography as="p" className="w-10 shrink-0 text-right" color="muted" variant="body">
-                      {formatShare(contribution.share)}
-                    </Typography>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                  <Typography
+                    color="inherit"
+                    as="p"
+                    className="w-10 shrink-0 text-right text-sm leading-4 tabular-nums text-on-surface-variant"
+                    variant="body"
+                    weight="normal"
+                  >
+                    {formatShare(contribution.share)}
+                  </Typography>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      {model.total.contributions.length > 0 ? (
+        <p className="text-sm text-on-surface-variant">Percentages are rounded.</p>
+      ) : null}
     </section>
   );
 }
@@ -149,17 +190,17 @@ function ContributionChange({
     <section className="flex flex-col gap-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <Typography as="h2" variant="h2SectionTitle">
+          <Typography color="inherit" as="h2" variant="h2SectionTitle">
             Food contribution change
           </Typography>
-          <Typography as="p" color="muted" variant="body">
+          <Typography as="p" color="onSurfaceVariant" variant="body">
             {CHANGE_SUBTITLE}
           </Typography>
         </div>
         <button
           aria-label="Reverse contribution change order"
           aria-pressed={reversed}
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-high focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-analytics-track aria-pressed:bg-analytics-track focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface-tint motion-reduce:transition-none"
           onClick={onReverse}
           type="button"
         >
@@ -169,10 +210,10 @@ function ContributionChange({
 
       {model.change.showInsufficientHistoryBanner ? (
         <div
-          className="flex items-start gap-2 rounded-xl border border-carbs-vibrant-azure/40 bg-carbs-vibrant-azure/15 px-4 py-3 text-sm text-on-surface"
+          className="flex items-start gap-2 rounded-xl border border-outline-variant/50 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface-variant"
           role="status"
         >
-          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-carbs-vibrant-azure" />
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           <span>{INSUFFICIENT_HISTORY_COPY}</span>
         </div>
       ) : null}
@@ -214,23 +255,25 @@ function ChangeSection({
 
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-3">
-      <Typography as="h3" color="muted" id={headingId} variant="h3">
+      <Typography as="h3" color="onSurfaceVariant" id={headingId} variant="h3">
         {title}
       </Typography>
       {rows.length === 0 ? (
         <p className="text-sm text-on-surface-variant">{emptyLabel}</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="divide-y divide-outline-variant/30 overflow-hidden rounded-md border border-outline-variant/40 bg-surface-container-lowest">
           {rows.map((entry) => (
-            <li key={entry.name}>
-              <Card className="rounded-3xl border-white/70 bg-white/80 py-0 shadow-[0_20px_40px_-30px_rgba(0,0,0,0.55)]">
-                <CardContent className="flex items-center justify-between gap-4 px-4 py-4">
-                  <Typography as="p" className="min-w-0 truncate" variant="body">
-                    {entry.name}
-                  </Typography>
-                  <ChangeValue entry={entry} unit={unit} />
-                </CardContent>
-              </Card>
+            <li className="flex items-start justify-between gap-3 px-4 py-3" key={entry.name}>
+              <Typography
+                color="inherit"
+                as="p"
+                className="min-w-0 flex-1 leading-5 [overflow-wrap:anywhere]"
+                variant="body"
+                weight="normal"
+              >
+                {entry.name}
+              </Typography>
+              <ChangeValue entry={entry} unit={unit} />
             </li>
           ))}
         </ul>
@@ -242,13 +285,17 @@ function ChangeSection({
 function ChangeValue({ entry, unit }: { entry: ChangeEntry; unit: NutrientAnalyticsModel["unit"] }) {
   if (entry.change === "new") {
     return (
-      <div className="flex items-center gap-2">
-        <Typography as="p" className="whitespace-nowrap" variant="body">
+      <div className="flex shrink-0 flex-col items-end gap-1">
+        <Typography
+          color="inherit"
+          as="p"
+          className="whitespace-nowrap text-sm tabular-nums"
+          variant="body"
+          weight="medium"
+        >
           {formatAmountWithUnit(entry.amount, unit)}
         </Typography>
-        <span className="rounded-full border border-outline-variant px-2 py-0.5 text-xs font-medium text-on-surface">
-          New
-        </span>
+        <span className="text-sm text-on-surface-variant">New</span>
       </div>
     );
   }
@@ -256,11 +303,22 @@ function ChangeValue({ entry, unit }: { entry: ChangeEntry; unit: NutrientAnalyt
   const Icon = entry.change < 0 ? ArrowDown : ArrowUpRight;
 
   return (
-    <div className="flex items-center gap-2 text-on-surface">
-      <Icon aria-hidden="true" className="size-4" />
-      <Typography as="p" className="whitespace-nowrap" variant="bodyLg">
-        {formatChange(entry.change)}
-      </Typography>
+    <div className="flex shrink-0 flex-col items-end gap-1 text-on-surface">
+      <div className="flex items-center gap-1">
+        <Icon aria-hidden="true" className="size-4" />
+        <Typography
+          color="inherit"
+          as="p"
+          className="whitespace-nowrap text-sm tabular-nums"
+          variant="body"
+          weight="medium"
+        >
+          {formatChange(entry.change)}
+        </Typography>
+      </div>
+      <p className="whitespace-nowrap text-sm tabular-nums text-on-surface-variant">
+        {formatAmountWithUnit(entry.amount, unit)} logged
+      </p>
     </div>
   );
 }

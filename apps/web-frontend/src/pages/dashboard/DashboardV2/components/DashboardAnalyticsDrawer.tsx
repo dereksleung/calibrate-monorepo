@@ -3,12 +3,14 @@ import type { RefObject } from "react";
 
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from "#/shared/components/base/drawer.tsx";
 import { useIsMobile } from "#/shared/hooks/use-media-query.ts";
+import { X } from "lucide-react";
 
 import { NutrientAnalytics } from "./NutrientAnalytics.tsx";
 
@@ -32,7 +34,8 @@ function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardA
       open={model !== null}
     >
       <DrawerContent
-        className="h-[80vh] w-full bg-surface-container-low md:h-full md:max-w-[28rem]"
+        className="h-[80vh] w-full border-outline-variant/40 bg-analytics-surface text-on-surface md:h-full md:max-w-[28rem]"
+        overlayClassName="bg-on-tertiary-fixed/15 supports-backdrop-filter:backdrop-blur-[6px]"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           returnFocusRef.current?.focus();
@@ -46,6 +49,12 @@ function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardA
               : "Nutrient contribution details."}
           </DrawerDescription>
         </DrawerHeader>
+        <DrawerClose
+          aria-label={`Close ${model?.title ?? "Nutrient"} analytics`}
+          className="absolute right-3 top-4 z-10 inline-flex size-11 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-analytics-track focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface-tint motion-reduce:transition-none"
+        >
+          <X aria-hidden="true" className="size-5" />
+        </DrawerClose>
         {model ? <NutrientAnalytics key={model.metric} model={model} /> : null}
       </DrawerContent>
     </Drawer>
