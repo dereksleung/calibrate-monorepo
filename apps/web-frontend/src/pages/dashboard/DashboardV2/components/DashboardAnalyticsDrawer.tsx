@@ -34,7 +34,7 @@ function DashboardAnalyticsDrawer({ model, onClose, returnFocusRef }: DashboardA
       open={model !== null}
     >
       <DrawerContent
-        className="h-[80vh] w-full overflow-hidden border-analytics-outline/40 bg-analytics-header text-analytics-foreground data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=right]:rounded-l-lg md:h-full md:max-w-[28rem] [&>div:first-child]:bg-analytics-header-muted/30"
+        className="h-[80vh] w-full overflow-hidden bg-analytics-header text-analytics-foreground data-[vaul-drawer-direction=bottom]:rounded-t-lg data-[vaul-drawer-direction=bottom]:border-0 data-[vaul-drawer-direction=right]:rounded-l-lg data-[vaul-drawer-direction=right]:border-0 md:h-full md:max-w-[28rem] [&>div:first-child]:bg-analytics-header-muted/30"
         overlayClassName="bg-on-tertiary-fixed/15 supports-backdrop-filter:backdrop-blur-[6px]"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
