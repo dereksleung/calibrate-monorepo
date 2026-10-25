@@ -11,11 +11,6 @@ COPY package.json package-lock.json tsconfig.base.json tsconfig.json nx.json ./
 COPY apps/backend ./apps/backend
 COPY packages/api-contracts ./packages/api-contracts
 COPY packages/local-runtime-config ./packages/local-runtime-config
-COPY .env ./.env
-
-# Keep the requested local dotenvx file in the image without the production private key.
-RUN --mount=type=bind,source=.env.keys,target=/tmp/.env.keys,readonly \
-    sed '/^DOTENV_PRIVATE_KEY_PRODUCTION/d' /tmp/.env.keys > .env.keys
 
 # Install all development and production dependencies
 RUN npm ci
@@ -37,10 +32,6 @@ COPY packages/local-runtime-config/package.json ./packages/local-runtime-config/
 # Copy only production dependencies to save space
 RUN npm pkg delete scripts.prepare
 RUN npm ci --omit=dev
-
-# Copy local dotenvx configuration for this first-pass local/dev image
-COPY --from=builder /app/.env ./.env
-COPY --from=builder /app/.env.keys ./.env.keys
 
 # Copy the compiled shared workspace library
 COPY --from=builder /app/packages/api-contracts/dist ./packages/api-contracts/dist
