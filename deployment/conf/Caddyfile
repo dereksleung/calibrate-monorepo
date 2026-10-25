@@ -1,0 +1,3 @@
+api.calibrateapp.org {
+  reverse_proxy backend:3001
+}

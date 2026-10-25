@@ -29,5 +29,22 @@ services:
       timeout: 5s
       retries: 10
 
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "443:443/udp"  # Optional: HTTP/3
+    volumes:
+      - ./conf:/etc/caddy:ro
+      - ./site:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:
