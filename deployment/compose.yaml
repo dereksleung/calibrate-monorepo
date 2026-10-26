@@ -23,9 +23,9 @@ services:
     ports:
       - "127.0.0.1:5433:5432"
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
@@ -33,6 +33,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    secrets:
+      - db_password
 
   caddy:
     image: caddy:latest
@@ -57,3 +59,5 @@ volumes:
 secrets:
   doppler_token:
     file: /etc/calibrate/doppler-token
+  db_password:
+    file: /etc/calibrate/postgres-password
