@@ -65,14 +65,17 @@ const runtimeConfigurationSchema = z
 
 type RuntimeConfiguration = z.infer<typeof runtimeConfigurationSchema>;
 
+/** Carries only setting names or fixed messages; safe for startup diagnostics. */
+export class RuntimeConfigurationError extends Error {}
+
 /** Validate parsed startup settings without exposing values or populating process.env. */
 export function validateRuntimeConfiguration(configuration: Record<string, string>): RuntimeConfiguration {
   for (const value of Object.values(configuration)) {
     if (typeof value !== "string") {
-      throw new Error("Runtime configuration must contain only string values");
+      throw new RuntimeConfigurationError("Runtime configuration must contain only string values");
     }
     if (value.trimStart().startsWith("encrypted:")) {
-      throw new Error("Runtime configuration contains undecrypted values");
+      throw new RuntimeConfigurationError("Runtime configuration contains undecrypted values");
     }
   }
 
@@ -80,7 +83,7 @@ export function validateRuntimeConfiguration(configuration: Record<string, strin
   if (!result.success) {
     // Never expose Zod issues or the original input: both can carry secret values.
     const names = [...new Set(result.error.issues.map((issue) => String(issue.path[0])))].sort();
-    throw new Error(`Invalid runtime configuration: ${names.join(", ")}`);
+    throw new RuntimeConfigurationError(`Invalid runtime configuration: ${names.join(", ")}`);
   }
 
   // Keep extra settings and exact secret bytes; consumers retain their existing defaults.
