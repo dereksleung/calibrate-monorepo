@@ -59,7 +59,8 @@ async function fetchDotenvPrivateKey(): Promise<string> {
     ["--config-dir", "/tmp/doppler", "secrets", "get", "DOTENV_PRIVATE_KEY_PRODUCTION", "--plain"],
     {
       encoding: "utf8",
-      env: { DOPPLER_TOKEN: token },
+      // Doppler resolves its home directory before processing --config-dir.
+      env: { HOME: "/tmp", DOPPLER_TOKEN: token },
       timeout: 30_000,
       maxBuffer: 16 * 1024,
     },

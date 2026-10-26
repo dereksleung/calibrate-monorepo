@@ -88,7 +88,7 @@ describe("backend startup diagnostics", () => {
     expect(mocks.execFileAsync).toHaveBeenCalledWith(
       "/usr/local/bin/doppler",
       expect.any(Array),
-      expect.objectContaining({ env: { DOPPLER_TOKEN: token } }),
+      expect.objectContaining({ env: { HOME: "/tmp", DOPPLER_TOKEN: token } }),
     );
   });
 
