@@ -23,6 +23,17 @@ FROM node:26.4.0-trixie AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# Install Doppler CLI into the production image
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl gpgv \
+    && curl -fsSL --tlsv1.2 --proto "=https" --retry 3 \
+        https://cli.doppler.com/install.sh \
+        -o /tmp/install-doppler.sh \
+    && sh /tmp/install-doppler.sh --install-path /usr/local/bin \
+    && /usr/local/bin/doppler --version \
+    && rm -f /tmp/install-doppler.sh \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy package manifests needed for npm workspace production install
 COPY package.json package-lock.json ./
 COPY apps/backend/package.json ./apps/backend/package.json
@@ -41,4 +52,4 @@ COPY --from=builder /app/packages/api-contracts/package.json ./packages/api-cont
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
 EXPOSE 3001
-CMD ["node", "apps/backend/dist/app.mjs"]
+CMD ["node", "apps/backend/dist/startup.mjs"]

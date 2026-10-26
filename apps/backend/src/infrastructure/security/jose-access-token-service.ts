@@ -1,6 +1,5 @@
 import { AuthenticationError } from "@application/errors/authentication-error.js";
 import { IAccessTokenService, IssuedAccessToken } from "@application/ports/access-token-service.js";
-import dotenvx from "@dotenvx/dotenvx";
 import { importPKCS8, importSPKI, jwtVerify, SignJWT } from "jose";
 import { createPrivateKey, createPublicKey, type KeyObject } from "node:crypto";
 import path from "node:path";
@@ -125,14 +124,9 @@ export class JoseAccessTokenService implements IAccessTokenService {
 
   private getPrivateKeyPem(): string {
     if (!this.privateKeyPem) {
-      const getOptions = {
-        path: this.config.envFilePath ?? path.resolve(process.cwd(), ".env"),
-        envKeysFile: this.config.envKeysFilePath ?? path.resolve(process.cwd(), ".env.keys"),
-        strict: true,
-      } as Parameters<typeof dotenvx.get>[1];
       const privateKeyPem = usesProcessEnvironmentRuntime()
         ? process.env.JWT_PRIVATE_KEY_PEM
-        : dotenvx.get("JWT_PRIVATE_KEY_PEM", getOptions);
+        : getRuntimeEnvironmentValue("JWT_PRIVATE_KEY_PEM");
 
       if (!privateKeyPem) {
         throw new Error("JWT_PRIVATE_KEY_PEM is not configured");

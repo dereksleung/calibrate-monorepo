@@ -3,15 +3,12 @@ services:
     image: dereksleung407/calibrate:latest
     ports:
       - "127.0.0.1:3001:3001"
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+    command: ["node", "/app/apps/backend/dist/startup.mjs"]
     depends_on:
       postgres:
         condition: service_healthy
+    secrets:
+      - doppler_token
 
   postgres:
     image: postgres:18
@@ -48,3 +45,7 @@ volumes:
   postgres_data:
   caddy_data:
   caddy_config:
+
+secrets:
+  doppler_token:
+    file: /etc/calibrate/doppler-token
