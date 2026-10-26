@@ -4,11 +4,19 @@ services:
     ports:
       - "127.0.0.1:3001:3001"
     command: ["node", "/app/apps/backend/dist/startup.mjs"]
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     secrets:
       - doppler_token
+    volumes:
+      - type: bind
+        source: /srv/calibrate/.env.production
+        target: /run/config/.env.production
+        read_only: true
+        bind:
+          create_host_path: false
 
   postgres:
     image: postgres:18
