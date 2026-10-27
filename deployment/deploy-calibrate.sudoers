@@ -1,0 +1,2 @@
+Defaults!/usr/local/sbin/deploy-calibrate env_reset
+deploy ALL=(root) NOPASSWD: NOSETENV: /usr/local/sbin/deploy-calibrate ""

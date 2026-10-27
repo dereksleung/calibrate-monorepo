@@ -1,5 +1,8 @@
 # Backend database migrations
 
+For the host script invoked by GitHub Actions over SSH, see
+[SSH backend deployment](SSH_DEPLOY.md).
+
 The backend and `migrate` services use the same image. The build includes
 `dist/startup.mjs`, `dist/migrate.mjs`, shared chunks, and `dist/migrations/*.mjs`.
 Keep the whole `dist` directory together. No Nx, TypeScript loader, or source
