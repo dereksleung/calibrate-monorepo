@@ -19,7 +19,7 @@ The existing `dereksleung407/calibrate:latest` reference remains the default.
 The encrypted `/srv/calibrate/.env.production` must contain `DB_HOST='postgres'`
 and `DB_PORT='5432'`, with credentials matching the PostgreSQL service. PostgreSQL
 has no host-port binding: both consumers connect over the Compose network. Use
-`docker compose -f deployment/compose.yaml exec postgres psql -U postgres -d postgres`
+`docker compose -p calibrate -f /srv/calibrate/compose.yaml exec postgres psql -U postgres -d postgres`
 for a database shell. Compose initializes a database named `postgres`; `DB_NAME`
 must match it, or the chosen database must already have been provisioned
 separately. Changing `POSTGRES_DB` does not create a new database in an existing
@@ -48,17 +48,22 @@ select a new project and create a new empty database volume. A newly created
 which database is intended before running migrations or starting the backend.
 Do not stop another container or delete a volume just to free a port.
 
-The commands below assume the repository layout. If the Droplet stores the file
-as `./compose.yaml`, use that path consistently instead of
-`deployment/compose.yaml`, while preserving the existing project name.
+The current Droplet deployment uses project `calibrate` and configuration
+`/srv/calibrate/compose.yaml`. Install the updated `deployment/compose.yaml` at
+that existing path before running the commands below. Preserve the adjacent
+`conf/` and `site/` directories used by the relative Caddy mounts. Every command
+specifies both the project and the absolute configuration path, so it can run
+from any directory without selecting a second deployment. For another host,
+adapt both values to that host's existing deployment.
 
 ## First startup
 
-From the repository root, after provisioning the existing configuration/secret
-files and publishing an image containing these changes:
+On the Droplet, after installing the updated Compose file, provisioning the
+existing configuration/secret files, and publishing an image containing these
+changes:
 
 ```sh
-docker compose -f deployment/compose.yaml up -d
+docker compose -p calibrate -f /srv/calibrate/compose.yaml up -d
 ```
 
 Compose waits for PostgreSQL's healthcheck, runs `migrate`, and starts the backend
@@ -75,17 +80,18 @@ in your interactive SSH shell:
 ```sh
 (
   set -e
-  docker compose -f deployment/compose.yaml pull backend migrate
-  docker compose -f deployment/compose.yaml up -d --wait postgres
-  docker compose -f deployment/compose.yaml up --no-deps --force-recreate --exit-code-from migrate migrate
-  docker compose -f deployment/compose.yaml up -d backend caddy
+  docker compose -p calibrate -f /srv/calibrate/compose.yaml config --quiet
+  docker compose -p calibrate -f /srv/calibrate/compose.yaml pull backend migrate
+  docker compose -p calibrate -f /srv/calibrate/compose.yaml up -d --wait postgres
+  docker compose -p calibrate -f /srv/calibrate/compose.yaml up --no-deps --force-recreate --exit-code-from migrate migrate
+  docker compose -p calibrate -f /srv/calibrate/compose.yaml up -d backend caddy
 )
 ```
 
 The explicit recreation runs this release's migration job even if an earlier job
 completed successfully. `--no-deps` keeps the foreground job from stopping
 PostgreSQL when the job exits. If migrations fail, the final startup command is
-not reached; inspect `docker compose -f deployment/compose.yaml logs migrate`.
+not reached; inspect `docker compose -p calibrate -f /srv/calibrate/compose.yaml logs migrate`.
 Correct the failure before retrying. Never mark failed migrations successful by
 editing Kysely's history manually.
 
