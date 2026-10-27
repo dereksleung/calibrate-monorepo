@@ -17,15 +17,40 @@ services inherit that exact reference; prefer a digest or immutable release tag.
 The existing `dereksleung407/calibrate:latest` reference remains the default.
 
 The encrypted `/srv/calibrate/.env.production` must contain `DB_HOST='postgres'`
-and `DB_PORT='5432'`, with credentials matching the PostgreSQL service. The host's
-published port `5433` is not used between containers. Compose initializes a
-database named `postgres`; `DB_NAME` must match it, or the chosen database must
-already have been provisioned separately. Changing `POSTGRES_DB` does not create
-a new database in an existing PostgreSQL volume.
+and `DB_PORT='5432'`, with credentials matching the PostgreSQL service. PostgreSQL
+has no host-port binding: both consumers connect over the Compose network. Use
+`docker compose -f deployment/compose.yaml exec postgres psql -U postgres -d postgres`
+for a database shell. Compose initializes a database named `postgres`; `DB_NAME`
+must match it, or the chosen database must already have been provisioned
+separately. Changing `POSTGRES_DB` does not create a new database in an existing
+PostgreSQL volume.
 
 The existing token and configuration mounts are shared by both services. The
 migration job uses the same complete validated production configuration as the
 backend, including its existing required non-database settings.
+
+## Existing Droplet preflight
+
+Before running startup or release commands on a host with an existing deployment,
+identify its Compose project and database volume:
+
+```sh
+docker compose ls
+docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Label "com.docker.compose.project"}}'
+docker volume ls --filter label=com.docker.compose.volume=postgres_data
+```
+
+Reuse the existing deployment's Compose project name, for example by setting
+`COMPOSE_PROJECT_NAME` to that name for every command. Compose otherwise derives
+the project name from the Compose file's directory. Moving the file can therefore
+select a new project and create a new empty database volume. A newly created
+`derek_postgres_data` volume alongside an older deployment is a reason to check
+which database is intended before running migrations or starting the backend.
+Do not stop another container or delete a volume just to free a port.
+
+The commands below assume the repository layout. If the Droplet stores the file
+as `./compose.yaml`, use that path consistently instead of
+`deployment/compose.yaml`, while preserving the existing project name.
 
 ## First startup
 
@@ -43,15 +68,18 @@ same PostgreSQL volume as application data.
 
 ## Each release
 
-Run these commands in a shell that stops on failure. Keep `CALIBRATE_IMAGE` set
-to the same release reference throughout:
+Keep `CALIBRATE_IMAGE` set to the same release reference throughout. Run the
+commands in a subshell so a failure stops the release without enabling `set -e`
+in your interactive SSH shell:
 
 ```sh
-set -e
-docker compose -f deployment/compose.yaml pull backend migrate
-docker compose -f deployment/compose.yaml up -d --wait postgres
-docker compose -f deployment/compose.yaml up --no-deps --force-recreate --exit-code-from migrate migrate
-docker compose -f deployment/compose.yaml up -d backend caddy
+(
+  set -e
+  docker compose -f deployment/compose.yaml pull backend migrate
+  docker compose -f deployment/compose.yaml up -d --wait postgres
+  docker compose -f deployment/compose.yaml up --no-deps --force-recreate --exit-code-from migrate migrate
+  docker compose -f deployment/compose.yaml up -d backend caddy
+)
 ```
 
 The explicit recreation runs this release's migration job even if an earlier job
