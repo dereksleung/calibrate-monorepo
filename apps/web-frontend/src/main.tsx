@@ -7,7 +7,7 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
 const router = createRouter({
-  basepath: WEB_PUBLIC_BASE_PATH, // For temp Github page deployment of mock UI, remove for production deployment
+  basepath: WEB_PUBLIC_BASE_PATH,
   routeTree,
   defaultPreload: "intent",
   scrollRestoration: true,

@@ -11,7 +11,7 @@ import { createViteApiProxy } from "./vite-api-proxy.ts";
 const apiProxy = createViteApiProxy();
 
 const config = defineConfig({
-  base: WEB_PUBLIC_BASE_URL, // For temp Github page deployment of mock UI, remove for production deployment
+  base: WEB_PUBLIC_BASE_URL,
   plugins: [
     devtools(),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
