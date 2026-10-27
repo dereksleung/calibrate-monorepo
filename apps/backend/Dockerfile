@@ -48,7 +48,7 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/packages/api-contracts/dist ./packages/api-contracts/dist
 COPY --from=builder /app/packages/api-contracts/package.json ./packages/api-contracts/package.json
 
-# Copy the compiled backend application
+# Copy both entrypoints, their shared chunks, and the compiled migration files
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
 
 EXPOSE 3001

@@ -1,6 +1,26 @@
+x-backend-runtime: &backend-runtime
+  image: ${CALIBRATE_IMAGE:-dereksleung407/calibrate:latest}
+  secrets:
+    - doppler_token
+  volumes:
+    - type: bind
+      source: /srv/calibrate/.env.production
+      target: /run/config/.env.production
+      read_only: true
+      bind:
+        create_host_path: false
+
 services:
+  migrate:
+    <<: *backend-runtime
+    command: ["node", "/app/apps/backend/dist/migrate.mjs"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
-    image: dereksleung407/calibrate:latest
+    <<: *backend-runtime
     ports:
       - "127.0.0.1:3001:3001"
     command: ["node", "/app/apps/backend/dist/startup.mjs"]
@@ -8,15 +28,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    secrets:
-      - doppler_token
-    volumes:
-      - type: bind
-        source: /srv/calibrate/.env.production
-        target: /run/config/.env.production
-        read_only: true
-        bind:
-          create_host_path: false
+      migrate:
+        condition: service_completed_successfully
 
   postgres:
     image: postgres:18
@@ -42,7 +55,7 @@ services:
     ports:
       - "80:80/tcp"
       - "443:443/tcp"
-      - "443:443/udp"  # Optional: HTTP/3
+      - "443:443/udp" # Optional: HTTP/3
     volumes:
       - ./conf:/etc/caddy:ro
       - ./site:/srv
