@@ -10,7 +10,7 @@ Accepted
 
 ## Last Updated
 
-2026-07-30
+2026-10-26
 
 ## Context
 
@@ -302,7 +302,13 @@ Transient failure never clears cookies. After five minutes, the client shows an 
 
 WebAuthn credentials are bound to a relying-party ID and accepted origins. Production must use a stable canonical custom domain before production passkey enrollment is enabled. Registering production passkeys directly under `calibrate.onrender.com` would bind those credentials to that host and complicate a later move to a custom domain.
 
-Production serves the frontend and API from the same canonical origin, with API routes under `/api/v1`. Staging uses a distinct origin and relying-party ID, so staging and production passkeys are intentionally separate.
+Production serves the frontend at `https://calibrateapp.org` and the API at `https://api.calibrateapp.org/api/v1`. The browser calls the API directly rather than forwarding API requests through a frontend-hosted Function. These HTTPS origins are cross-origin but same-site. This replaces the earlier same-origin production decision: it removes the forwarding component in exchange for an explicit credentialed CORS policy and browser verification of the cross-origin flows.
+
+The frontend uses `VITE_API_BASE_URL=https://api.calibrateapp.org/api/v1` and includes credentials on API requests. The backend sets `CORS_ORIGIN=https://calibrateapp.org`, `WEBAUTHN_ORIGIN=https://calibrateapp.org`, and `WEBAUTHN_RP_ID=calibrateapp.org`. Passkey identity follows the frontend origin where the ceremony runs, not the API hostname. API cookies remain host-only, with no `Domain` attribute, and retain their existing `HttpOnly`, `Secure`, `SameSite`, and path protections. Existing cookies on the frontend hostname do not migrate to the API hostname; a cutover may require signing in again.
+
+A shared presentation-layer CORS policy covers `/api/v1` before body parsing, authentication, and routes. Auth and day-log routes share the same frontend origin and credential requirements, so their route definitions do not duplicate the policy. Preflight requests require no session and are handled by the CORS middleware. Actual responses, including application errors, carry the applicable CORS headers. The policy allows the API's supported methods and request headers and exposes `Retry-After` for frontend rate-limit handling. CORS governs browser response access; authentication and server-side exact-origin checks remain separate requirements.
+
+Staging uses a distinct origin and relying-party ID, so staging and production passkeys are intentionally separate. Frontend previews on provider domains are not automatically trusted by the production API and are cross-site with its cookies.
 
 The primary local checkout defaults to the frontend at `http://localhost:3000`
 and the API at `http://localhost:3001`. Linked worktrees use the sticky
@@ -320,10 +326,11 @@ Cookie authentication MUST NOT ship or be enabled in production until every cont
 
 #### Origin, transport, and browser boundaries
 
-- Production remains same-origin and does not enable unnecessary CORS. Where CORS is required, including localhost development, credentialed CORS uses an explicit per-environment allowlist and returns an allow-origin value only for the exact configured frontend origin. Wildcards, reflected arbitrary origins, `null`, sibling hosting domains, and an unparameterized default CORS configuration are prohibited.
+- Production credentialed CORS permits only `https://calibrateapp.org`; local development uses its exact configured frontend origin. The policy uses an explicit per-environment allowlist and returns an allow-origin value only for the exact configured frontend origin. Wildcards, reflected arbitrary origins, `null`, sibling hosting domains, and an unparameterized default CORS configuration are prohibited.
+- Browser verification covers cross-origin signup, passkey login, session restoration, refresh, logout, and rate-limit responses, including preflight handling and rejection of untrusted origins. Proxies and hosting rules permit preflights, and application errors preserve the applicable CORS headers.
 - Every cookie-authenticated state-changing endpoint validates the exact `Origin` server-side before changing credential or application state. Tests reject missing, `null`, malformed, and unexpected origins.
 - HTTPS is enforced outside the localhost development exception. Proxy trust is explicitly configured and tested so production requests cannot downgrade secure-cookie decisions through spoofed forwarding headers. HSTS and the planned security headers are present on production responses.
-- The production frontend has an enforced Content Security Policy. Script sources are restricted to the minimum required set, unsafe script execution is not enabled for convenience, and third-party scripts are avoided unless separately reviewed.
+- The production frontend has an enforced Content Security Policy whose `connect-src` permits `https://api.calibrateapp.org`. Script sources are restricted to the minimum required set, unsafe script execution is not enabled for convenience, and third-party scripts are avoided unless separately reviewed.
 
 #### Credential handling
 

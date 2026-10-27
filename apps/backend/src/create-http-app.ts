@@ -16,15 +16,23 @@ export function createHttpApp(container: Container): Express {
 
   app.set("trust proxy", container.getTrustProxyHops());
   app.use(helmet());
+  const frontendOrigin = getRuntimeEnvironmentValue("CORS_ORIGIN");
+
+  if (!frontendOrigin) {
+    throw new Error("CORS_ORIGIN must be configured");
+  }
+
   app.use(
+    "/api/v1",
     cors({
-      origin:
-        process.env.NODE_ENV === "production"
-          ? false
-          : (getRuntimeEnvironmentValue("CORS_ORIGIN") ?? "http://localhost:3000"),
+      origin: [frontendOrigin],
       credentials: true,
+      methods: ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type"],
+      exposedHeaders: ["Retry-After"],
     }),
   );
+
   app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
   app.use(express.json());
 
