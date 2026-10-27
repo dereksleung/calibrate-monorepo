@@ -53,154 +53,166 @@ beforeEach(() => {
     mocks.loadApplication();
     return {};
   });
+  vi.doMock("../infrastructure/persistence/migrate-database.js", () => ({
+    migrateDatabase: mocks.loadApplication,
+  }));
+  vi.doMock("../infrastructure/persistence/database.js", () => ({ databaseClient: {} }));
 });
 
 afterEach(() => {
   process.exitCode = previousExitCode;
   errorLog.mockRestore();
   vi.doUnmock("../app.js");
+  vi.doUnmock("../infrastructure/persistence/migrate-database.js");
+  vi.doUnmock("../infrastructure/persistence/database.js");
 });
 
-async function boot(outcome: "success" | "failure" = "failure") {
-  await import("../startup.js");
-  await vi.waitFor(() => {
-    expect(outcome === "success" ? mocks.loadApplication : errorLog).toHaveBeenCalledTimes(1);
-  });
-}
+describe.each([
+  { entrypoint: "startup", failureMessage: "Backend startup failed", loadStage: "load-application" },
+  { entrypoint: "migrate", failureMessage: "Database migration failed", loadStage: "run-migrations" },
+])("$entrypoint diagnostics", ({ entrypoint, failureMessage, loadStage }) => {
+  async function boot(outcome: "success" | "failure" = "failure") {
+    if (entrypoint === "startup") await import("../startup.js");
+    else await import("../migrate.js");
+    await vi.waitFor(() => {
+      expect(outcome === "success" ? mocks.loadApplication : errorLog).toHaveBeenCalledTimes(1);
+    });
+  }
 
-function expectFailure(stage: string, reason: string | ReturnType<typeof expect.stringContaining>) {
-  expect(errorLog).toHaveBeenCalledWith("Backend startup failed", { stage, reason });
-  expect(process.exitCode).toBe(1);
-}
+  function expectFailure(stage: string, reason: string | ReturnType<typeof expect.stringContaining>) {
+    expect(errorLog).toHaveBeenCalledWith(failureMessage, { stage, reason });
+    expect(process.exitCode).toBe(1);
+  }
 
-describe("backend startup diagnostics", () => {
-  it("initializes configuration before loading the app without changing process.env", async () => {
-    const environment = { ...process.env };
-    mocks.loadApplication.mockImplementation(() => {
-      expect(mocks.initialize).toHaveBeenCalledWith(configuration);
+  describe("backend startup diagnostics", () => {
+    it("initializes configuration before loading the app without changing process.env", async () => {
+      const environment = { ...process.env };
+      mocks.loadApplication.mockImplementation(() => {
+        expect(mocks.initialize).toHaveBeenCalledWith(configuration);
+      });
+
+      await boot("success");
+
+      expect(errorLog).not.toHaveBeenCalled();
+      expect(process.exitCode).toBeUndefined();
+      expect(process.env).toEqual(environment);
+      expect(mocks.execFileAsync).toHaveBeenCalledWith(
+        "/usr/local/bin/doppler",
+        expect.any(Array),
+        expect.objectContaining({ env: { HOME: "/tmp", DOPPLER_TOKEN: token } }),
+      );
     });
 
-    await boot("success");
+    it.each(["ENOENT", "EACCES"])("reports token-file error %s without its raw message", async (code) => {
+      mocks.readFile.mockRejectedValueOnce(Object.assign(new Error(token), { code }));
 
-    expect(errorLog).not.toHaveBeenCalled();
-    expect(process.exitCode).toBeUndefined();
-    expect(process.env).toEqual(environment);
-    expect(mocks.execFileAsync).toHaveBeenCalledWith(
-      "/usr/local/bin/doppler",
-      expect.any(Array),
-      expect.objectContaining({ env: { HOME: "/tmp", DOPPLER_TOKEN: token } }),
-    );
-  });
+      await boot();
 
-  it.each(["ENOENT", "EACCES"])("reports token-file error %s without its raw message", async (code) => {
-    mocks.readFile.mockRejectedValueOnce(Object.assign(new Error(token), { code }));
-
-    await boot();
-
-    expectFailure("read-doppler-token", code);
-    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
-  });
-
-  it("identifies an empty token file", async () => {
-    mocks.readFile.mockResolvedValueOnce(" \n");
-    await boot();
-    expectFailure("read-doppler-token", "Doppler token file is empty");
-  });
-
-  it("reports Doppler failure without leaking its output, arguments, or environment", async () => {
-    mocks.execFileAsync.mockRejectedValueOnce(
-      Object.assign(new Error(`command includes ${token}`), {
-        code: 1,
-        stdout: privateKey,
-        stderr: token,
-        cmd: token,
-        env: { DOPPLER_TOKEN: token },
-      }),
-    );
-
-    await boot();
-
-    expectFailure("fetch-dotenv-private-key", "External command exited with code 1");
-    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
-    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(privateKey);
-  });
-
-  it("identifies a missing Doppler executable", async () => {
-    mocks.execFileAsync.mockRejectedValueOnce(Object.assign(new Error(token), { code: "ENOENT" }));
-    await boot();
-    expectFailure("fetch-dotenv-private-key", "ENOENT");
-  });
-
-  it("identifies malformed key output without displaying it", async () => {
-    mocks.execFileAsync.mockResolvedValueOnce({ stdout: "sensitive-bad-key", stderr: "" });
-    await boot();
-    expectFailure("validate-dotenv-private-key", "Invalid dotenvx private key");
-  });
-
-  it("identifies a missing encrypted configuration mount", async () => {
-    mocks.readFile
-      .mockResolvedValueOnce(token)
-      .mockRejectedValueOnce(Object.assign(new Error(privateKey), { code: "ENOENT" }));
-    await boot();
-    expectFailure("read-encrypted-configuration", "ENOENT");
-  });
-
-  it("reports the invalid literal line without revealing its contents", async () => {
-    mocks.readFile
-      .mockResolvedValueOnce(token)
-      .mockResolvedValueOnce(`# comment\nDB_PASSWORD="${privateKey}"\n`);
-    await boot();
-    expectFailure(
-      "validate-configuration-format",
-      "Production configuration must use single-quoted literals (line 2)",
-    );
-    expect(mocks.parse).not.toHaveBeenCalled();
-  });
-
-  it("reports decryption failure and suppresses dotenvx error details", async () => {
-    const originalLogger = mocks.logger.error;
-    mocks.parse.mockImplementationOnce(() => {
-      mocks.logger.error(`private key ${privateKey}`);
-      return { DB_HOST: "encrypted:unresolved" };
+      expectFailure("read-doppler-token", code);
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
     });
 
-    await boot();
-
-    expectFailure("decrypt-configuration", "Production configuration could not be decrypted");
-    expect(originalLogger).not.toHaveBeenCalled();
-    expect(mocks.logger.error).toBe(originalLogger);
-    expect(mocks.initialize).not.toHaveBeenCalled();
-  });
-
-  it("reports invalid setting names without their values", async () => {
-    mocks.validate.mockImplementationOnce(() => mocks.realValidate({ DB_PORT: token }));
-
-    await boot();
-
-    expectFailure("validate-runtime-configuration", expect.stringContaining("DB_PORT"));
-    expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
-    expect(mocks.initialize).not.toHaveBeenCalled();
-  });
-
-  it("suppresses unexpected validation errors instead of trusting their messages", async () => {
-    mocks.validate.mockImplementationOnce(() => {
-      throw new Error(privateKey);
+    it("identifies an empty token file", async () => {
+      mocks.readFile.mockResolvedValueOnce(" \n");
+      await boot();
+      expectFailure("read-doppler-token", "Doppler token file is empty");
     });
-    await boot();
-    expectFailure("validate-runtime-configuration", "Unexpected error; sensitive details suppressed");
-  });
 
-  it("reports a terminated Doppler command without its captured output", async () => {
-    mocks.execFileAsync.mockRejectedValueOnce(Object.assign(new Error(token), { killed: true }));
-    await boot();
-    expectFailure("fetch-dotenv-private-key", "External command was terminated (timeout or signal)");
-  });
+    it("reports Doppler failure without leaking its output, arguments, or environment", async () => {
+      mocks.execFileAsync.mockRejectedValueOnce(
+        Object.assign(new Error(`command includes ${token}`), {
+          code: 1,
+          stdout: privateKey,
+          stderr: token,
+          cmd: token,
+          env: { DOPPLER_TOKEN: token },
+        }),
+      );
 
-  it("suppresses unexpected application import errors", async () => {
-    mocks.loadApplication.mockImplementationOnce(() => {
-      throw new Error(privateKey);
+      await boot();
+
+      expectFailure("fetch-dotenv-private-key", "External command exited with code 1");
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(privateKey);
     });
-    await boot();
-    expectFailure("load-application", "Unexpected error; sensitive details suppressed");
+
+    it("identifies a missing Doppler executable", async () => {
+      mocks.execFileAsync.mockRejectedValueOnce(Object.assign(new Error(token), { code: "ENOENT" }));
+      await boot();
+      expectFailure("fetch-dotenv-private-key", "ENOENT");
+    });
+
+    it("identifies malformed key output without displaying it", async () => {
+      mocks.execFileAsync.mockResolvedValueOnce({ stdout: "sensitive-bad-key", stderr: "" });
+      await boot();
+      expectFailure("validate-dotenv-private-key", "Invalid dotenvx private key");
+    });
+
+    it("identifies a missing encrypted configuration mount", async () => {
+      mocks.readFile
+        .mockResolvedValueOnce(token)
+        .mockRejectedValueOnce(Object.assign(new Error(privateKey), { code: "ENOENT" }));
+      await boot();
+      expectFailure("read-encrypted-configuration", "ENOENT");
+    });
+
+    it("reports the invalid literal line without revealing its contents", async () => {
+      mocks.readFile
+        .mockResolvedValueOnce(token)
+        .mockResolvedValueOnce(`# comment\nDB_PASSWORD="${privateKey}"\n`);
+      await boot();
+      expectFailure(
+        "validate-configuration-format",
+        "Production configuration must use single-quoted literals (line 2)",
+      );
+      expect(mocks.parse).not.toHaveBeenCalled();
+    });
+
+    it("reports decryption failure and suppresses dotenvx error details", async () => {
+      const originalLogger = mocks.logger.error;
+      mocks.parse.mockImplementationOnce(() => {
+        mocks.logger.error(`private key ${privateKey}`);
+        return { DB_HOST: "encrypted:unresolved" };
+      });
+
+      await boot();
+
+      expectFailure("decrypt-configuration", "Production configuration could not be decrypted");
+      expect(originalLogger).not.toHaveBeenCalled();
+      expect(mocks.logger.error).toBe(originalLogger);
+      expect(mocks.initialize).not.toHaveBeenCalled();
+    });
+
+    it("reports invalid setting names without their values", async () => {
+      mocks.validate.mockImplementationOnce(() => mocks.realValidate({ DB_PORT: token }));
+
+      await boot();
+
+      expectFailure("validate-runtime-configuration", expect.stringContaining("DB_PORT"));
+      expect(JSON.stringify(errorLog.mock.calls)).not.toContain(token);
+      expect(mocks.initialize).not.toHaveBeenCalled();
+    });
+
+    it("suppresses unexpected validation errors instead of trusting their messages", async () => {
+      mocks.validate.mockImplementationOnce(() => {
+        throw new Error(privateKey);
+      });
+      await boot();
+      expectFailure("validate-runtime-configuration", "Unexpected error; sensitive details suppressed");
+    });
+
+    it("reports a terminated Doppler command without its captured output", async () => {
+      mocks.execFileAsync.mockRejectedValueOnce(Object.assign(new Error(token), { killed: true }));
+      await boot();
+      expectFailure("fetch-dotenv-private-key", "External command was terminated (timeout or signal)");
+    });
+
+    it("suppresses unexpected application import errors", async () => {
+      mocks.loadApplication.mockImplementationOnce(() => {
+        throw new Error(privateKey);
+      });
+      await boot();
+      expectFailure(loadStage, "Unexpected error; sensitive details suppressed");
+    });
   });
 });
