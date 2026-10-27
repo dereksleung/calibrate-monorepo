@@ -9,7 +9,7 @@
       "executor": "nx:run-commands",
       "continuous": true,
       "options": {
-        "command": "nodemon --exec \"tsx --tsconfig apps/backend/tsconfig.json\" apps/backend/src/app.ts"
+        "command": "nodemon --exec \"tsx --tsconfig apps/backend/tsconfig.json\" apps/backend/src/dev-app.ts"
       }
     },
     "demo": {

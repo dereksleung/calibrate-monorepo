@@ -101,6 +101,7 @@ WEBAUTHN_RP_ID="localhost"
 WEBAUTHN_ORIGIN="http://localhost:3000"
 WEBAUTHN_RP_NAME="Calibrate"
 EMAIL_SERVICE_CREDENTIAL="<brevo_api_key>"
+CORS_ORIGIN="http://localhost:3000"
 ```
 
 `TRUST_PROXY_HOPS` must match the number of trusted reverse-proxy hops in front
@@ -124,6 +125,10 @@ values for `OTP_HMAC_KEY` and `EMAIL_REQUEST_IP_HMAC_KEY`.
 6. Run `npx nx run workspace:worktree-setup` to provision Postgres, create the worktree database, run migrations, and print the dev commands.
 
 7. Run the printed `backend:dev` and `web:dev` commands in separate terminals.
+   `backend:dev` decrypts the root `.env` using `.env.keys` or `DOTENV_PRIVATE_KEY`,
+   validates configuration, and initializes it before loading the application.
+   Existing environment values take precedence, preserving the printed worktree
+   overrides. `CORS_ORIGIN` must be set explicitly to the frontend origin.
 
 8. Other commands can be run like `npx nx run (project_name):(command_name) (args)`. Project names are found in `apps/app-folder/package.json`'s `name` field, the available command names comes from the `scripts` field.
 
