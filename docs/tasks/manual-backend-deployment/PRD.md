@@ -23,16 +23,22 @@ One required string input, `image`, accepts:
 - An exact semver tag: `1.2.3`, `v1.2.3`, or a prerelease such as
   `1.2.3-rc.1`. The supplied tag is used literally; the script does not add or
   remove `v`.
+- A branch image tag such as `main`, `develop`, `feature-login`, or
+  `codex.my_branch`, using its exact published Docker tag spelling. The user
+  explicitly requested branch-tag support after the initial implementation.
 - A full reference in the fixed repository using one of those digests or tags.
 
-Reject `latest`, moving aliases such as `stable`, incomplete versions, other
-repositories, whitespace inside a reference, command arguments, and shell
-syntax. Semver build metadata containing `+` is not supported because `+` is
-not valid in a Docker tag. A registry digest is distinct from a Git commit SHA
-or the local Docker image ID.
+Accept Docker's ASCII tag syntax, up to 128 characters, preserving case. Reject
+the reserved aliases `latest` and `stable`, other repositories, whitespace inside
+a reference, command arguments, and shell syntax. Numeric-looking tags such as
+`1.2` are valid Docker tags; the validator no longer enforces semver. Semver
+build metadata containing `+` is not supported because `+` is not valid in a
+Docker tag. Raw Git branch names containing `/` are rejected; users must supply
+the published tag spelling rather than relying on implicit sanitization. A
+registry digest is distinct from a Git commit SHA or the local Docker image ID.
 
 The workflow writes the selected input to `/home/deploy/incoming/image.txt`.
-The root-owned script independently validates it. Semver tags are pulled once
+The root-owned script independently validates it. Release and branch tags are pulled once
 under the existing deployment lock, resolved to a digest in the approved
 repository, and pinned before migrations or production configuration changes.
 All subsequent Compose operations, health verification, and `release.env`
@@ -122,7 +128,7 @@ Ask before dependency installation, production actions, pushes, or destructive
 operations. Never add an automatic deployment trigger or silently fall back to
 `latest`.
 
-Success means a manual digest or semver selection deploys the selected published
+Success means a manual digest, release tag, or branch tag selection deploys the selected published
 image using an immutable digest, with a documented configuration source and no
 automatic production promotion.
 
@@ -133,7 +139,7 @@ template, transport tests, and operator documentation. The workflow template
 preserves the inspected private Action and adds the required image input plus
 temporary upload/publication of `image.txt`.
 
-Verified 22 deployment/workflow tests and the installed-launcher test, parsed
+Verified the deployment/workflow tests and the installed-launcher test, parsed
 the YAML and checked its manual-only trigger/input/concurrency settings, and
 validated the unchanged sudoers rule with `visudo`. The full Linux lock/FIFO
 suite was not run: the local Docker daemon has no cached `node:26.4.0` image.

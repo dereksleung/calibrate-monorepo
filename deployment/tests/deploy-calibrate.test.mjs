@@ -51,31 +51,55 @@ test("rejects plaintext secrets, shell syntax, duplicates, and uploaded decrypti
   }
 });
 
-test("normalizes registry digests and exact semver selections in the approved repository", () => {
+test("normalizes registry digests, release tags, and branch tags in the approved repository", () => {
   const digest = `sha256:${"a".repeat(64)}`;
   for (const input of [digest, "a".repeat(64), image]) {
     assert.equal(validateImage(Buffer.from(input)), image);
   }
-  for (const tag of ["1.2.3", "v1.2.3", "0.0.0", "1.2.3-rc.1", "v1.2.3-alpha-1"]) {
+  for (const tag of [
+    "1.2.3",
+    "v1.2.3",
+    "0.0.0",
+    "1.2.3-rc.1",
+    "v1.2.3-alpha-1",
+    "main",
+    "develop",
+    "feature-login",
+    "codex.my_branch",
+    "Feature-Test",
+    "123-feature",
+    "1.2",
+    "01.2.3",
+    "1.2.3-01",
+    "a".repeat(128),
+  ]) {
     const expected = `dereksleung407/calibrate:${tag}`;
     assert.equal(validateImage(Buffer.from(tag)), expected);
     assert.equal(validateImage(Buffer.from(expected)), expected);
   }
 });
 
-test("rejects moving aliases, malformed versions, other repositories, and extra arguments", () => {
+test("rejects reserved aliases, invalid Docker tags, other repositories, and extra arguments", () => {
   for (const value of [
     "latest",
     "stable",
-    "1.2",
-    "01.2.3",
-    "1.2.3-01",
+    "",
+    "feature/login",
+    ".main",
+    "-main",
+    "feature login",
+    "feature:login",
+    "dévelop",
     "1.2.3+build.1",
     `1.2.3-${"a".repeat(128)}`,
+    "a".repeat(129),
     "1.2.3\nother-value",
     "$(id)",
     "--help",
     "dereksleung407/calibrate:latest",
+    "dereksleung407/calibrate:stable",
+    "dereksleung407/calibrate:feature/login",
+    "evil/image:main",
     "evil/image:1.2.3",
     `evil/image@sha256:${"a".repeat(64)}`,
     `${image}\n--privileged`,
@@ -107,6 +131,18 @@ test("resolves a semver tag using the registry digest returned by Docker pull", 
   assert.deepEqual(calls[0].args, ["pull", "dereksleung407/calibrate:v1.2.3"]);
   assert.equal(calls[0].options.timeout, 300_000);
   assert.equal(calls.length, 1);
+});
+
+test("resolves a literal branch image tag to an immutable digest", async () => {
+  const calls = [];
+  const resolved = await resolveImage("dereksleung407/calibrate:feature-login", {
+    docker: async (args) => {
+      calls.push(args);
+      return `feature-login: Pulling from dereksleung407/calibrate\nDigest: sha256:${"a".repeat(64)}`;
+    },
+  });
+  assert.equal(resolved, image);
+  assert.deepEqual(calls, [["pull", "dereksleung407/calibrate:feature-login"]]);
 });
 
 test("rejects missing or ambiguous pull digests and hides raw registry errors", async () => {

@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: "Published image digest (sha256:...) or exact semver tag (1.2.3 or v1.2.3)"
+        description: "Published image digest (sha256:...) or release/branch image tag (v1.2.3, main, feature-login)"
         required: true
         type: string
 

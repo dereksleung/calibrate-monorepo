@@ -97,14 +97,10 @@ export function validateImage(contents) {
     return `${IMAGE_REPOSITORY}@${digest.startsWith("sha256:") ? digest : `sha256:${digest}`}`;
 
   const tag = image.startsWith(`${IMAGE_REPOSITORY}:`) ? image.slice(IMAGE_REPOSITORY.length + 1) : image;
-  const numeric = "(?:0|[1-9][0-9]*)";
-  const identifier = `(?:${numeric}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)`;
-  const semver = new RegExp(
-    `^v?${numeric}\\.${numeric}\\.${numeric}(?:-${identifier}(?:\\.${identifier})*)?$`,
-  );
-  if (tag.length <= 128 && semver.test(tag)) return `${IMAGE_REPOSITORY}:${tag}`;
+  if (/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/.test(tag) && !["latest", "stable"].includes(tag))
+    return `${IMAGE_REPOSITORY}:${tag}`;
   throw new DeploymentError(
-    "Image must be a registry digest or exact semver tag in dereksleung407/calibrate",
+    "Image must be a registry digest or Docker tag in dereksleung407/calibrate; latest and stable are not allowed",
   );
 }
 

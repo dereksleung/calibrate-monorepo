@@ -80,15 +80,22 @@ Accepted image selections:
   64 hexadecimal characters.
 - Exact semver tag: `1.2.3`, `v1.2.3`, or a prerelease such as `1.2.3-rc.1`.
   The tag is used literally; `v1.2.3` and `1.2.3` are distinct registry tags.
+- Branch image tag: `main`, `develop`, `feature-login`, or `codex.my_branch`.
+  Enter the exact tag published by your image-building workflow. Git branches
+  containing `/`, such as `feature/login`, must use their published Docker tag
+  spelling, for example `feature-login`; the deploy script does not convert names.
 - A full reference in `dereksleung407/calibrate`, using one of those tags or
   digests.
 
-`latest`, moving aliases, incomplete versions, other repositories, and semver
-build metadata with `+` are rejected. Use the **registry manifest/index digest**
+Docker tags may contain ASCII letters, digits, underscores, periods, and hyphens;
+they must start with a letter, digit, or underscore and contain at most 128
+characters. Numeric-looking tags such as `1.2` are accepted as literal Docker
+tags without enforcing semver. `latest`, `stable`, other repositories, and
+semver build metadata with `+` remain rejected. Use the **registry manifest/index digest**
 reported when an image is pushed or pulled; a Git commit SHA or local Docker
 image ID is not a registry digest for this purpose.
 
-The Droplet resolves a semver tag once by pulling it under the deployment lock
+The Droplet resolves a release or branch tag once by pulling it under the deployment lock
 and reading the registry digest reported by Docker. Every later Compose command,
 health check, and `release.env` record uses that digest, even if the tag moves.
 Missing tags, registry access failures, and missing or ambiguous digests stop
@@ -127,7 +134,7 @@ ssh deploy@your-droplet 'sudo -n /usr/local/sbin/deploy-calibrate.mjs'
 2. Checks single-quoted assignment syntax, duplicate keys, and accidental
    plaintext secrets. Uploaded Doppler tokens and dotenvx private keys are
    rejected. Uploaded configuration is never sourced or printed. Normalizes the
-   image selection and resolves any semver tag to a digest.
+   image selection and resolves any release or branch tag to a digest.
 3. Validates the fixed Compose file and pulls the approved digest for both
    `backend` and `migrate`. Commands use the local Docker context, project
    `calibrate`, `/srv/calibrate/compose.yaml`, and an explicit environment.
@@ -192,4 +199,5 @@ to verify both uploads precede deployment, failed uploads prevent deployment,
 and image input is treated as data.
 
 References: [GitHub manual workflows](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow),
-[Docker digest pinning](https://docs.docker.com/reference/cli/docker/image/pull/#pull-an-image-by-digest-immutable-identifier).
+[Docker digest pinning](https://docs.docker.com/reference/cli/docker/image/pull/#pull-an-image-by-digest-immutable-identifier),
+[Docker tag syntax](https://github.com/distribution/reference/blob/main/regexp.go).
