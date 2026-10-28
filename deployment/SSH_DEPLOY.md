@@ -1,6 +1,7 @@
 # SSH backend deployment
 
-GitHub Actions uploads a release and invokes the root-owned
+The manually triggered Action in the private `dereksleung/calibrate-config`
+repository uploads a release and invokes the root-owned
 [deploy-calibrate.mjs](deploy-calibrate.mjs) on the Droplet. The script runs on
 the host using `/home/derek/.asdf/installs/nodejs/26.4.0/bin/node`. Docker Compose
 runs the backend, migrations, and PostgreSQL; the deployment script does not run
@@ -44,15 +45,69 @@ permissions. The Action cannot supply arbitrary root commands, a Compose
 file, Docker options, or a different image repository. Script and Compose updates
 remain administrator operations.
 
+If the rule is already installed under another filename, such as
+`/etc/sudoers.d/calibrate-deploy`, maintain that existing file rather than
+installing a duplicate. Its executable path must end in `deploy-calibrate.mjs`.
+
+## Manual production workflow
+
+Copy [the workflow template](github-actions/deploy-calibrate.yml) to
+`.github/workflows/deploy-calibrate.yml` in **the private config repository**.
+It preserves that repository's pinned checkout action and existing secrets:
+`DROPLET_SSH_PRIVATE_KEY`, `DROPLET_KNOWN_HOSTS`, and `DROPLET_HOST`.
+Keep the encrypted `.env.production` in that private repository.
+
+The workflow has only a `workflow_dispatch` trigger. Pushes, image publication,
+and release tags do not trigger this deployment. It selects an already-published
+image; it does not build, push, or retag one. Clicking **Run workflow** starts
+deployment directly without an additional environment approval. Its workflow
+file must be present on the private repository's default branch for manual
+execution through GitHub's Actions UI.
+
+Open **Actions → Deploy backend → Run workflow**, then provide the required
+`image` input. Alternatively, deliberately trigger a deployment with:
+
+```sh
+gh workflow run deploy-calibrate.yml --repo dereksleung/calibrate-config -f image=v1.2.3
+```
+
+The GitHub branch selector chooses the private configuration/workflow revision;
+the `image` input independently chooses the Docker image.
+
+Accepted image selections:
+
+- Registry digest: `sha256:<64 lowercase hexadecimal characters>` or just the
+  64 hexadecimal characters.
+- Exact semver tag: `1.2.3`, `v1.2.3`, or a prerelease such as `1.2.3-rc.1`.
+  The tag is used literally; `v1.2.3` and `1.2.3` are distinct registry tags.
+- A full reference in `dereksleung407/calibrate`, using one of those tags or
+  digests.
+
+`latest`, moving aliases, incomplete versions, other repositories, and semver
+build metadata with `+` are rejected. Use the **registry manifest/index digest**
+reported when an image is pushed or pulled; a Git commit SHA or local Docker
+image ID is not a registry digest for this purpose.
+
+The Droplet resolves a semver tag once by pulling it under the deployment lock
+and reading the registry digest reported by Docker. Every later Compose command,
+health check, and `release.env` record uses that digest, even if the tag moves.
+Missing tags, registry access failures, and missing or ambiguous digests stop
+deployment before production files or containers are changed. Registry access
+uses Docker's existing root-owned configuration; the workflow does not upload
+registry credentials.
+
+Install the updated script on the Droplet before using the revised workflow;
+the earlier script accepts only full digest references. The sudoers command
+remains unchanged and accepts no arguments.
+
 ## Upload contract
 
 Upload these two regular files, owned by `deploy`, into `/home/deploy/incoming/`:
 
 - `.env.production`: the encrypted production artifact, at most 128 KiB.
-- `image.txt`: one full immutable reference such as
-  `dereksleung407/calibrate@sha256:<64 lowercase hexadecimal characters>`.
-  Use the digest returned by the image publishing step. Tags such as `latest`
-  and other repositories are rejected.
+- `image.txt`: one image selection in the formats above, at most 256 bytes.
+  The workflow writes the `image` input to this file without shell expansion.
+  Both completed uploads are published before invoking the root-owned script.
 
 Configure one GitHub Actions concurrency group for the whole production job,
 including uploads, with `cancel-in-progress: false`. Finish both uploads before
@@ -71,7 +126,8 @@ ssh deploy@your-droplet 'sudo -n /usr/local/sbin/deploy-calibrate.mjs'
    into memory without following file symlinks or reading special files.
 2. Checks single-quoted assignment syntax, duplicate keys, and accidental
    plaintext secrets. Uploaded Doppler tokens and dotenvx private keys are
-   rejected. Uploaded configuration is never sourced or printed.
+   rejected. Uploaded configuration is never sourced or printed. Normalizes the
+   image selection and resolves any semver tag to a digest.
 3. Validates the fixed Compose file and pulls the approved digest for both
    `backend` and `migrate`. Commands use the local Docker context, project
    `calibrate`, `/srv/calibrate/compose.yaml`, and an explicit environment.
@@ -119,7 +175,7 @@ recreates Caddy. It does not rotate the PostgreSQL cluster password: changing
 Pure and deployment-sequence tests use Node's built-in runner:
 
 ```sh
-node --test deployment/tests/deploy-calibrate.test.mjs
+node --test deployment/tests/deploy-calibrate.test.mjs deployment/tests/manual-deploy-workflow.test.mjs
 ```
 
 On Linux with Node 26.4.0 and `flock`, also run:
@@ -131,3 +187,9 @@ node --test deployment/tests/deploy-calibrate.test.mjs deployment/tests/deploy-c
 These tests use temporary files and doubles for Docker. They do not deploy,
 contact Doppler, or connect to the production database. A Docker container was
 used locally only to verify the exact Node version and Linux locking behavior.
+Workflow tests execute the template's Bash script with local SSH/SCP/sudo doubles
+to verify both uploads precede deployment, failed uploads prevent deployment,
+and image input is treated as data.
+
+References: [GitHub manual workflows](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow),
+[Docker digest pinning](https://docs.docker.com/reference/cli/docker/image/pull/#pull-an-image-by-digest-immutable-identifier).

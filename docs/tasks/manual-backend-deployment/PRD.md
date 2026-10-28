@@ -1,6 +1,6 @@
 # Manual backend image deployment
 
-Status: specification approved by the user on 2026-10-27; implementation in progress.
+Status: implemented locally after specification approval on 2026-10-27.
 
 ## Objective
 
@@ -100,7 +100,7 @@ Docker and temporary files for uploads and release metadata. Do not exercise the
 production Droplet in tests.
 
 ```sh
-node --test deployment/tests/deploy-calibrate.test.mjs
+node --test deployment/tests/deploy-calibrate.test.mjs deployment/tests/manual-deploy-workflow.test.mjs
 node --test --test-name-pattern='installed .mjs launcher' deployment/tests/deploy-calibrate-linux.test.mjs
 visudo -cf deployment/deploy-calibrate.sudoers
 git diff --check
@@ -125,6 +125,24 @@ operations. Never add an automatic deployment trigger or silently fall back to
 Success means a manual digest or semver selection deploys the selected published
 image using an immutable digest, with a documented configuration source and no
 automatic production promotion.
+
+## Implementation and verification
+
+Implemented the script and regression tests first, then the private-workflow
+template, transport tests, and operator documentation. The workflow template
+preserves the inspected private Action and adds the required image input plus
+temporary upload/publication of `image.txt`.
+
+Verified 22 deployment/workflow tests and the installed-launcher test, parsed
+the YAML and checked its manual-only trigger/input/concurrency settings, and
+validated the unchanged sudoers rule with `visudo`. The full Linux lock/FIFO
+suite was not run: the local Docker daemon has no cached `node:26.4.0` image.
+No image was downloaded and no production deployment was attempted.
+
+The user chose to copy the workflow file themselves. Nothing has been pushed or
+published to `calibrate-config`. Apply the prepared template to its existing
+`.github/workflows/deploy-calibrate.yml` and install the updated root-owned
+script on the Droplet before the next manual run.
 
 ## Sources
 

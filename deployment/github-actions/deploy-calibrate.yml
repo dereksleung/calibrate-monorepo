@@ -1,0 +1,82 @@
+# Copy to .github/workflows/deploy-calibrate.yml in dereksleung/calibrate-config.
+name: Deploy backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: "Published image digest (sha256:...) or exact semver tag (1.2.3 or v1.2.3)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: calibrate-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out private repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Upload encrypted configuration and selected image, then deploy
+        shell: bash
+        env:
+          DEPLOY_IMAGE: ${{ inputs.image }}
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.DROPLET_KNOWN_HOSTS }}
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+        run: |
+          set -euo pipefail
+          umask 077
+
+          # Fail before connecting if either required input is missing.
+          test -s .env.production
+          test -n "$DEPLOY_IMAGE"
+          printf '%s\n' "$DEPLOY_IMAGE" > "$RUNNER_TEMP/image.txt"
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" \
+            > "$RUNNER_TEMP/deploy_key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" \
+            > "$RUNNER_TEMP/known_hosts"
+
+          ssh_options=(
+            -i "$RUNNER_TEMP/deploy_key"
+            -o IdentitiesOnly=yes
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+            -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts"
+            -o ConnectTimeout=15
+          )
+
+          remote="deploy@$DROPLET_HOST"
+
+          ssh "${ssh_options[@]}" "$remote" \
+            'install -d -m 0700 /home/deploy/incoming'
+
+          # Finish both temporary uploads before publishing either one.
+          scp "${ssh_options[@]}" \
+            .env.production \
+            "${remote}:/home/deploy/incoming/.env.production.upload"
+          scp "${ssh_options[@]}" \
+            "$RUNNER_TEMP/image.txt" \
+            "${remote}:/home/deploy/incoming/image.txt.upload"
+
+          ssh "${ssh_options[@]}" "$remote" '
+            set -eu
+            chmod 0600 /home/deploy/incoming/.env.production.upload \
+                       /home/deploy/incoming/image.txt.upload
+            mv /home/deploy/incoming/.env.production.upload \
+               /home/deploy/incoming/.env.production
+            mv /home/deploy/incoming/image.txt.upload \
+               /home/deploy/incoming/image.txt
+            sudo -n /usr/local/sbin/deploy-calibrate.mjs
+          '
