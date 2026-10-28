@@ -23,6 +23,7 @@ import { promisify } from "node:util";
 const APP_DIR = "/srv/calibrate";
 const INCOMING_DIR = "/home/deploy/incoming";
 const NODE_BINARY = "/home/derek/.asdf/installs/nodejs/26.4.0/bin/node";
+const IMAGE_REPOSITORY = "dereksleung407/calibrate";
 const ENV = { PATH: "/usr/local/bin:/usr/bin:/bin", HOME: "/root", LC_ALL: "C" };
 const execFileAsync = promisify(execFile);
 let cancellation;
@@ -91,9 +92,39 @@ export function validateConfiguration(contents) {
 
 export function validateImage(contents) {
   const image = contents.toString("utf8").trim();
-  if (!/^dereksleung407\/calibrate@sha256:[0-9a-f]{64}$/.test(image))
-    throw new DeploymentError("Image must be a digest in dereksleung407/calibrate");
-  return image;
+  const digest = image.startsWith(`${IMAGE_REPOSITORY}@`) ? image.slice(IMAGE_REPOSITORY.length + 1) : image;
+  if (/^(?:sha256:)?[0-9a-f]{64}$/.test(digest))
+    return `${IMAGE_REPOSITORY}@${digest.startsWith("sha256:") ? digest : `sha256:${digest}`}`;
+
+  const tag = image.startsWith(`${IMAGE_REPOSITORY}:`) ? image.slice(IMAGE_REPOSITORY.length + 1) : image;
+  const numeric = "(?:0|[1-9][0-9]*)";
+  const identifier = `(?:${numeric}|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)`;
+  const semver = new RegExp(
+    `^v?${numeric}\\.${numeric}\\.${numeric}(?:-${identifier}(?:\\.${identifier})*)?$`,
+  );
+  if (tag.length <= 128 && semver.test(tag)) return `${IMAGE_REPOSITORY}:${tag}`;
+  throw new DeploymentError(
+    "Image must be a registry digest or exact semver tag in dereksleung407/calibrate",
+  );
+}
+
+export async function resolveImage(image, { docker = dockerOutput } = {}) {
+  const reference = validateImage(Buffer.from(image));
+  if (reference.startsWith(`${IMAGE_REPOSITORY}@`)) return reference;
+  let output;
+  try {
+    output = await docker(["pull", reference], { timeout: 300_000 });
+  } catch {
+    throw new DeploymentError(
+      "Cannot resolve selected image tag; check that it exists and registry access is configured",
+    );
+  }
+  // Docker pull reports the registry manifest/index digest, not the local image ID.
+  // Use that exact digest for every later operation, even if the tag moves.
+  const digests = [...output.matchAll(/^Digest: (sha256:[0-9a-f]{64})\r?$/gm)];
+  if (digests.length !== 1)
+    throw new DeploymentError("Docker pull did not return one unambiguous registry digest");
+  return `${IMAGE_REPOSITORY}@${digests[0][1]}`;
 }
 
 function atomicWrite(appDir, destination, contents) {
@@ -212,8 +243,16 @@ export async function checkBackendHealth(image, options = {}) {
 export async function deployRelease(
   configuration,
   image,
-  { appDir = APP_DIR, compose = composeCommand, checkHealth = checkBackendHealth, log = console.info } = {},
+  {
+    appDir = APP_DIR,
+    compose = composeCommand,
+    checkHealth = checkBackendHealth,
+    docker = dockerOutput,
+    log = console.info,
+  } = {},
 ) {
+  image = await resolveImage(image, { docker });
+  log(`Deploying ${image}`);
   const dc = (args, options) => compose(image, args, { appDir, ...options });
   log("Validating Compose and pulling the release image");
   await dc(["config", "--quiet"]);

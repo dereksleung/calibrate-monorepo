@@ -9,6 +9,7 @@ import {
   readUpload,
   validateConfiguration,
   validateImage,
+  resolveImage,
   deployRelease,
   checkBackendHealth,
   composeCommand,
@@ -50,14 +51,87 @@ test("rejects plaintext secrets, shell syntax, duplicates, and uploaded decrypti
   }
 });
 
-test("rejects mutable tags, other repositories, and extra arguments", () => {
+test("normalizes registry digests and exact semver selections in the approved repository", () => {
+  const digest = `sha256:${"a".repeat(64)}`;
+  for (const input of [digest, "a".repeat(64), image]) {
+    assert.equal(validateImage(Buffer.from(input)), image);
+  }
+  for (const tag of ["1.2.3", "v1.2.3", "0.0.0", "1.2.3-rc.1", "v1.2.3-alpha-1"]) {
+    const expected = `dereksleung407/calibrate:${tag}`;
+    assert.equal(validateImage(Buffer.from(tag)), expected);
+    assert.equal(validateImage(Buffer.from(expected)), expected);
+  }
+});
+
+test("rejects moving aliases, malformed versions, other repositories, and extra arguments", () => {
   for (const value of [
+    "latest",
+    "stable",
+    "1.2",
+    "01.2.3",
+    "1.2.3-01",
+    "1.2.3+build.1",
+    `1.2.3-${"a".repeat(128)}`,
+    "1.2.3\nother-value",
+    "$(id)",
+    "--help",
     "dereksleung407/calibrate:latest",
+    "evil/image:1.2.3",
     `evil/image@sha256:${"a".repeat(64)}`,
     `${image}\n--privileged`,
   ]) {
     assert.throws(() => validateImage(Buffer.from(value)), DeploymentError);
   }
+});
+
+test("digest selections do not need tag resolution", async () => {
+  assert.equal(
+    await resolveImage(image, {
+      docker: async () => {
+        throw new Error("must not resolve a digest");
+      },
+    }),
+    image,
+  );
+});
+
+test("resolves a semver tag using the registry digest returned by Docker pull", async () => {
+  const calls = [];
+  const resolved = await resolveImage("v1.2.3", {
+    docker: async (args, options) => {
+      calls.push({ args, options });
+      return `v1.2.3: Pulling from dereksleung407/calibrate\nDigest: sha256:${"a".repeat(64)}\nStatus: Image is up to date`;
+    },
+  });
+  assert.equal(resolved, image);
+  assert.deepEqual(calls[0].args, ["pull", "dereksleung407/calibrate:v1.2.3"]);
+  assert.equal(calls[0].options.timeout, 300_000);
+  assert.equal(calls.length, 1);
+});
+
+test("rejects missing or ambiguous pull digests and hides raw registry errors", async () => {
+  for (const output of [
+    "Status: downloaded without a registry digest",
+    `Digest: sha256:${"a".repeat(64)}\nDigest: sha256:${"b".repeat(64)}`,
+  ]) {
+    await assert.rejects(resolveImage("1.2.3", { docker: async () => output }), DeploymentError);
+  }
+  await assert.rejects(
+    resolveImage("1.2.3", {
+      docker: async () => {
+        throw new Error("synthetic-sensitive-registry-error");
+      },
+    }),
+    (error) => error instanceof DeploymentError && !error.message.includes("synthetic-sensitive"),
+  );
+  await assert.rejects(
+    resolveImage("evil/image:1.2.3", {
+      docker: async () => {
+        assert.fail("invalid references must not reach Docker");
+      },
+    }),
+    DeploymentError,
+  );
 });
 
 test("snapshots bounded regular uploads and rejects symlinks, directories, and wrong ownership", (t) => {
@@ -105,6 +179,43 @@ test("pull failure leaves installed configuration untouched", async (t) => {
   const setup = releaseFixture(t, (args) => args[0] === "pull");
   await assert.rejects(deployRelease(candidate, image, setup));
   assert.deepEqual(readFileSync(join(setup.appDir, ".env.production")), oldConfig);
+});
+
+test("pins migrations, backend recreation, health verification, and release metadata to the resolved digest", async (t) => {
+  const setup = releaseFixture(t);
+  const selectedImages = [];
+  let healthImage;
+  await deployRelease(candidate, "1.2.3", {
+    ...setup,
+    docker: async () => `Digest: sha256:${"a".repeat(64)}`,
+    compose: async (selected, args) => {
+      selectedImages.push(selected);
+      return setup.compose(selected, args);
+    },
+    checkHealth: async (selected) => {
+      healthImage = selected;
+    },
+  });
+  assert(selectedImages.length > 0);
+  assert(selectedImages.every((selected) => selected === image));
+  assert.equal(healthImage, image);
+  assert.equal(readFileSync(join(setup.appDir, "release.env"), "utf8"), `CALIBRATE_IMAGE=${image}\n`);
+});
+
+test("tag resolution failure leaves production files and containers untouched", async (t) => {
+  const setup = releaseFixture(t);
+  await assert.rejects(
+    deployRelease(candidate, "1.2.3", {
+      ...setup,
+      docker: async () => {
+        throw new Error("registry unavailable");
+      },
+    }),
+    DeploymentError,
+  );
+  assert.deepEqual(setup.calls, []);
+  assert.deepEqual(readFileSync(join(setup.appDir, ".env.production")), oldConfig);
+  assert.throws(() => readFileSync(join(setup.appDir, "release.env")), { code: "ENOENT" });
 });
 
 test("migration failure stops the job and restores configuration without restarting backend", async (t) => {
