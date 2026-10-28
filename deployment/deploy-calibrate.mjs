@@ -308,7 +308,7 @@ export async function main() {
   const runtimeOwners = [0, Number(administratorUid)];
   trustedParents(NODE_BINARY, runtimeOwners);
   requireProtectedPath(NODE_BINARY, { owners: runtimeOwners });
-  for (const path of ["/usr/local/sbin/deploy-calibrate", join(APP_DIR, "compose.yaml")]) {
+  for (const path of ["/usr/local/sbin/deploy-calibrate.mjs", join(APP_DIR, "compose.yaml")]) {
     trustedParents(path);
     requireProtectedPath(path);
   }

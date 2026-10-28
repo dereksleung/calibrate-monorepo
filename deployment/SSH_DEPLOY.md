@@ -30,14 +30,17 @@ As your administrator, after copying the reviewed deployment files to the
 Droplet, install the script and the sudoers rule:
 
 ```sh
-sudo install -o root -g root -m 0755 deployment/deploy-calibrate.mjs /usr/local/sbin/deploy-calibrate
+sudo install -o root -g root -m 0755 deployment/deploy-calibrate.mjs /usr/local/sbin/deploy-calibrate.mjs
 sudo visudo -cf deployment/deploy-calibrate.sudoers
 sudo install -o root -g root -m 0440 deployment/deploy-calibrate.sudoers /etc/sudoers.d/deploy-calibrate
 sudo visudo -c
 ```
 
-The [sudoers rule](deploy-calibrate.sudoers) allows only that installed script
-with no arguments. The Action cannot supply arbitrary root commands, a Compose
+The [sudoers rule](deploy-calibrate.sudoers) lets the `deploy` account run that
+installed script as root without a password and with no arguments. Install it
+as `/etc/sudoers.d/deploy-calibrate`; the repository file alone does not grant
+access. The Action needs this rule for `sudo -n` to work without broader sudo
+permissions. The Action cannot supply arbitrary root commands, a Compose
 file, Docker options, or a different image repository. Script and Compose updates
 remain administrator operations.
 
@@ -59,7 +62,7 @@ The host lock additionally prevents simultaneous deployment executions.
 The Action then runs:
 
 ```sh
-ssh deploy@your-droplet 'sudo -n /usr/local/sbin/deploy-calibrate'
+ssh deploy@your-droplet 'sudo -n /usr/local/sbin/deploy-calibrate.mjs'
 ```
 
 ## What the script does

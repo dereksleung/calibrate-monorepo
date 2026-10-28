@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -31,8 +31,8 @@ test("rejects FIFO uploads without waiting for a writer", (t) => {
   assert.throws(() => readUpload(directory, "fifo", process.getuid(), 100), DeploymentError);
 });
 
-test("extensionless installed launcher clears NODE_OPTIONS before Node starts", (t) => {
-  const executable = join(fixture(t), "deploy-calibrate");
+test("installed .mjs launcher clears NODE_OPTIONS before Node starts", (t) => {
+  const executable = join(realpathSync(fixture(t)), "deploy-calibrate.mjs");
   const source = readFileSync(new URL("../deploy-calibrate.mjs", import.meta.url), "utf8").replace(
     /^#![^\n]+/,
     `#!/usr/bin/env -S -i ${process.execPath}`,
